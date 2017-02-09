@@ -6,3 +6,19 @@
 	box-shadow: 4px 4px 6px 0px;
 	position: absolute;
 }
+
+.red {
+	background-color: red;
+}
+
+.black {
+	background-color: black;
+}
+
+.pink {
+	background-color: pink;
+}
+
+.gray {
+	background-color: gray;
+}

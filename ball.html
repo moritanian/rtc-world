@@ -21,7 +21,7 @@ $(function () {
         sendAlongDataChanel(msg);
     }
     var swipe_control = new SwipeObjControl(send_msg_func);
-    chanel(function(){}, function(msg){swipe_control.get_msg(msg)});
+   
 
 
 
@@ -29,14 +29,23 @@ $(function () {
         
         var l = {};
         l[1] = 1;
-       // l[7] = 7;
-       // l[2] = 2;
+        // l[7] = 7;
+        // l[2] = 2;
          //l.push(5);
         console.log(l);
         console.log(JSON.stringify(l));
         
-        var user_id = $("#user-id").val();
-        swipe_control.startWithUserId(user_id);
+        //var user_id = $("#user-id").val();
+        var connected_callback = function(connection_count){
+            swipe_control.startWithUserId(connection_count + 1);
+            console.log("connected count = " + connection_count);
+            $("#user-id").val(connection_count + 1);
+        };
+        var msg_get_callback = function(msg){
+            swipe_control.get_msg(msg);
+        }
+        chanel(connected_callback, msg_get_callback);
+       
 
     });
 });

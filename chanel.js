@@ -15,6 +15,7 @@ let port = 3002;
 let socket = io.connect('http://localhost:' + port + '/');
 let connected_callback;
 let get_msg_callback;
+let connected_flg = false;
 // connected_callback: 接続した際のコールバック関数, get_msg_callback
 var chanel = function(_connected_callback, _get_msg_callback){
   connected_callback = _connected_callback;
@@ -107,7 +108,7 @@ var chanel = function(_connected_callback, _get_msg_callback){
   }
   // --- RTCPeerConnections ---
   function getConnectionCount() {
-    return peerConnections.length;
+    return Object.keys(peerConnections).length;
   }
   function canConnectMore() {
     return (getConnectionCount() < MAX_CONNECTION_COUNT);
@@ -201,9 +202,6 @@ var chanel = function(_connected_callback, _get_msg_callback){
     peer.oniceconnectionstatechange = function() {
       console.log('== ice connection status=' + peer.iceConnectionState);
       if(peer.iceConnectionState === 'connected'){
-        if(connected_callback){
-            connected_callback(getConnectionCount());
-        }
       }
       if (peer.iceConnectionState === 'disconnected') {
         console.log('-- disconnected --');
@@ -226,7 +224,6 @@ var chanel = function(_connected_callback, _get_msg_callback){
     peerConnection = prepareNewConnection(id);
     addConnection(id, peerConnection);
     createDataChanel(id); // data chanel
-    console.log("createDataChanel");
 
     peerConnection.createOffer()
     .then(function (sessionDescription) {
@@ -255,6 +252,10 @@ var chanel = function(_connected_callback, _get_msg_callback){
     .then(function() {
       console.log('setRemoteDescription(offer) succsess in promise');
       makeAnswer(id);
+      if(!connected_flg){
+        connected_flg = true;
+        connected_callback(getConnectionCount());
+      }
     }).catch(function(err) {
       console.error('setRemoteDescription(offer) ERROR: ', err);
     });
@@ -373,13 +374,15 @@ var chanel = function(_connected_callback, _get_msg_callback){
   function setDataChanel(id, dataChannel){
     dataChannels[id] = dataChannel;
     dataChannel.onmessage = function (event) {
-      console.log("データチャネルメッセージ取得:", event.data);
+      //console.log("データチャネルメッセージ取得:", event.data);
       get_msg_callback(event.data);
     };
 
     dataChannel.onopen = function () {
-      //console.log("opened data chanel " + id);
-      //dataChannel.send("hello");
+     if(!connected_flg){
+        connected_flg = true;
+        connected_callback(getConnectionCount() - 1);
+      }
     };
 
     dataChannel.onclose = function () {
@@ -403,6 +406,8 @@ var chanel = function(_connected_callback, _get_msg_callback){
 
   function clickDataChanel(){
     console.log("click data chanel");
-    sendAlongDataChanel("moritanian");
-   // console.log(chanel.getConnectionCount());
+    //sendAlongDataChanel("moritanian");
+    console.log(getConnectionCount());
+    console.log(peerConnections);
+    console.log(Object.keys(peerConnections).length);
   }

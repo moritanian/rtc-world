@@ -1,7 +1,8 @@
 var SwipeObjControl = function(send_msg_func){
 	this.obj_class = ".swipe-obj";
 	this.start = {x:0, y:0}; // スワイプしたときの最初の位置
-	this.friction = 5.0; // マサツ
+	this.friction = 1.001; // マサツ
+	this.force = 1.0;
 	var instance = this;
 	this.send_msg_func = send_msg_func;
 	this.swipe_area = $(".swipe-area");
@@ -32,6 +33,7 @@ var SwipeObjControl = function(send_msg_func){
 	this.get_world_info_flg = false;
 
 	this.is_parent_user = false; // parent user は新規加入者に対し情報を渡す
+	this.world = {boarder: {x: 1000, y : 600}};
 
 
 }
@@ -66,6 +68,9 @@ SwipeObjControl.prototype.mdown = function(e){
    
     instance.target_id = $(drag).attr("obj-id");
 
+    instance.swipe_objs[instance.target_id].vx = 0;
+    instance.swipe_objs[instance.target_id].vy = 0;
+
 }
 
 //マウスカーソルが動いたときに発火
@@ -83,7 +88,12 @@ SwipeObjControl.prototype.mmove = function(e) {
     //フリックしたときに画面を動かさないようにデフォルト動作を抑制
     e.preventDefault();
     //マウスが動いた場所に要素を動かす
-   	instance.set_pos($(drag), event.pageX - instance.drag_offset.x,  event.pageY - instance.drag_offset.y);
+   	instance.set_pos($(drag), event.pageX - instance.drag_offset.x + instance.local_world.pos.x,  event.pageY - instance.drag_offset.y + instance.local_world.pos.y);
+    var obj_id = $(drag).attr("obj-id"); 
+    instance.swipe_objs[obj_id].xp = event.pageX - instance.drag_offset.x + instance.local_world.pos.x; // global で格納
+    instance.swipe_objs[obj_id].yp = event.pageY - instance.drag_offset.y + instance.local_world.pos.y;  
+    instance.send_obj_info(obj_id);
+   	
    // $(drag).css("top", event.pageY - y + "px");
     //$(drag).css("left", event.pageX - x + "px");
   
@@ -119,8 +129,8 @@ SwipeObjControl.prototype.mup = function(e) {
     $(drag).removeClass("drag");
 
     console.log("mup id = " + obj_id);
-    instance.swipe_objs[obj_id].vx = (event.pageX - instance.start.x)/instance.friction;
-    instance.swipe_objs[obj_id].vy = (event.pageY - instance.start.y)/ instance.friction;
+    instance.swipe_objs[obj_id].vx = - (event.pageX - instance.start.x)*instance.force;
+    instance.swipe_objs[obj_id].vy = - (event.pageY - instance.start.y)*instance.force;
     instance.swipe_objs[obj_id].xp = event.pageX - instance.drag_offset.x + instance.local_world.pos.x; // global で格納
     instance.swipe_objs[obj_id].yp = event.pageY - instance.drag_offset.y + instance.local_world.pos.y;
     instance.target_id = -1;
@@ -131,10 +141,30 @@ SwipeObjControl.prototype.update = function(instance) {
 	$(this.obj_class).each(function(){
 		var obj_id = $(this).attr("obj-id");
 		if(obj_id != instance.target_id){
-			 instance.swipe_objs[obj_id].xp += instance.swipe_objs[obj_id].vx/instance.f_rate; 
-			 instance.swipe_objs[obj_id].yp += instance.swipe_objs[obj_id].vy/instance.f_rate;
+			instance.swipe_objs[obj_id].vx /= instance.friction;
+			instance.swipe_objs[obj_id].vy /= instance.friction;
+			instance.swipe_objs[obj_id].xp += instance.swipe_objs[obj_id].vx/instance.f_rate; 
+			instance.swipe_objs[obj_id].yp += instance.swipe_objs[obj_id].vy/instance.f_rate;
 			 
-			 instance.set_pos($(this),instance.swipe_objs[obj_id].xp, instance.swipe_objs[obj_id].yp);
+			if(instance.swipe_objs[obj_id].xp > instance.world.boarder.x){
+				//instance.swipe_objs[obj_id].xp = 0;
+				instance.swipe_objs[obj_id].vx = - instance.swipe_objs[obj_id].vx;
+			}else if(instance.swipe_objs[obj_id].xp < 0){
+				//instance.swipe_objs[obj_id].xp = instance.world.boarder.x;
+				instance.swipe_objs[obj_id].vx = - instance.swipe_objs[obj_id].vx;
+			}
+
+			if(instance.swipe_objs[obj_id].yp > instance.world.boarder.y){
+				//instance.swipe_objs[obj_id].yp = 0;
+				instance.swipe_objs[obj_id].vy = - instance.swipe_objs[obj_id].vy;
+				
+			}else if(instance.swipe_objs[obj_id].yp < 0){
+				//instance.swipe_objs[obj_id].yp = instance.world.boarder.y;
+				instance.swipe_objs[obj_id].vy = - instance.swipe_objs[obj_id].vy;
+				
+			}
+			 
+			instance.set_pos($(this),instance.swipe_objs[obj_id].xp, instance.swipe_objs[obj_id].yp);
 		}else{
 
 		}
@@ -167,11 +197,14 @@ SwipeObjControl.prototype.push_obj = function(obj_info) {
 SwipeObjControl.prototype.add_obj = function(obj_id, obj_info) {
 	console.log("add_obj" + this.obj_class );
 	this.swipe_objs[obj_id] = obj_info;
-	var swipe_obj = $("<div class='swipe-ball swipe-obj'></div>");
-	swipe_obj.on("mousedown", {instance: this}, this.mdown);
-    swipe_obj.on("touchstart", {instance: this}, this.mdown);
-	swipe_obj.attr("obj-id", obj_id);
-	this.swipe_area.append(swipe_obj);
+	var $swipe_obj = $("<div class='swipe-ball swipe-obj'></div>");
+	for (var i  in obj_info.classes){
+		$swipe_obj.addClass(obj_info.classes[i]);
+	}
+	$swipe_obj.on("mousedown", {instance: this}, this.mdown);
+    $swipe_obj.on("touchstart", {instance: this}, this.mdown);
+	$swipe_obj.attr("obj-id", obj_id);
+	this.swipe_area.append($swipe_obj);
 
 }
 
@@ -185,18 +218,35 @@ SwipeObjControl.prototype.show_obj_number = function(instance) {
 }
 
 SwipeObjControl.prototype.startWithUserId = function(user_id) {
+	var instance = this;
+	if(user_id == 1) {
+		this.is_parent_user = true;
+	}
 	this.user_id = user_id;
 	if(user_id == 1){
 		this.local_world.pos = {x:0, y:0};
-		var obj_info = {vx: 0, vy : 0, xp: 200, yp: 200};
+		var obj_info = {vx: 0, vy : 0, xp: 200, yp: 200, classes:["red"]};
 		this.push_obj(obj_info);
+		var obj_info = {vx: 0, vy : 0, xp: 200, yp: 250, classes:["black"]};
+		this.push_obj(obj_info);
+
 		this.get_world_info_flg = true;
 	}else if(user_id == 2){
 		this.local_world.pos = {x:500, y:0};
-		this.send_my_enter_info();
+		// 初めの２つがつながる場合、両方がつながったタイミングでリクエストしないといけない。コールバックとしてこのメソッドが呼ばれた際に
+		// そのタイミングは保証されないので、返信があるまで問い合わせる
+		var request_info_until_back = function(){
+			instance.send_my_enter_info();	
+			setTimeout(function(){
+				if(!instance.get_world_info_flg){
+					request_info_until_back();
+				}
+			}, 100);
+		};
+		request_info_until_back();
 	}
 	console.log("start " + user_id);
-	var instance = this;
+	
 	setTimeout(function(){instance.update(instance)}, 1000/this.f_rate);
 
 }
@@ -204,31 +254,30 @@ SwipeObjControl.prototype.startWithUserId = function(user_id) {
 SwipeObjControl.prototype.send_obj_info = function(obj_id) {
 	var msg_obj = {};
 	msg_obj.objs = {};
-	msg_obj.type = "objs_info";
+	
 	if(obj_id){
-		console.log("send obj info")
-		console.log(obj_id);
-		console.log(this.swipe_objs);
+		msg_obj.type = "objs_info";
 		msg_obj.objs[obj_id] = this.swipe_objs[obj_id];
 	}else{
-		console.log(this.swipe_objs);
+		msg_obj.type = "objs_all_info";
+		//console.log(this.swipe_objs);
 		msg_obj.objs = this.swipe_objs;
 	}
 	var json_obj = JSON.stringify(msg_obj);
-	console.log(json_obj);
 	this.send_msg_func(json_obj);
 }
 
 SwipeObjControl.prototype.send_my_enter_info = function() {
 	msg_obj = {type: "enter", user_id: this.user_id};
 	this.send_msg_func(JSON.stringify(msg_obj));
+	console.log("my enter");
+	console.log(msg_obj);
 }
 
 // 他でバイスからメッセージを受け取る
 SwipeObjControl.prototype.get_msg = function(msg) {
 	var msg_obj = JSON.parse(msg);
-	console.log(msg);
-	if(msg_obj.type === "objs_info"){ //追加するobj情報// 参加者への初期情報もこれで伝える
+	if(msg_obj.type === "objs_info" || msg_obj.type === "objs_all_info"){ //追加するobj情報// 参加者への初期情報もこれで伝える
 		for(var obj_id in msg_obj.objs){
 			if(this.swipe_objs[obj_id]){ // 存在する場合は更新
 				this.swipe_objs[obj_id] = msg_obj.objs[obj_id];
@@ -236,15 +285,26 @@ SwipeObjControl.prototype.get_msg = function(msg) {
 				this.add_obj(obj_id,  msg_obj.objs[obj_id]);
 			}
 		}
-		if(this.get_world_info_flg == false){
+		if(msg_obj.type === "objs_all_info" && this.get_world_info_flg == false){
 			this.get_world_info_flg = true;
 			var obj_info = {vx: 0, vy : 0, xp: 200, yp: 200};
 			var obj_id = this.push_obj(obj_info);
 			this.send_obj_info(obj_id);
+
+			var obj_info = {vx: 0, vy : 0, xp: 400, yp: 250, classes:["pink"]};
+			var obj_id = this.push_obj(obj_info);
+			this.send_obj_info(obj_id);
+
+			var obj_info = {vx: 0, vy : 0, xp: 400, yp: 250, classes:["gray"]};
+			var obj_id = this.push_obj(obj_info);
+			this.send_obj_info(obj_id);
+
+
+			
 		}
 	}else if(msg_obj.type === "enter"){ // 新規加入者がはいってきた
 		console.log("get msg enter");
-		if(this.user_id == 1){
+		if(this.is_parent_user){
 			console.log("send obj info first");
 			this.send_obj_info();
 		}
