@@ -1,0 +1,27 @@
+https://html5experts.jp/mganeko/19814/
+
+https://html5experts.jp/mganeko/20013/
+
+# データチャネル
+http://qiita.com/udonchan/items/7f5ffa9e8982ae1636c3
+# WebRTC技術
+## 必要なデータ
+Session Description Protocol (SDP)
+- 通信内容、鍵
+ICE Candidate
+- p2p通信するための情報
+- 経路情報など
+
+
+# データ共有方法
+
+## 分散案
+全ての端末がすべてのデータを持ち計算。
+何らかのアクションがあった場合そのアクションのみをブロードキャストする
+
+参加した際にはいずれか一台に場の情報を問い合わせる必要あり
+
+## マスタスレーブ案
+マスタがすべてのデータをもつ
+各端末は表示領域に関係するデータのみをマスタから受け取る。
+スレーブでも表示領域の計算を行う。

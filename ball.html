@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+<head>
+ <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+ <title>ball</title>
+<link rel=stylesheet href="./ball.css">
+<script src="./../jquery/jq.js"></script>
+<script src="./swipe_obj.js"></script>
+
+<script src="http://localhost:3002/socket.io/socket.io.js"></script>
+
+<script src="./chanel.js"></script>
+
+
+
+
+<script>
+ 
+$(function () {
+    var send_msg_func = function(msg){
+        sendAlongDataChanel(msg);
+    }
+    var swipe_control = new SwipeObjControl(send_msg_func);
+    chanel(function(){}, function(msg){swipe_control.get_msg(msg)});
+
+
+
+    $("#start-button").on("click", function(){
+        
+        var l = {};
+        l[1] = 1;
+       // l[7] = 7;
+       // l[2] = 2;
+         //l.push(5);
+        console.log(l);
+        console.log(JSON.stringify(l));
+        
+        var user_id = $("#user-id").val();
+        swipe_control.startWithUserId(user_id);
+
+    });
+});
+
+
+</script>
+</head>
+<body>
+    <div>
+        <select id="user-id">
+            <option value=1>左</option>
+            <option value=2>右 </option>
+        </select>
+        <button type="button" id="start-button">start!</button> 
+        <button type="button" onclick="clickDataChanel();">Along DataChanel</button> 
+        objnumber <span id="obj-number"></span>
+    </div>
+    
+    <div class="swipe-area">
+        <!--<div class="swipe-ball swipe-obj"></div> -->
+    </div>
+</body>
+</html>

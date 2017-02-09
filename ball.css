@@ -1,0 +1,8 @@
+.swipe-ball{
+	background-color: yellow;
+	width: 30px;
+	height: 30px;
+	border-radius: 30px;
+	box-shadow: 4px 4px 6px 0px;
+	position: absolute;
+}
