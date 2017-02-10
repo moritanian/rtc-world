@@ -12,7 +12,10 @@ let dataChannels = [];
 //let remoteStreams = [];
 const MAX_CONNECTION_COUNT = 3;
 let port = 3002;
-let socket = io.connect('http://localhost:' + port + '/');
+let url = window.location.hostname;
+
+//let socket = io.connect('http://localhost:' + port + '/');
+let socket = io.connect(url + ':' + port + '/');
 let connected_callback;
 let get_msg_callback;
 let connected_flg = false;

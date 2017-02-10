@@ -3,12 +3,13 @@
 }
 body {
 	overflow: hidden;
+  	webkit-text-size-adjust: 100%;
 }
 .swipe-ball{
 	background-color: yellow;
-	width: 30px;
-	height: 30px;
-	border-radius: 30px;
+	width: 45px;
+	height: 45px;
+	border-radius: 45px;
 	box-shadow: 4px 4px 6px 0px;
-	position: absolute;
+	position: absolute; 
 }

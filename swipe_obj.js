@@ -1,7 +1,7 @@
 var SwipeObjControl = function(send_msg_func){
 	this.obj_class = ".swipe-obj";
 	this.start = {x:0, y:0}; // スワイプしたときの最初の位置
-	this.friction = 1.001; // マサツ
+	this.friction = 1.00; // マサツ
 	this.force = 1.0;
 	var instance = this;
 	this.send_msg_func = send_msg_func;
@@ -33,22 +33,26 @@ var SwipeObjControl = function(send_msg_func){
 	this.get_world_info_flg = false;
 
 	this.is_parent_user = false; // parent user は新規加入者に対し情報を渡す
-	this.world = {boarder: {x: 1000, y : 600}};
+	this.world = {boarder: {x: 760, y : 500}};
+	this.is_touch = ('ontouchstart' in window);
 
 
 }
 
 SwipeObjControl.prototype.mdown = function(e){
-
 	console.log("mdown");
     var instance = e.data.instance;
     //クラス名に .drag を追加
     $(this).addClass("drag");
     //タッチデイベントとマウスのイベントの差異を吸収
-    if(e.type === "mousedown") {
+    //if(e.type === "mousedown") {
+    if(!instance.is_touch) {
         var event = e;
-        } else {
-        var event = e.changedTouches[0];
+    } else {
+    	console.log(e);
+    	//var event = e.changedTouches[0];
+    	var event = instance.get_touch_event(e);
+    	//var event = e.changedTouches[0];
     }
     //要素内の相対座標を取得
     instance.drag_offset.x = event.pageX - this.offsetLeft;
@@ -58,23 +62,34 @@ SwipeObjControl.prototype.mdown = function(e){
     instance.start.y = event.pageY;
 
     //ムーブイベントにコールバック
-    $(document).on("mousemove", {instance: instance}, instance.mmove);
-    $(document).on("touchmove", {instance: instance}, instance.mmove);
     var drag = $(".drag");
-    $(drag).on("mouseup", {instance: instance}, instance.mup);
-    $(document).on("mouseleave", {instance: instance}, instance.mup);
-    $(drag).on("touchend", {instance: instance}, instance.mup);
-    $(document).on("touchleave", {instance: instance}, instance.mup);
-   
+    if(!instance.is_touch){
+    	$(this).on("mousemove", {instance: instance}, instance.mmove);
+    	$(this).on("mouseup", {instance: instance}, instance.mup);
+    	$(this).on("mouseleave", {instance: instance}, instance.mup);
+    }else{
+    	$(this).bind("touchmove", {instance: instance}, instance.mmove);
+    	$(this).bind("touchend", {instance: instance}, instance.mup);
+    	$(this).bind("touchleave", {instance: instance}, instance.mup);
+   	}
     instance.target_id = $(drag).attr("obj-id");
 
     instance.swipe_objs[instance.target_id].vx = 0;
     instance.swipe_objs[instance.target_id].vy = 0;
+    $("#drag-state").text("mdown");
 
+    this.touched = true; // フラグを立てる
 }
 
 //マウスカーソルが動いたときに発火
 SwipeObjControl.prototype.mmove = function(e) {
+	console.log("mouse move!!");
+	// 開始していない場合は動かないようにする
+	// 過剰動作の防止
+	if (!this.touched) {
+		return;
+	}
+
     var instance = e.data.instance;
     //ドラッグしている要素を取得
     //var drag = document.getElementsByClassName("drag")[0];
@@ -83,7 +98,9 @@ SwipeObjControl.prototype.mmove = function(e) {
     if(e.type === "mousemove") {
         var event = e;
     } else {
-        var event = e.changedTouches[0];
+        //var event = e.changedTouches[0];
+    	var event = instance.get_touch_event(e);
+    	
     }
     //フリックしたときに画面を動かさないようにデフォルト動作を抑制
     e.preventDefault();
@@ -93,6 +110,9 @@ SwipeObjControl.prototype.mmove = function(e) {
     instance.swipe_objs[obj_id].xp = event.pageX - instance.drag_offset.x + instance.local_world.pos.x; // global で格納
     instance.swipe_objs[obj_id].yp = event.pageY - instance.drag_offset.y + instance.local_world.pos.y;  
     instance.send_obj_info(obj_id);
+
+    $("#drag-state").text("mmove");
+
    	
    // $(drag).css("top", event.pageY - y + "px");
     //$(drag).css("left", event.pageX - x + "px");
@@ -107,22 +127,31 @@ SwipeObjControl.prototype.mmove = function(e) {
 
 //マウスボタンが上がったら発火
 SwipeObjControl.prototype.mup = function(e) {
-	console.log("up");
+	if (!this.touched) {
+		return;
+	}
+	// タッチ処理は終了したため、フラグをたたむ
+	this.touched = false;
+    
     var instance = e.data.instance;
     var drag = $(".drag");
      //同様にマウスとタッチの差異を吸収
     if(e.type === "mouseup" || e.type === "mouseleave") {
         var event = e;
     } else {
-        var event = e.changedTouches[0];
+        //var event = e.changedTouches[0];
+    	//var event = e.originalEvent;
+    	console.log(e);
+    	var event = instance.get_touch_event(e);
+    	
     }
     //ムーブベントハンドラの消去
-    $(document).unbind("mousemove", instance.mmove);
-    $(drag).unbind("mouseup", instance.mup);
-    $(document).unbind("mouseleave", instance.mup);
-    $(document).unbind("touchmove", instance.mmove);
-    $(drag).unbind("touchend", document.mup);
-    $(document).unbind("touchleave", document.mup);
+    $(this).unbind("mousemove", instance.mmove);
+    $(this).unbind("mouseup", instance.mup);
+    $(this).unbind("mouseleave", instance.mup);
+    $(this).unbind("touchmove", instance.mmove);
+    $(this).unbind("touchend", instance.mup);
+    $(this).unbind("touchleave", instance.mup);
     var obj_id = $(drag).attr("obj-id");
     
     //クラス名 .drag も消す
@@ -135,7 +164,20 @@ SwipeObjControl.prototype.mup = function(e) {
     instance.swipe_objs[obj_id].yp = event.pageY - instance.drag_offset.y + instance.local_world.pos.y;
     instance.target_id = -1;
     instance.send_obj_info(obj_id);
+
+    $("#drag-state").text("mup");
+
 } 
+
+SwipeObjControl.prototype.get_touch_event = function(e) {
+	//var event = e.changedTouches[0];
+	var originalEvent = e.originalEvent;
+	var event = originalEvent.changedTouches[0];
+
+		  //event.changedTouches[0].
+    //var event = e.originalEvent;
+	return event;
+}
 
 SwipeObjControl.prototype.update = function(instance) {
 	$(this.obj_class).each(function(){
@@ -201,8 +243,11 @@ SwipeObjControl.prototype.add_obj = function(obj_id, obj_info) {
 	for (var i  in obj_info.classes){
 		$swipe_obj.addClass(obj_info.classes[i]);
 	}
-	$swipe_obj.on("mousedown", {instance: this}, this.mdown);
-    $swipe_obj.on("touchstart", {instance: this}, this.mdown);
+	if(!this.is_touch){
+		$swipe_obj.on("mousedown", {instance: this}, this.mdown);
+    }else{
+   		$swipe_obj.bind("touchstart", {instance: this}, this.mdown);
+	}
 	$swipe_obj.attr("obj-id", obj_id);
 	this.swipe_area.append($swipe_obj);
 
@@ -231,8 +276,8 @@ SwipeObjControl.prototype.startWithUserId = function(user_id) {
 		this.push_obj(obj_info);
 
 		this.get_world_info_flg = true;
-	}else if(user_id == 2){
-		this.local_world.pos = {x:500, y:0};
+	}else if(user_id == 2 || user_id == 3){
+		this.local_world.pos = {x:400, y:0};
 		// 初めの２つがつながる場合、両方がつながったタイミングでリクエストしないといけない。コールバックとしてこのメソッドが呼ばれた際に
 		// そのタイミングは保証されないので、返信があるまで問い合わせる
 		var request_info_until_back = function(){
@@ -291,11 +336,11 @@ SwipeObjControl.prototype.get_msg = function(msg) {
 			var obj_id = this.push_obj(obj_info);
 			this.send_obj_info(obj_id);
 
-			var obj_info = {vx: 0, vy : 0, xp: 400, yp: 250, classes:["pink"]};
+			var obj_info = {vx: 100, vy : 50, xp: 400, yp: 250, classes:["pink"]};
 			var obj_id = this.push_obj(obj_info);
 			this.send_obj_info(obj_id);
 
-			var obj_info = {vx: 0, vy : 0, xp: 400, yp: 250, classes:["gray"]};
+			var obj_info = {vx: 20, vy : 20, xp: 400, yp: 250, classes:["gray"]};
 			var obj_id = this.push_obj(obj_info);
 			this.send_obj_info(obj_id);
 
