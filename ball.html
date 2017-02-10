@@ -20,6 +20,7 @@ document.write("\<script type='text/javascript' src='http://" + window.location.
 
 <script>
  
+ // chanel (webRTC) とボールスワイプ(swipe_obj.js) のつなぎこみを記述
 $(function () {
     var send_msg_func = function(msg){
         sendAlongDataChanel(msg);
@@ -67,6 +68,7 @@ $(function () {
         <button type="button" onclick="clickDataChanel();">Along DataChanel</button> 
         objnum <span id="obj-number"></span>
         <span id="drag-state"> </span>
+        <div id="com_val"></div>
     </div>
     
     <div class="swipe-area">

@@ -10,7 +10,7 @@
 let peerConnections = [];
 let dataChannels = [];
 //let remoteStreams = [];
-const MAX_CONNECTION_COUNT = 3;
+const MAX_CONNECTION_COUNT = 4;
 let port = 3002;
 let url = window.location.hostname;
 

@@ -1,43 +1,77 @@
 var SwipeObjControl = function(send_msg_func){
 	this.obj_class = ".swipe-obj";
 	this.start = {x:0, y:0}; // スワイプしたときの最初の位置
-	this.friction = 1.00; // マサツ
-	this.force = 1.0;
+	this.friction = 1.01; // マサツ
+	this.force = 2.0;
 	var instance = this;
 	this.send_msg_func = send_msg_func;
 	this.swipe_area = $(".swipe-area");
 	this.swipe_objs = {};
-	//this.last_id = 1;
-	//var obj_info = {vx: 0, vy : 0, xp: 200, yp: 200};
-	//instance.add_obj(instance.last_id, obj_info);
-	/*
-	$(this.obj_class).each(function(){
-		instance.last_id ++;
-		
-		$(this).on("mousedown", {instance: instance}, instance.mdown);
-        $(this).on("touchstart", {instance: instance}, instance.mdown);
-		$(this).attr("obj-id", instance.last_id);
-		var obj_info = {vx: 0, vy : 0, xp: 200, yp: 200};
-		console.log(obj_info.xp);
-		instance.swipe_objs.push(obj_info);
-		
-		var obj_info = {vx: 0, vy : 0, xp: 200, yp: 200};
-		instance.add_obj(instance.last_id, obj_info);
-	});
-	*/
-	//var x, y;
+	
 	this.drag_offset = {x:0 , y:0};
 	this.f_rate = 40.0;
 	this.target_id = 0;
-	this.local_world = {};
+	this.local_world = {pos: {x:0, y:0}};
 	this.get_world_info_flg = false;
 
 	this.is_parent_user = false; // parent user は新規加入者に対し情報を渡す
 	this.world = {boarder: {x: 760, y : 500}};
 	this.is_touch = ('ontouchstart' in window);
 
+	this.compassdir = {x: 0 , y:0, z:0};
+	this.acc = {x: 0 , y:0, z:0};
+	this.has_compass = false;
+	// conpass
+	if (window.DeviceOrientationEvent) {
+		this.init_compass_and_acc();
+	}else{
+		$( "#com_val").text("compass not available");
+	}
 
 }
+
+SwipeObjControl.prototype.init_compass_and_acc = function(){
+	var instance = this;
+	//$( "#com_val" ).text("init compass");
+
+	//$( window ).on( "orientationchange", {instance: instance}, function(event){
+	$( window ).on( "deviceorientation", {instance: instance}, function(e){
+		var evenet = e.originalEvent;
+		var instance = e.data.instance;
+
+		instance.has_compass = evenet.absolute;
+		if(event.webkitCompassHeading) {
+			// Apple works only with this, alpha doesn't work
+			instance.compassdir = event.webkitCompassHeading;  
+		}
+		else
+		{ 
+			var k = 3.1415 * 2/360.0;
+			instance.compassdir.x = event.gamma * k;//event.alpha * k + 1.5
+			instance.compassdir.y = event.beta * k;
+			instance.compassdir.z = 0.0;//event.gamma * k;
+			// 値が小さい時は水平とする
+			var compass_as_zero_limit = 0.1;
+			if(Math.abs(instance.compassdir.x) < compass_as_zero_limit){
+				instance.compassdir.x = 0.0;
+			}
+			if(Math.abs(instance.compassdir.y) < compass_as_zero_limit){
+				instance.compassdir.y = 0.0;
+			}
+		}
+	});
+
+	$( window ).on( "devicemotion", {instance: instance}, function(e){
+		var evenet = e.originalEvent;
+		var instance = e.data.instance;
+			
+			instance.acc.x = event.acceleration.x;//event.alpha * k + 1.5
+			instance.acc.y = event.acceleration.y;
+			instance.acc.z = event.acceleration.z;
+	});
+}
+
+
 
 SwipeObjControl.prototype.mdown = function(e){
 	console.log("mdown");
@@ -83,7 +117,6 @@ SwipeObjControl.prototype.mdown = function(e){
 
 //マウスカーソルが動いたときに発火
 SwipeObjControl.prototype.mmove = function(e) {
-	console.log("mouse move!!");
 	// 開始していない場合は動かないようにする
 	// 過剰動作の防止
 	if (!this.touched) {
@@ -183,26 +216,43 @@ SwipeObjControl.prototype.update = function(instance) {
 	$(this.obj_class).each(function(){
 		var obj_id = $(this).attr("obj-id");
 		if(obj_id != instance.target_id){
+			// （スマホのみ）傾きによる加速
+			if(instance.has_compass){
+				$("#com_val").text("compass heading" + instance.compassdir.x+ ": " + instance.compassdir.y);
+				var gravity = 20.8;
+				//instance.swipe_objs[obj_id].vx += Math.sin(instance.compassdir.x) *  gravity;
+				//instance.swipe_objs[obj_id].vy += Math.sin(instance.compassdir.y) *  gravity;
+				if(instance.local_world.pos.x + instance.compassdir.x< instance.world.boarder.x && instance.local_world.pos.x + instance.compassdir.x>= 0){
+					instance.local_world.pos.x += instance.compassdir.x;
+				}
+				if(instance.local_world.pos.y + instance.compassdir.y< instance.world.boarder.y && instance.local_world.pos.y + instance.compassdir.y >= 0){
+					instance.local_world.pos.y += instance.compassdir.y;
+				}
+				instance.update_boarder_line();
+			}
+
+			// マサツによる減速
 			instance.swipe_objs[obj_id].vx /= instance.friction;
 			instance.swipe_objs[obj_id].vy /= instance.friction;
+			// 位置積分
 			instance.swipe_objs[obj_id].xp += instance.swipe_objs[obj_id].vx/instance.f_rate; 
 			instance.swipe_objs[obj_id].yp += instance.swipe_objs[obj_id].vy/instance.f_rate;
 			 
-			if(instance.swipe_objs[obj_id].xp > instance.world.boarder.x){
+			if(instance.swipe_objs[obj_id].xp + instance.swipe_objs[obj_id].width > instance.world.boarder.x){
 				//instance.swipe_objs[obj_id].xp = 0;
-				instance.swipe_objs[obj_id].vx = - instance.swipe_objs[obj_id].vx;
+				instance.swipe_objs[obj_id].vx = - Math.abs(instance.swipe_objs[obj_id].vx);
 			}else if(instance.swipe_objs[obj_id].xp < 0){
 				//instance.swipe_objs[obj_id].xp = instance.world.boarder.x;
-				instance.swipe_objs[obj_id].vx = - instance.swipe_objs[obj_id].vx;
+				instance.swipe_objs[obj_id].vx = Math.abs(instance.swipe_objs[obj_id].vx);
 			}
 
-			if(instance.swipe_objs[obj_id].yp > instance.world.boarder.y){
+			if(instance.swipe_objs[obj_id].yp +  instance.swipe_objs[obj_id].height > instance.world.boarder.y){
 				//instance.swipe_objs[obj_id].yp = 0;
-				instance.swipe_objs[obj_id].vy = - instance.swipe_objs[obj_id].vy;
+				instance.swipe_objs[obj_id].vy = - Math.abs(instance.swipe_objs[obj_id].vy);
 				
 			}else if(instance.swipe_objs[obj_id].yp < 0){
 				//instance.swipe_objs[obj_id].yp = instance.world.boarder.y;
-				instance.swipe_objs[obj_id].vy = - instance.swipe_objs[obj_id].vy;
+				instance.swipe_objs[obj_id].vy =  Math.abs(instance.swipe_objs[obj_id].vy);
 				
 			}
 			 
@@ -243,6 +293,13 @@ SwipeObjControl.prototype.add_obj = function(obj_id, obj_info) {
 	for (var i  in obj_info.classes){
 		$swipe_obj.addClass(obj_info.classes[i]);
 	}
+	// 大きさ
+	if(obj_info.width){
+		$swipe_obj.css("width", obj_info.width + "px");
+	}
+	if(obj_info.height){
+		$swipe_obj.css("height", obj_info.height + "px");
+	}
 	if(!this.is_touch){
 		$swipe_obj.on("mousedown", {instance: this}, this.mdown);
     }else{
@@ -270,9 +327,9 @@ SwipeObjControl.prototype.startWithUserId = function(user_id) {
 	this.user_id = user_id;
 	if(user_id == 1){
 		this.local_world.pos = {x:0, y:0};
-		var obj_info = {vx: 0, vy : 0, xp: 200, yp: 200, classes:["red"]};
+		var obj_info = {vx: 0, vy : 0, xp: 200, yp: 200, classes:["red"], width: 45, height: 45};
 		this.push_obj(obj_info);
-		var obj_info = {vx: 0, vy : 0, xp: 200, yp: 250, classes:["black"]};
+		var obj_info = {vx: 0, vy : 0, xp: 200, yp: 250, classes:["black"], width: 45, height: 45};
 		this.push_obj(obj_info);
 
 		this.get_world_info_flg = true;
@@ -291,6 +348,8 @@ SwipeObjControl.prototype.startWithUserId = function(user_id) {
 		request_info_until_back();
 	}
 	console.log("start " + user_id);
+	// world objs
+	this.init_boarder_line();
 	
 	setTimeout(function(){instance.update(instance)}, 1000/this.f_rate);
 
@@ -332,15 +391,15 @@ SwipeObjControl.prototype.get_msg = function(msg) {
 		}
 		if(msg_obj.type === "objs_all_info" && this.get_world_info_flg == false){
 			this.get_world_info_flg = true;
-			var obj_info = {vx: 0, vy : 0, xp: 200, yp: 200};
+			var obj_info = {vx: 0, vy : 0, xp: 200, yp: 200,width: 45, height: 45};
 			var obj_id = this.push_obj(obj_info);
 			this.send_obj_info(obj_id);
 
-			var obj_info = {vx: 100, vy : 50, xp: 400, yp: 250, classes:["pink"]};
+			var obj_info = {vx: 100, vy : 50, xp: 400, yp: 250, classes:["pink"], width: 30, height: 30};
 			var obj_id = this.push_obj(obj_info);
 			this.send_obj_info(obj_id);
 
-			var obj_info = {vx: 20, vy : 20, xp: 400, yp: 250, classes:["gray"]};
+			var obj_info = {vx: 20, vy : 20, xp: 400, yp: 250, classes:["gray"],width: 45, height: 45};
 			var obj_id = this.push_obj(obj_info);
 			this.send_obj_info(obj_id);
 
@@ -354,4 +413,49 @@ SwipeObjControl.prototype.get_msg = function(msg) {
 			this.send_obj_info();
 		}
 	}
+}
+
+SwipeObjControl.prototype.init_boarder_line = function(){
+	this.world.boarder_lines = [];
+	var instance = this;
+	var _init_boarder_line = function(start, goal){
+		var line_info = instance.create_line(start, goal);
+		instance.swipe_area.append(line_info.line);
+		instance.world.boarder_lines.push(line_info);
+	}
+
+	_init_boarder_line({x: 0, y:0}, {x:0, y: this.world.boarder.y});
+	_init_boarder_line({x: 0, y:0}, {x: this.world.boarder.x, y:0});
+	_init_boarder_line({x: this.world.boarder.x , y:0}, {x:this.world.boarder.x , y: this.world.boarder.y});
+	_init_boarder_line({x: 0, y:this.world.boarder.y}, {x:this.world.boarder.x , y: this.world.boarder.y});
+	
+}
+
+SwipeObjControl.prototype.update_boarder_line = function(){
+	for(var i in this.world.boarder_lines){
+		var line_info = this.world.boarder_lines[i];
+		this.set_line(line_info.start, line_info.goal, line_info.line);
+	}	
+}
+
+SwipeObjControl.prototype.create_line = function(start, goal){
+	var $line = $("<div class='line'></div>");
+	this.set_line(start, goal, $line);
+	var line_info = {line: $line, start: start, goal: goal};
+	return line_info;
+}
+
+// 入力はグローバル座標
+SwipeObjControl.prototype.set_line = function(start, goal, $line){
+    var d_x = goal.x - start.x;
+    var d_y = goal.y - start.y;
+    var len = Math.sqrt(d_x　* d_x + d_y * d_y);   
+    if(d_x == 0){
+  		d_x = 0.1;
+  	}
+  	$line.css("width", len);
+  	var deg = Math.atan(d_y/d_x) * 180.0 / Math.PI;  //deg = 0;
+    $line.css("transform", "rotate(" + deg + "deg)");
+    $line.css("top", start.y - this.local_world.pos.y + d_y/2 + "px");
+    $line.css("left", start.x - this.local_world.pos.x + d_x/2 - len/2.0 + "px");
 }

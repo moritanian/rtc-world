@@ -17,3 +17,16 @@
 .gray {
 	background-color: gray;
 }
+
+.line {
+	width: 100px;
+	height: 10px;
+	position: absolute;
+	background-color: #a0a0a0;
+
+	-webkit-transform:rotate(30deg);
+	-moz-transform:rotate(30deg);
+	-o-transform:rotate(30deg);
+	-ms-transform:rotate(30deg);
+	transform:rotate(30deg);
+}
