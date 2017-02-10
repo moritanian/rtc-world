@@ -18,6 +18,11 @@
 	background-color: gray;
 }
 
+.green {
+	background-color: green;
+	opacity: 0.7;
+}
+
 .line {
 	width: 100px;
 	height: 10px;

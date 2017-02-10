@@ -2,6 +2,13 @@ https://html5experts.jp/mganeko/19814/
 
 https://html5experts.jp/mganeko/20013/
 
+# install
+npm install socket.io
+2017/2/10 npm install が途中で止まる問題
+setx  TEMP C:\tmp
+としてからbashを起動しなおしてset TEMP
+
+
 # データチャネル
 http://qiita.com/udonchan/items/7f5ffa9e8982ae1636c3
 # WebRTC技術

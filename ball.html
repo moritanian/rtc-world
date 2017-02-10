@@ -26,32 +26,34 @@ $(function () {
         sendAlongDataChanel(msg);
     }
     var swipe_control = new SwipeObjControl(send_msg_func);
-   
-
-
 
     $("#start-button").on("click", function(){
-        
-        var l = {};
-        l[1] = 1;
-        // l[7] = 7;
-        // l[2] = 2;
-         //l.push(5);
-        console.log(l);
-        console.log(JSON.stringify(l));
-        
-        //var user_id = $("#user-id").val();
+        swipe_control.start_simulation();
         var connected_callback = function(connection_count){
-            swipe_control.startWithUserId(connection_count + 1);
-            console.log("connected count = " + connection_count);
-            $("#user-id").val(connection_count + 1);
+            swipe_control.startWithMemberNum(connection_count + 1);
+            //$("#user-id").val(connection_count + 1);
         };
         var msg_get_callback = function(msg){
             swipe_control.get_msg(msg);
         }
         chanel(connected_callback, msg_get_callback);
-       
+    });
 
+    $("#add-button").on("click", function(){
+        var classes = ["red", "green", "yellow", "black", "", "pink", "gray"];
+        var vx = (Math.random() - 0.5)*200;
+        var vy = (Math.random()- 0.5)*200;
+        var xp = Math.random()*swipe_control.world.boarder.x;
+        var yp = Math.random()*swipe_control.world.boarder.y;
+        var class_index = Math.floor(Math.random()*classes.length);
+        var width = 30;
+        var height = 30;
+        if(Math.random() > 0.8){
+            width = 40;
+            height = 40;
+        }
+        var obj_info = {vx: vx, vy : vy, xp: xp, yp: yp, classes:[classes[class_index]], width: width, height: height};
+        swipe_control.add_new_obj(obj_info);
     });
 });
 
@@ -61,11 +63,13 @@ $(function () {
 <body>
     <div>
         <select id="user-id">
-            <option value=1>左</option>
-            <option value=2>右 </option>
+            <option value=1>no.1</option>
+            <option value=2>no.2 </option>
+            <option value=3>np.3</option>
+            <option value=4>no.4 </option>
         </select>
         <button type="button" id="start-button">start!</button> 
-        <button type="button" onclick="clickDataChanel();">Along DataChanel</button> 
+        <button type="button" id="add-button">add</button> 
         objnum <span id="obj-number"></span>
         <span id="drag-state"> </span>
         <div id="com_val"></div>

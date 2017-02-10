@@ -255,10 +255,10 @@ var chanel = function(_connected_callback, _get_msg_callback){
     .then(function() {
       console.log('setRemoteDescription(offer) succsess in promise');
       makeAnswer(id);
-      if(!connected_flg){
+     /* if(!connected_flg){
         connected_flg = true;
         connected_callback(getConnectionCount());
-      }
+      }*/
     }).catch(function(err) {
       console.error('setRemoteDescription(offer) ERROR: ', err);
     });
@@ -384,7 +384,7 @@ var chanel = function(_connected_callback, _get_msg_callback){
     dataChannel.onopen = function () {
      if(!connected_flg){
         connected_flg = true;
-        connected_callback(getConnectionCount() - 1);
+        connected_callback(getConnectionCount() );
       }
     };
 
@@ -405,12 +405,4 @@ var chanel = function(_connected_callback, _get_msg_callback){
         }
       }
     }
-  }
-
-  function clickDataChanel(){
-    console.log("click data chanel");
-    //sendAlongDataChanel("moritanian");
-    console.log(getConnectionCount());
-    console.log(peerConnections);
-    console.log(Object.keys(peerConnections).length);
   }

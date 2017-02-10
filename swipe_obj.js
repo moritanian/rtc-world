@@ -14,7 +14,7 @@ var SwipeObjControl = function(send_msg_func){
 	this.local_world = {pos: {x:0, y:0}};
 	this.get_world_info_flg = false;
 
-	this.is_parent_user = false; // parent user は新規加入者に対し情報を渡す
+	this.is_parent_user = true; // parent user は新規加入者に対し情報を渡す
 	this.world = {boarder: {x: 760, y : 500}};
 	this.is_touch = ('ontouchstart' in window);
 
@@ -25,9 +25,19 @@ var SwipeObjControl = function(send_msg_func){
 	if (window.DeviceOrientationEvent) {
 		this.init_compass_and_acc();
 	}else{
-		$( "#com_val").text("compass not available");
+		//$( "#com_val").text("compass not available");
 	}
 
+	this.init_boarder_line();
+}
+
+// start button がおされた
+SwipeObjControl.prototype.start_simulation = function(){
+	// 開始時刻を取得 
+	var date = new Date() ;
+	this.start_time = date.getTime() ;
+	var instance = this;
+	setTimeout(function(){instance.update(instance)}, 1000/this.f_rate);
 }
 
 SwipeObjControl.prototype.init_compass_and_acc = function(){
@@ -110,7 +120,7 @@ SwipeObjControl.prototype.mdown = function(e){
 
     instance.swipe_objs[instance.target_id].vx = 0;
     instance.swipe_objs[instance.target_id].vy = 0;
-    $("#drag-state").text("mdown");
+   // $("#drag-state").text("mdown");
 
     this.touched = true; // フラグを立てる
 }
@@ -144,7 +154,7 @@ SwipeObjControl.prototype.mmove = function(e) {
     instance.swipe_objs[obj_id].yp = event.pageY - instance.drag_offset.y + instance.local_world.pos.y;  
     instance.send_obj_info(obj_id);
 
-    $("#drag-state").text("mmove");
+   // $("#drag-state").text("mmove");
 
    	
    // $(drag).css("top", event.pageY - y + "px");
@@ -198,7 +208,7 @@ SwipeObjControl.prototype.mup = function(e) {
     instance.target_id = -1;
     instance.send_obj_info(obj_id);
 
-    $("#drag-state").text("mup");
+   // $("#drag-state").text("mup");
 
 } 
 
@@ -218,7 +228,7 @@ SwipeObjControl.prototype.update = function(instance) {
 		if(obj_id != instance.target_id){
 			// （スマホのみ）傾きによる加速
 			if(instance.has_compass){
-				$("#com_val").text("compass heading" + instance.compassdir.x+ ": " + instance.compassdir.y);
+				//$("#com_val").text("compass heading" + instance.compassdir.x+ ": " + instance.compassdir.y);
 				var gravity = 20.8;
 				//instance.swipe_objs[obj_id].vx += Math.sin(instance.compassdir.x) *  gravity;
 				//instance.swipe_objs[obj_id].vy += Math.sin(instance.compassdir.y) *  gravity;
@@ -266,6 +276,16 @@ SwipeObjControl.prototype.update = function(instance) {
 	this.show_obj_number();
 }
 
+SwipeObjControl.prototype.set_user_id = function(user_id) {
+	this.user_id = user_id;
+	$("#user-id").val(user_id);
+	if(user_id > 1){
+		this.local_world.pos = {x:400, y:0};
+		this.update_boarder_line();
+	}
+
+}
+
 SwipeObjControl.prototype.set_pos = function(jq_obj, x, y) {
 	// global 座標から　localへ変換
 	var local_x = x - this.local_world.pos.x;
@@ -307,7 +327,13 @@ SwipeObjControl.prototype.add_obj = function(obj_id, obj_info) {
 	}
 	$swipe_obj.attr("obj-id", obj_id);
 	this.swipe_area.append($swipe_obj);
+}
 
+// 新規にオブジェクトを世界に追加する
+// 追加情報をbroadcastも行う
+SwipeObjControl.prototype.add_new_obj = function(obj_info){
+	var obj_id = this.push_obj(obj_info);
+	this.send_obj_info(obj_id);
 }
 
 // 場にあるswipe_objectの数　ただしidの最大ではない
@@ -319,40 +345,13 @@ SwipeObjControl.prototype.show_obj_number = function(instance) {
 	$("#obj-number").text(this.obj_number());
 }
 
-SwipeObjControl.prototype.startWithUserId = function(user_id) {
+// 初めての dataChanelのコネクション完了時に呼ばれる
+SwipeObjControl.prototype.startWithMemberNum = function(member_num) {
 	var instance = this;
-	if(user_id == 1) {
-		this.is_parent_user = true;
+	this.member_num = member_num;
+	if(!instance.get_world_info_flg){
+		instance.send_my_enter_info();	 // 1回だけで帰ってこなければ誰もいないということで
 	}
-	this.user_id = user_id;
-	if(user_id == 1){
-		this.local_world.pos = {x:0, y:0};
-		var obj_info = {vx: 0, vy : 0, xp: 200, yp: 200, classes:["red"], width: 45, height: 45};
-		this.push_obj(obj_info);
-		var obj_info = {vx: 0, vy : 0, xp: 200, yp: 250, classes:["black"], width: 45, height: 45};
-		this.push_obj(obj_info);
-
-		this.get_world_info_flg = true;
-	}else if(user_id == 2 || user_id == 3){
-		this.local_world.pos = {x:400, y:0};
-		// 初めの２つがつながる場合、両方がつながったタイミングでリクエストしないといけない。コールバックとしてこのメソッドが呼ばれた際に
-		// そのタイミングは保証されないので、返信があるまで問い合わせる
-		var request_info_until_back = function(){
-			instance.send_my_enter_info();	
-			setTimeout(function(){
-				if(!instance.get_world_info_flg){
-					request_info_until_back();
-				}
-			}, 100);
-		};
-		request_info_until_back();
-	}
-	console.log("start " + user_id);
-	// world objs
-	this.init_boarder_line();
-	
-	setTimeout(function(){instance.update(instance)}, 1000/this.f_rate);
-
 }
 
 SwipeObjControl.prototype.send_obj_info = function(obj_id) {
@@ -364,7 +363,6 @@ SwipeObjControl.prototype.send_obj_info = function(obj_id) {
 		msg_obj.objs[obj_id] = this.swipe_objs[obj_id];
 	}else{
 		msg_obj.type = "objs_all_info";
-		//console.log(this.swipe_objs);
 		msg_obj.objs = this.swipe_objs;
 	}
 	var json_obj = JSON.stringify(msg_obj);
@@ -372,7 +370,7 @@ SwipeObjControl.prototype.send_obj_info = function(obj_id) {
 }
 
 SwipeObjControl.prototype.send_my_enter_info = function() {
-	msg_obj = {type: "enter", user_id: this.user_id};
+	msg_obj = {type: "enter", start_time: this.start_time};
 	this.send_msg_func(JSON.stringify(msg_obj));
 	console.log("my enter");
 	console.log(msg_obj);
@@ -391,23 +389,18 @@ SwipeObjControl.prototype.get_msg = function(msg) {
 		}
 		if(msg_obj.type === "objs_all_info" && this.get_world_info_flg == false){
 			this.get_world_info_flg = true;
-			var obj_info = {vx: 0, vy : 0, xp: 200, yp: 200,width: 45, height: 45};
-			var obj_id = this.push_obj(obj_info);
-			this.send_obj_info(obj_id);
-
-			var obj_info = {vx: 100, vy : 50, xp: 400, yp: 250, classes:["pink"], width: 30, height: 30};
-			var obj_id = this.push_obj(obj_info);
-			this.send_obj_info(obj_id);
-
-			var obj_info = {vx: 20, vy : 20, xp: 400, yp: 250, classes:["gray"],width: 45, height: 45};
-			var obj_id = this.push_obj(obj_info);
-			this.send_obj_info(obj_id);
-
-
-			
+			this.set_user_id(this.member_num);
+			console.log("set user id" + this.member_num);
 		}
 	}else if(msg_obj.type === "enter"){ // 新規加入者がはいってきた
 		console.log("get msg enter");
+		console.log("time stamp me: " + this.start_time + "other" + msg_obj.start_time);
+		if(!this.get_world_info_flg  &&  this.start_time < msg_obj.start_time){ // この時、他からデータをもらってない場合、自分がfirst user　ただし、最初の二人の接続は開始時間で比べる
+			this.get_world_info_flg = true;
+			this.set_user_id(1);
+			console.log("set user id parent");
+
+		}
 		if(this.is_parent_user){
 			console.log("send obj info first");
 			this.send_obj_info();
