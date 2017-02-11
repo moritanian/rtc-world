@@ -29,15 +29,29 @@ $(function () {
 
     $("#start-button").on("click", function(){
         swipe_control.start_simulation();
+        $("#stop-button").removeClass("hidden");
+        $("#start-button").addClass("hidden");
         var connected_callback = function(connection_count){
-            swipe_control.startWithMemberNum(connection_count + 1);
-            //$("#user-id").val(connection_count + 1);
+            swipe_control.connection_changed(connection_count + 1);
+            $("#member-number").text(connection_count + 1);
+            console.log("connected callback " + connection_count);
         };
         var msg_get_callback = function(msg){
             swipe_control.get_msg(msg);
         }
-        chanel(connected_callback, msg_get_callback);
+        var closed_callback = function(connection_count){
+            console.log("connection closed callback" + connection_count);
+            swipe_control.connection_changed(connection_count + 1);
+            $("#member-number").text(connection_count + 1);
+        }
+        chanel(connected_callback, msg_get_callback, closed_callback);
     });
+
+    $("#stop-button").on("click", function(){
+         hangUp();
+         $("#stop-button").addClass("hidden");
+         $("#start-button").removeClass("hidden");
+     });
 
     $("#add-button").on("click", function(){
         var classes = ["red", "green", "yellow", "black", "", "pink", "gray"];
@@ -69,8 +83,10 @@ $(function () {
             <option value=4>no.4 </option>
         </select>
         <button type="button" id="start-button">start!</button> 
+        <button type="button" id="stop-button" class="hidden">stop</button> 
         <button type="button" id="add-button">add</button> 
-        objnum <span id="obj-number"></span>
+        obj:<span id="obj-number"></span>
+        member:<span id="member-number"></span>
         <span id="drag-state"> </span>
         <div id="com_val"></div>
     </div>

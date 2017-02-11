@@ -18,11 +18,12 @@ let url = window.location.hostname;
 let socket = io.connect(url + ':' + port + '/');
 let connected_callback;
 let get_msg_callback;
-let connected_flg = false;
-// connected_callback: 接続した際のコールバック関数, get_msg_callback
-var chanel = function(_connected_callback, _get_msg_callback){
+let closed_callback;
+// connected_callback: 接続した際のコールバック関数, get_msg_callback, _closed_callback : データチャネル切断時のｃａｌｌｂａｃｋ
+var chanel = function(_connected_callback, _get_msg_callback, _closed_callback){
   connected_callback = _connected_callback;
   get_msg_callback = _get_msg_callback;
+  closed_callback = _closed_callback;
   // ---- for multi party -----
  
   // --- prefix -----
@@ -143,6 +144,7 @@ var chanel = function(_connected_callback, _get_msg_callback){
       let peer = getConnection(id);
       peer.close();
       deleteConnection(id);
+      closed_callback(getConnectionCount());
     }
   }
   function stopAllConnection() {
@@ -204,7 +206,7 @@ var chanel = function(_connected_callback, _get_msg_callback){
     };
     peer.oniceconnectionstatechange = function() {
       console.log('== ice connection status=' + peer.iceConnectionState);
-      if(peer.iceConnectionState === 'connected'){
+      if(peer.iceConnectionState === 'connected'){ // data chanel 接続はこれより遅いのでここではｃａｌｌｂａｃｋよばない
       }
       if (peer.iceConnectionState === 'disconnected') {
         console.log('-- disconnected --');
@@ -255,10 +257,6 @@ var chanel = function(_connected_callback, _get_msg_callback){
     .then(function() {
       console.log('setRemoteDescription(offer) succsess in promise');
       makeAnswer(id);
-     /* if(!connected_flg){
-        connected_flg = true;
-        connected_callback(getConnectionCount());
-      }*/
     }).catch(function(err) {
       console.error('setRemoteDescription(offer) ERROR: ', err);
     });
@@ -382,14 +380,12 @@ var chanel = function(_connected_callback, _get_msg_callback){
     };
 
     dataChannel.onopen = function () {
-     if(!connected_flg){
-        connected_flg = true;
-        connected_callback(getConnectionCount() );
-      }
+      connected_callback(getConnectionCount() );
     };
 
     dataChannel.onclose = function () {
       console.log("データチャネルのクローズ");
+      //closed_callback(getConnectionCount());
     };
   }
 

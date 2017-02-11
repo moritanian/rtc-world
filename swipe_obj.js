@@ -1,4 +1,5 @@
 var SwipeObjControl = function(send_msg_func){
+	this.MAX_USER_ID = 4;
 	this.obj_class = ".swipe-obj";
 	this.start = {x:0, y:0}; // スワイプしたときの最初の位置
 	this.friction = 1.01; // マサツ
@@ -28,6 +29,7 @@ var SwipeObjControl = function(send_msg_func){
 		//$( "#com_val").text("compass not available");
 	}
 
+	this.members = {}; //キーをuser_id, に
 	this.init_boarder_line();
 }
 
@@ -247,7 +249,7 @@ SwipeObjControl.prototype.update = function(instance) {
 			// 位置積分
 			instance.swipe_objs[obj_id].xp += instance.swipe_objs[obj_id].vx/instance.f_rate; 
 			instance.swipe_objs[obj_id].yp += instance.swipe_objs[obj_id].vy/instance.f_rate;
-			 
+			// 壁の反射
 			if(instance.swipe_objs[obj_id].xp + instance.swipe_objs[obj_id].width > instance.world.boarder.x){
 				//instance.swipe_objs[obj_id].xp = 0;
 				instance.swipe_objs[obj_id].vx = - Math.abs(instance.swipe_objs[obj_id].vx);
@@ -345,11 +347,12 @@ SwipeObjControl.prototype.show_obj_number = function(instance) {
 	$("#obj-number").text(this.obj_number());
 }
 
-// 初めての dataChanelのコネクション完了時に呼ばれる
-SwipeObjControl.prototype.startWithMemberNum = function(member_num) {
+
+SwipeObjControl.prototype.connection_changed = function(member_num) {
 	var instance = this;
 	this.member_num = member_num;
-	if(!instance.get_world_info_flg){
+	if(!instance.get_world_info_flg){ // 初めての dataChanelのコネクション完了時
+		this.require_get_world_ans_num = member_num -1;
 		instance.send_my_enter_info();	 // 1回だけで帰ってこなければ誰もいないということで
 	}
 }
@@ -364,13 +367,17 @@ SwipeObjControl.prototype.send_obj_info = function(obj_id) {
 	}else{
 		msg_obj.type = "objs_all_info";
 		msg_obj.objs = this.swipe_objs;
+		msg_obj.user_id = this.user_id;
 	}
 	var json_obj = JSON.stringify(msg_obj);
 	this.send_msg_func(json_obj);
 }
 
 SwipeObjControl.prototype.send_my_enter_info = function() {
-	msg_obj = {type: "enter", start_time: this.start_time};
+	var date = new Date() ;
+	var crt_time = date.getTime() ;
+	this.elapsed_time = crt_time - this.start_time;
+	msg_obj = {type: "enter", start_time: this.start_time, elapsed_time: this.elapsed_time};
 	this.send_msg_func(JSON.stringify(msg_obj));
 	console.log("my enter");
 	console.log(msg_obj);
@@ -388,14 +395,26 @@ SwipeObjControl.prototype.get_msg = function(msg) {
 			}
 		}
 		if(msg_obj.type === "objs_all_info" && this.get_world_info_flg == false){
-			this.get_world_info_flg = true;
-			this.set_user_id(this.member_num);
-			console.log("set user id" + this.member_num);
+			this.require_get_world_ans_num --;
+			this.members[msg_obj.user_id] = "connected";
+			if(this.require_get_world_ans_num == 0){
+				this.get_world_info_flg = true;
+				for(var user_id = 1; user_id < this.MAX_USER_ID; user_id++){
+					console.log(user_id);
+					console.log(this.members[user_id]);
+					if(!(this.members[user_id] === "connected")){
+						this.set_user_id(user_id);
+						break;
+					}
+				}
+				console.log("set user id" + this.user_id);
+				console.log(this.members);
+			}
 		}
 	}else if(msg_obj.type === "enter"){ // 新規加入者がはいってきた
 		console.log("get msg enter");
-		console.log("time stamp me: " + this.start_time + "other" + msg_obj.start_time);
-		if(!this.get_world_info_flg  &&  this.start_time < msg_obj.start_time){ // この時、他からデータをもらってない場合、自分がfirst user　ただし、最初の二人の接続は開始時間で比べる
+		//console.log("time stamp me: " + this.start_time + "other" + msg_obj.start_time);
+		if(!this.get_world_info_flg  &&  msg_obj.elapsed_time <  this.elapsed_time){ // この時、他からデータをもらってない場合、自分がfirst user　ただし、最初の二人の接続は開始時間で比べる
 			this.get_world_info_flg = true;
 			this.set_user_id(1);
 			console.log("set user id parent");
