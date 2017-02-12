@@ -74,7 +74,8 @@ function stop()
     alert('stop 2');
     
     try {
-      window.stream.stop();
+      //window.stream.stop();
+      window.stream.getTracks().forEach(function (track) { track.stop(); });
     }
     catch (e) {
       alert(e) // 例外オブジェクトをエラー処理部分に渡す
