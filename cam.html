@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ja">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
+		<title>HTML5で背面カメラを取得する - 遊び場</title>
+
+		<!-- js start -->
+		<script src="./jq.js"></script>
+		<script src="./cam.js"></script>
+		<!-- js end -->
+	</head>
+
+	<body>
+		<!-- header start-->
+		<header>
+			
+		</header>
+		<!-- header end -->
+
+		<!-- main start -->
+		<main role="main">
+			<div id="container">
+				<h1>html5で背面カメラを取得する</h1>
+
+				<div class="select" style="margin-bottom:30px;">
+					<label for="videoSource">カメラを選択: </label><select id="videoSource"></select>
+					<button id="videoStop">カメラを止める</button>
+				</div>
+
+				<video muted autoplay></video>
+			</div>
+		</main>
+
+		<!-- footer start -->
+		<!-- footer end -->
+
+
+		<script src="./cam.js"></script>
+	</body>
+</html>
