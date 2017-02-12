@@ -59,7 +59,7 @@ function start()
 {
   //var videoSource = videoSelect.value;
   //setSource(videoSource);
-  setSourceByIndex(1);
+  setSourceByIndex(0);
 }
 
 function changeSource(){

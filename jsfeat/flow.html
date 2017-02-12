@@ -33,7 +33,7 @@
               for (var i = 0; i != sourceInfos.length; ++i)
               {
                 var sourceInfo = sourceInfos[i];
-                var option = document.createElement("option");
+               // var option = document.createElement("option");
                 option.value = sourceInfo.id;
                 if (sourceInfo.kind === 'video')
                 {
@@ -55,6 +55,7 @@
               }
               catch(e){
                 console.log(e);
+                alert(e);
                 has_media_stream_track = false;
               }
             }
@@ -87,7 +88,7 @@
                 if(has_media_stream_track){
                     var constraints = {
                         video: {
-                        optional: [{sourceId: sourceIds[0]}]
+                        optional: [{sourceId: sourceIds[1]}]
                         }
                     };
                 }else{
