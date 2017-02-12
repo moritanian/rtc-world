@@ -58,7 +58,7 @@ function start()
 {
   //var videoSource = videoSelect.value;
   //setSource(videoSource);
-  setSourceByIndex(0);
+  setSourceByIndex(1);
 }
 
 function changeSource(){
@@ -108,7 +108,7 @@ function stop()
 
 videoSelect.onchange = 
   function(){
-    start();
+    changeSource();
    
   };
 stopButton.onclick = function(){
