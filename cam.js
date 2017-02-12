@@ -15,12 +15,13 @@ function gotSources(sourceInfos)
     var sourceInfo = sourceInfos[i];
     var option = document.createElement("option");
     option.value = sourceInfo.id;
-    sourceIds.push(sourceInfo.id);
-
+  
     if (sourceInfo.kind === 'video')
     {
       option.text = sourceInfo.label || 'camera ' + (videoSelect.length + 1);
       videoSelect.appendChild(option);
+      sourceIds.push(sourceInfo.id);
+
     }
   }
 }
