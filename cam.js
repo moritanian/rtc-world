@@ -33,8 +33,11 @@ else
 
 function successCallback(stream)
 {
+  alert("successCallback 1");
   window.stream = stream;
   videoElement.src = window.URL.createObjectURL(stream);
+  alert("successCallback 2");
+  
   videoElement.play();
 }
 
@@ -45,14 +48,19 @@ function errorCallback(error)
 
 function start()
 {
-  stop();
+  alert('start 0');
 
+  stop();
+  alert('start 1');
   var videoSource = videoSelect.value;
+  alert('start 2');
   var constraints = {
     video: {
       optional: [{sourceId: videoSource}]
     }
   };
+  alert('start 3');
+
   navigator.getUserMedia(constraints, successCallback, errorCallback);
 }
 
@@ -65,7 +73,12 @@ function stop()
   }
 }
 
-videoSelect.onchange = start;
+videoSelect.onchange = 
+  function(){
+    MediaStreamTrack.getSources(gotSources);
+    start();
+   
+  };
 stopButton.onclick = stop;
 
 start();
