@@ -7,7 +7,7 @@ npm install socket.io
 2017/2/10 npm install が途中で止まる問題
 setx  TEMP C:\tmp
 としてからbashを起動しなおしてset TEMP
-
+でいけた
 
 # データチャネル
 http://qiita.com/udonchan/items/7f5ffa9e8982ae1636c3
@@ -32,3 +32,7 @@ ICE Candidate
 マスタがすべてのデータをもつ
 各端末は表示領域に関係するデータのみをマスタから受け取る。
 スレーブでも表示領域の計算を行う。
+
+# センサ情報関連
+- 加速度
+https://developer.mozilla.org/ja/docs/Web/API/Detecting_device_orientation

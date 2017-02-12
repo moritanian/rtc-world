@@ -12,7 +12,14 @@ var SwipeObjControl = function(send_msg_func){
 	this.drag_offset = {x:0 , y:0};
 	this.f_rate = 40.0;
 	this.target_id = 0;
-	this.local_world = {pos: {x:0, y:0}};
+
+	//local setting
+	var local_screen = {};
+	local_screen.x = screen.width;
+	local_screen.y = screen.height;
+	console.log(local_screen);
+	this.local_world = {pos: {x:0, y:0}, screen: local_screen};
+	
 	this.get_world_info_flg = false;
 
 	this.is_parent_user = true; // parent user は新規加入者に対し情報を渡す
@@ -219,10 +226,10 @@ SwipeObjControl.prototype.update = function(instance) {
 				var gravity = 20.8;
 				//instance.swipe_objs[obj_id].vx += Math.sin(instance.compassdir.x) *  gravity;
 				//instance.swipe_objs[obj_id].vy += Math.sin(instance.compassdir.y) *  gravity;
-				if(instance.local_world.pos.x + instance.compassdir.x< instance.world.boarder.x && instance.local_world.pos.x + instance.compassdir.x>= 0){
+				if(instance.local_world.pos.x + instance.compassdir.x< instance.world.boarder.x - instance.local_world.screen.x && instance.local_world.pos.x + instance.compassdir.x>= 0){
 					instance.local_world.pos.x += instance.compassdir.x;
 				}
-				if(instance.local_world.pos.y + instance.compassdir.y< instance.world.boarder.y && instance.local_world.pos.y + instance.compassdir.y >= 0){
+				if(instance.local_world.pos.y + instance.compassdir.y< instance.world.boarder.y - instance.local_world.screen.y && instance.local_world.pos.y + instance.compassdir.y >= 0){
 					instance.local_world.pos.y += instance.compassdir.y;
 				}
 				instance.update_boarder_line();
