@@ -2,6 +2,23 @@
 @import url(ball_tablet.css) screen and (max-width: 768px); /* 768以下 */
 @import url(ball_smart.css) screen and (max-width: 320px); /* 320以下 */
 
+#stop-button {
+	background-color: coral;
+	width: 60px;
+	height: 30px;
+}
+
+#start-button {
+	background-color: azure; 
+	width: 60px;
+	height: 30px;
+}
+
+#add-button {
+	width: 60px;
+	height: 30px; 
+}
+
 .hidden{
 	display : none;
 }

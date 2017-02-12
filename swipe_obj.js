@@ -86,7 +86,6 @@ SwipeObjControl.prototype.init_compass_and_acc = function(){
 
 
 SwipeObjControl.prototype.mdown = function(e){
-	console.log("mdown");
     var instance = e.data.instance;
     //クラス名に .drag を追加
     $(this).addClass("drag");
@@ -154,20 +153,7 @@ SwipeObjControl.prototype.mmove = function(e) {
     var obj_id = $(drag).attr("obj-id"); 
     instance.swipe_objs[obj_id].xp = event.pageX - instance.drag_offset.x + instance.local_world.pos.x; // global で格納
     instance.swipe_objs[obj_id].yp = event.pageY - instance.drag_offset.y + instance.local_world.pos.y;  
-    instance.send_obj_info(obj_id);
-
-   // $("#drag-state").text("mmove");
-
-   	
-   // $(drag).css("top", event.pageY - y + "px");
-    //$(drag).css("left", event.pageX - x + "px");
-  
-    //マウスボタンが離されたとき、またはカーソルが外れたとき発火
-   // $(drag).on("mouseup", {instance: instance}, instance.mup);
-   // $(document).bind("mouseleave", {instance: instance}, instance.mup);
-   // $(drag).on("touchend", {instance: instance}, instance.mup);
-   // $(document).on("touchleave", {instance: instance}, instance.mup);
-    
+    instance.send_obj_info(obj_id);   
 }
 
 //マウスボタンが上がったら発火
@@ -202,7 +188,6 @@ SwipeObjControl.prototype.mup = function(e) {
     //クラス名 .drag も消す
     $(drag).removeClass("drag");
 
-    console.log("mup id = " + obj_id);
     instance.swipe_objs[obj_id].vx = - (event.pageX - instance.start.x)*instance.force;
     instance.swipe_objs[obj_id].vy = - (event.pageY - instance.start.y)*instance.force;
     instance.swipe_objs[obj_id].xp = event.pageX - instance.drag_offset.x + instance.local_world.pos.x; // global で格納
