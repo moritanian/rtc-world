@@ -2,9 +2,12 @@ var videoElement = document.querySelector("video");
 var videoSelect = document.querySelector("select#videoSource");
 var stopButton = document.querySelector("button#videoStop");
 
+var sourceIds = [];
+var cnt = 0;
 navigator.getUserMedia = navigator.getUserMedia ||
 navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
 
+var has_media_stream_track = true;
 function gotSources(sourceInfos)
 {
   for (var i = 0; i != sourceInfos.length; ++i)
@@ -12,6 +15,7 @@ function gotSources(sourceInfos)
     var sourceInfo = sourceInfos[i];
     var option = document.createElement("option");
     option.value = sourceInfo.id;
+    sourceIds.push(sourceInfo.id);
 
     if (sourceInfo.kind === 'video')
     {
@@ -27,16 +31,20 @@ if (typeof MediaStreamTrack === 'undefined')
 }
 else
 {
-  MediaStreamTrack.getSources(gotSources);
+  try{
+    MediaStreamTrack.getSources(gotSources);
+  }
+  catch(e){
+    console.log(e);
+    has_media_stream_track = false;
+  }
 }
 
 
 function successCallback(stream)
 {
-  alert("successCallback 1");
   window.stream = stream;
   videoElement.src = window.URL.createObjectURL(stream);
-  alert("successCallback 2");
   
   videoElement.play();
 }
@@ -48,30 +56,43 @@ function errorCallback(error)
 
 function start()
 {
-  alert('start 0');
+  //var videoSource = videoSelect.value;
+  //setSource(videoSource);
+  setSourceByIndex(0);
+}
 
+function changeSource(){
+  cnt++;
+  if(cnt==sourceIds.length){
+    cnt=0;
+  }
+  setSource(sourceIds[cnt]);
+}
+
+function setSourceByIndex(index){
+  setSource(sourceIds[index]);
+}
+
+function setSource(videoSource){
   stop();
-  alert('start 1');
-  var videoSource = videoSelect.value;
-  alert('start 2');
-  var constraints = {
-    video: {
-      optional: [{sourceId: videoSource}]
-    }
-  };
-  alert('start 3');
+  if(has_media_stream_track){
+    var constraints = {
+      video: {
+        optional: [{sourceId: videoSource}]
+      }
+    };
+  }else{
+    var constraints = {video: true};
+  }
 
   navigator.getUserMedia(constraints, successCallback, errorCallback);
 }
 
 function stop()
 {
-    alert('stop 0');
   if (!!window.stream)
   {
-    alert('stop 1');
     videoElement.src = null;
-    alert('stop 2');
     
     try {
       //window.stream.stop();
@@ -81,19 +102,16 @@ function stop()
       alert(e) // 例外オブジェクトをエラー処理部分に渡す
     }
     //window.stream.stop();
-    alert('stop 3');
 
   }
 }
 
 videoSelect.onchange = 
   function(){
-   // MediaStreamTrack.getSources(gotSources);
     start();
    
   };
 stopButton.onclick = function(){
-    alert('call stop');
   stop();
 };
 

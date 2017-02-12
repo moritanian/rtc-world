@@ -53,7 +53,7 @@
 
         //カメラ再生中の場合は切り替えのため、一旦停止する
         if( localStream ){
-          //localStream.stop();
+          localStream.getTracks().forEach(function (track) { track.stop()});
         }
 
         //カメラをIDを使用して取得する
