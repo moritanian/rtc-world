@@ -12,10 +12,12 @@ let dataChannels = [];
 //let remoteStreams = [];
 const MAX_CONNECTION_COUNT = 4;
 let port = 3002;
-let url = window.location.hostname;
+//let url = window.location.hostname;
+let url = "https://rtc-world-s.herokuapp.com";
 
 //let socket = io.connect('http://localhost:' + port + '/');
-let socket = io.connect(url + ':' + port + '/');
+//let socket = io.connect(url + ':' + port + '/');
+let socket = io.connect(url +'/');
 let connected_callback;
 let get_msg_callback;
 let closed_callback;
