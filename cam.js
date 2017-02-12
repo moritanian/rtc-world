@@ -66,16 +66,21 @@ function start()
 
 function stop()
 {
+    alert('stop 0');
   if (!!window.stream)
   {
+    alert('stop 1');
     videoElement.src = null;
+    alert('stop 2');
     window.stream.stop();
+    alert('stop 3');
+
   }
 }
 
 videoSelect.onchange = 
   function(){
-    MediaStreamTrack.getSources(gotSources);
+   // MediaStreamTrack.getSources(gotSources);
     start();
    
   };
