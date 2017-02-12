@@ -72,7 +72,7 @@ function stop()
     alert('stop 1');
     videoElement.src = null;
     alert('stop 2');
-    window.stream.stop();
+    //window.stream.stop();
     alert('stop 3');
 
   }
@@ -84,6 +84,9 @@ videoSelect.onchange =
     start();
    
   };
-stopButton.onclick = stop;
+stopButton.onclick = function(){
+    alert('call stop');
+  stop();
+};
 
 start();
