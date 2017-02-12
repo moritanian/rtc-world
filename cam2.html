@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no;" />
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+  <title></title>
+  <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+  <script type="text/javascript">
+
+    $(function(){
+
+      //カメラの情報を取得
+      var cameraData = [];
+      MediaStreamTrack.getSources(function(data){
+
+        //カメラ情報を取得して、出力する
+        var strCamera = "";
+        var len = data.length;
+        for( var i = 0 ; i < len ; i ++ ){
+          strCamera += "<p>種類："+ data[i].kind+"<br/>ID："+ data[i].id+"</p>";
+          if( data[i].kind == "video" ){
+            cameraData.push(data[i]);
+          }
+        }
+        if( cameraData.length == 0 ){
+          alert("カメラが見つかりません");
+          return;
+        }
+
+        $("#result").html( strCamera );
+
+        //カメラを取得・切り替える
+        setCamera();
+
+      });
+
+      //カメラを取得・切り替える
+      var cnt = 0;
+      var localStream = null;
+      function setCamera(){
+
+        //カメラを順番に切り替える
+        cnt++;
+        if( cnt == cameraData.length ){
+          cnt = 0;
+        }
+
+        //カメラ取得
+        var video = document.getElementById('myVideo');
+
+        navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || window.navigator.mozGetUserMedia;
+        window.URL = window.URL || window.webkitURL;
+
+        //カメラ再生中の場合は切り替えのため、一旦停止する
+        if( localStream ){
+          localStream.stop();
+        }
+
+        //カメラをIDを使用して取得する
+        navigator.getUserMedia(
+          {
+            video: {
+              optional: [{sourceId: cameraData[cnt].id }] //カメラIDを直接指定する
+            },
+            audio: false
+          },
+          function(stream) {
+
+            //切り替え時にカメラを停止するため、情報を保存しておく
+            localStream = stream;
+
+            $("#result_use").html( cameraData[cnt].id );
+
+            //カメラをvideoに結びつける
+            video.src = window.URL.createObjectURL(stream);
+
+          },
+          function(err) {
+            //エラー処理
+          }
+        );
+
+      }
+
+      //カメラ切り替えボタンクリックイベント
+      $("#changeButton").bind("click",function(){
+        setCamera();
+      });
+
+    });
+  </script>
+  <style type="text/css">
+    *{
+      padding: 0;
+      margin: 0;
+    }
+    body{
+      text-align: center;
+      padding: 10px;
+    }
+    h2{
+      font-size: 18px;;
+      font-weight: bold;
+      margin-bottom: 13px;
+    }
+    h3{
+      font-size: 14px;;
+      font-weight: normal;
+      margin-bottom: 5px;
+    }
+    #result{
+      font-size: 12px;;
+      color: gray;
+      border:1px solid #aeaeae;
+      border-radius: 5px;
+      padding: 10px;
+      text-align: left;
+      margin-bottom: 13px;
+    }
+    #myVideo{
+      width: 100%;
+      box-shadow: 0 0 3px gray;
+      border-radius: 5px;;
+      margin-bottom: 13px;
+    }
+    #changeButton{
+      background: #7abcff;
+      background: -moz-linear-gradient(top, #7abcff 0%, #60abf8 44%, #4096ee 100%);
+      background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#7abcff), color-stop(44%,#60abf8), color-stop(100%,#4096ee));
+      background: -webkit-linear-gradient(top, #7abcff 0%,#60abf8 44%,#4096ee 100%);
+      background: -o-linear-gradient(top, #7abcff 0%,#60abf8 44%,#4096ee 100%);
+      background: -ms-linear-gradient(top, #7abcff 0%,#60abf8 44%,#4096ee 100%);
+      background: linear-gradient(to bottom, #7abcff 0%,#60abf8 44%,#4096ee 100%);
+      filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#7abcff', endColorstr='#4096ee',GradientType=0 );
+      padding: 5px 12px;
+      font-weight: bold;
+      border: 1px solid blue;
+      font-size: 16px;
+      text-shadow: 0 0 3px #fff;
+      border-radius: 4px;
+      margin-bottom: 13px;
+    }
+    #result_use{
+      font-size: 12px;;
+      color: gray;
+      border:1px solid #aeaeae;
+      border-radius: 5px;
+      padding: 10px;
+      margin-bottom: 13px;
+      background: rgb(255, 251, 242);
+    }
+  </style>
+</head>
+<body>
+<h2>内カメラ・外カメラ切り替えテスト</h2>
+<h3>カメラ・マイクリスト</h3>
+<div id="result"></div>
+<video id="myVideo" autoplay="1" ></video>
+<button id="changeButton">カメラ切り替え</button>
+<h3>使用カメラID</h3>
+<div id="result_use"></div>
+</body>
+</html>
