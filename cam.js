@@ -72,6 +72,13 @@ function stop()
     alert('stop 1');
     videoElement.src = null;
     alert('stop 2');
+    
+    try {
+      window.stream.stop();
+    }
+    catch (e) {
+      alert(e) // 例外オブジェクトをエラー処理部分に渡す
+    }
     //window.stream.stop();
     alert('stop 3');
 
