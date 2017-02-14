@@ -101,10 +101,7 @@ var SwipeObjControl = (function(){
 	    if(!instance.is_touch) {
 	        var event = e;
 	    } else {
-	    	console.log(e);
-	    	//var event = e.changedTouches[0];
 	    	var event = instance.get_touch_event(e);
-	    	//var event = e.changedTouches[0];
 	    }
 	    //要素内の相対座標を取得
 	    instance.drag_offset.x = event.pageX - this.offsetLeft;
@@ -174,11 +171,7 @@ var SwipeObjControl = (function(){
 	    if(e.type === "mouseup" || e.type === "mouseleave") {
 	        var event = e;
 	    } else {
-	        //var event = e.changedTouches[0];
-	    	//var event = e.originalEvent;
-	    	console.log(e);
-	    	var event = instance.get_touch_event(e);
-	    	
+	    	var event = instance.get_touch_event(e);	
 	    }
 	    //ムーブベントハンドラの消去
 	    $(this).unbind("mousemove", instance.mmove);
@@ -233,8 +226,9 @@ var SwipeObjControl = (function(){
 		}
 
 		
-		$(this.obj_class).each(function(){
-			var obj_id = $(this).attr("obj-id");
+		//$(this.obj_class).each(function(){
+		for(var obj_id in this.swipe_objs){
+			//var obj_id = $(this).attr("obj-id");
 			if(obj_id != instance.target_id){
 				
 			
@@ -263,12 +257,11 @@ var SwipeObjControl = (function(){
 					instance.swipe_objs[obj_id].vy =  Math.abs(instance.swipe_objs[obj_id].vy);
 					
 				}
-				 
-				instance.set_pos($(this),instance.swipe_objs[obj_id].xp, instance.swipe_objs[obj_id].yp);
+				instance.set_pos(instance.swipe_objs[obj_id].jqobj ,instance.swipe_objs[obj_id].xp, instance.swipe_objs[obj_id].yp);
 			}else{
 
 			}
-		});
+		};
 
 		// TODO
 		// かかった時間をもとにfpsを調整
@@ -298,8 +291,8 @@ var SwipeObjControl = (function(){
 		// global 座標から　localへ変換
 		var local_x = x - this.local_world.pos.x;
 		var local_y = y - this.local_world.pos.y;
-		jq_obj.css("top",  local_y + "px");
-		jq_obj.css("left",  local_x + "px");
+		$(jq_obj).css("top",  local_y + "px");
+		$(jq_obj).css("left",  local_x + "px");
 	}
 
 	SwipeObjControl.prototype.push_obj = function(obj_info) {
@@ -315,7 +308,7 @@ var SwipeObjControl = (function(){
 
 	// objを追加する
 	SwipeObjControl.prototype.add_obj = function(obj_id, obj_info) {
-		console.log("add_obj" + this.obj_class );
+		//console.log("add_obj" + this.obj_class );
 		this.swipe_objs[obj_id] = obj_info;
 		var $swipe_obj = $("<div class='swipe-ball swipe-obj'></div>");
 		for (var i  in obj_info.classes){
@@ -335,10 +328,14 @@ var SwipeObjControl = (function(){
 		}
 		$swipe_obj.attr("obj-id", obj_id);
 		this.swipe_area.append($swipe_obj);
+		// obj_info に　jquery obectも追加
+		this.swipe_objs[obj_id].jqobj = $swipe_obj.get(0);
+
 	}
 
 	// 新規にオブジェクトを世界に追加する
 	// 追加情報をbroadcastも行う
+	//  var obj_info = {vx: vx, vy : vy, xp: xp, yp: yp, classes:[classes[class_index]], width: width, height: height};
 	SwipeObjControl.prototype.add_new_obj = function(obj_info){
 		var obj_id = this.push_obj(obj_info);
 		this.send_obj_info(obj_id);
