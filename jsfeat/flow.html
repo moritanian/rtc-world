@@ -54,27 +54,18 @@ THE SOFTWARE.
             var cameraData = [];
             function _gotSources(sourceInfos)
             {
-                alert("gotSources");
-                alert(sourceInfos);
-                alert(sourceInfos.length);
               for (var i = 0; i != sourceInfos.length; i++)
               {
                 var sourceInfo = sourceInfos[i];
-                alert(sourceInfo.id);
                 if (sourceInfo.kind == 'video')
                 {
                     cameraData.push(sourceInfos[i]);
-                    //option.text = sourceInfo.label || 'camera ' + (videoSelect.length + 1);
-                    //videoSelect.appendChild(option);
                 }
               }
-
               setCamera();
             }
 
             function setCamera(){
-                alert("setCamera");
-
                 try{
                     if(has_media_stream_track){
                         var constraints = {
@@ -82,13 +73,11 @@ THE SOFTWARE.
                             optional: [{sourceId: cameraData[1].id}]
                             }
                         };
-                        alert(cameraData[0].id + " <br> " + cameraData[1].id);
                     }else{
                         var constraints = {video: true};
-                        alert("normal video");
                     }
                 }catch(e){
-                    alert(e);
+                    console.log(e);
                 }
 
                 compatibility.getUserMedia(constraints, function(stream) {
@@ -118,7 +107,6 @@ THE SOFTWARE.
                 MediaStreamTrack.getSources(_gotSources);
               }
               catch(e){
-                alert(e);
                 console.log("get Source err");
                 has_media_stream_track = false;
                 setCamera();
@@ -126,7 +114,6 @@ THE SOFTWARE.
             }
 
             try {
-                alert("try");
                 var attempts = 0;
                 var readyListener = function(event) {
                     findVideoSize();
@@ -150,7 +137,6 @@ THE SOFTWARE.
                 };
 
                 video.addEventListener('loadeddata', readyListener);
-                alert("add event list");
             } catch (error) {
                 alert(error);
                 $('#canvas').hide();

@@ -53,35 +53,63 @@ THE SOFTWARE.
             var canvas = document.getElementById('canvas');
 
             var has_media_stream_track = true;
-            var sourceIds = [];
-            function gotSources(sourceInfos)
+            var cameraData = [];
+            function _gotSources(sourceInfos)
             {
               for (var i = 0; i != sourceInfos.length; i++)
               {
                 var sourceInfo = sourceInfos[i];
-               // var option = document.createElement("option");
-                option.value = sourceInfo.id;
-                if (sourceInfo.kind === 'video')
+                if (sourceInfo.kind == 'video')
                 {
-                    sourceIds.push(sourceInfo.id);
-                    //option.text = sourceInfo.label || 'camera ' + (videoSelect.length + 1);
-                    //videoSelect.appendChild(option);
+                     cameraData.push(sourceInfos[i]);
                 }
               }
+              setCamera();
+            }
+
+            function setCamera(){
+                try{
+                    if(has_media_stream_track){
+                        var constraints = {
+                            video: {
+                            optional: [{sourceId: cameraData[1].id}]
+                            }
+                        };
+                    }else{
+                        var constraints = {video: true};
+                    }
+                }catch(e){
+                    console.log(e);
+                }
+
+                compatibility.getUserMedia(constraints, function(stream) {
+                    try {
+                        video.src = compatibility.URL.createObjectURL(stream);
+                    } catch (error) {
+                        video.src = stream;
+                    }
+                    setTimeout(function() {
+                            video.play();
+                        }, 500);
+                }, function (error) {
+                    $('#canvas').hide();
+                    $('#log').hide();
+                    $('#no_rtc').html('<h4>WebRTC not available.</h4>');
+                    $('#no_rtc').show();
+                });
             }
 
             if (typeof MediaStreamTrack === 'undefined')
             {
-              //alert('未対応ブラウザです');
+              alert('未対応ブラウザです');
             }
             else
             {
               try{
-                MediaStreamTrack.getSources(gotSources);
+                MediaStreamTrack.getSources(_gotSources);
               }
               catch(e){
                 console.log(e);
-                //alert(e);
                 has_media_stream_track = false;
               }
             }
@@ -121,21 +149,6 @@ THE SOFTWARE.
                     var constraints = {video: true};
                 }
 
-                compatibility.getUserMedia(constraints, function(stream) {
-                    try {
-                        video.src = compatibility.URL.createObjectURL(stream);
-                    } catch (error) {
-                        video.src = stream;
-                    }
-                    setTimeout(function() {
-                            video.play();
-                        }, 500);
-                }, function (error) {
-                    $('#canvas').hide();
-                    $('#log').hide();
-                    $('#no_rtc').html('<h4>WebRTC not available.</h4>');
-                    $('#no_rtc').show();
-                });
             } catch (error) {
                 alert(error);
                 $('#canvas').hide();
