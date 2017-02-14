@@ -138,17 +138,6 @@ THE SOFTWARE.
                 };
 
                 video.addEventListener('loadeddata', readyListener);
-
-                if(has_media_stream_track){
-                    var constraints = {
-                        video: {
-                        optional: [{sourceId: sourceIds[1]}]
-                        }
-                    };
-                }else{
-                    var constraints = {video: true};
-                }
-
             } catch (error) {
                 alert(error);
                 $('#canvas').hide();
