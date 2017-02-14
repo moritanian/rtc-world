@@ -218,7 +218,6 @@ var SwipeObjControl = (function(){
 		setTimeout(function(){instance.update()}, 1000/this.f_rate);
 
 		if(this.tracking){
-			alert("tracking");
 			var move_data = this.tracking.get_data();
 			var scale = 4;
 			this.set_boarder_line_pos({x: move_data.move.x/scale, y: move_data.move.y/scale} );
