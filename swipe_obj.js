@@ -298,6 +298,7 @@ var SwipeObjControl = (function(){
 	SwipeObjControl.prototype.push_obj = function(obj_info) {
 		var max_id = 1;
 		for(let id in this.swipe_objs){
+			id = Math.floor(id); // 数値に置き換え
 			if(id > max_id){
 				max_id = id;
 			}
@@ -390,7 +391,9 @@ var SwipeObjControl = (function(){
 		if(msg_obj.type === "objs_info" || msg_obj.type === "objs_all_info"){ //追加するobj情報// 参加者への初期情報もこれで伝える
 			for(var obj_id in msg_obj.objs){
 				if(this.swipe_objs[obj_id]){ // 存在する場合は更新
+					var jqobj = this.swipe_objs[obj_id].jqobj; //jqobj 退避
 					this.swipe_objs[obj_id] = msg_obj.objs[obj_id];
+					this.swipe_objs[obj_id].jqobj = jqobj;
 				}else{ // ない場合は追加
 					this.add_obj(obj_id,  msg_obj.objs[obj_id]);
 				}
