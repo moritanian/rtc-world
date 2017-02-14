@@ -39,14 +39,17 @@ var SwipeObjControl = (function(){
 		}
 		this.members = {}; //キーをuser_id, に
 		this.init_boarder_line();
-
-		this.tracking = new screen_flow(3, true);
 	}
 
 	// start button がおされた
 	SwipeObjControl.prototype.start_simulation = function(){
 		// 開始時刻を取得 
 		this.start_time = this.get_time();
+		try{
+			this.tracking = new screen_flow(3, true);
+		}catch(e){
+			console.log("cannot use camera tracking in this environment");
+		}
 		setTimeout(function(){instance.update()}, 1000/this.f_rate);
 	}
 
@@ -214,22 +217,23 @@ var SwipeObjControl = (function(){
 		var update_func_start = this.get_time();
 		setTimeout(function(){instance.update()}, 1000/this.f_rate);
 
-		// （スマホのみ）傾きによる加速
-		if(instance.has_compass){
+		if(this.tracking){
+			alert("tracking");
+			var move_data = this.tracking.get_data();
+			var scale = 4;
+			this.set_boarder_line_pos({x: move_data.move.x/scale, y: move_data.move.y/scale} );
+		}else// （スマホのみ）傾きによる加速
+		if(this.has_compass){
 			//$("#com_val").text("compass heading" + instance.compassdir.x+ ": " + instance.compassdir.y);
 			var gravity = 20.8;
 			//instance.swipe_objs[obj_id].vx += Math.sin(instance.compassdir.x) *  gravity;
 			//instance.swipe_objs[obj_id].vy += Math.sin(instance.compassdir.y) *  gravity;
-			thid.move_boarder_line(this.compassdir);
+			
+			this.move_boarder_line(this.compassdir);
 			
 		}
 
-		if(this.tracking){
-			var move_data = this.tracking.get_data();
-			var scale = 10;
-			this.set_boarder_line_pos({x: move_data.move.x/scale, y: move_data.move.y/scale} );
-		}
-
+		
 		$(this.obj_class).each(function(){
 			var obj_id = $(this).attr("obj-id");
 			if(obj_id != instance.target_id){
