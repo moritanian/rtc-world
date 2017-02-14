@@ -50,7 +50,7 @@ THE SOFTWARE.
             var canvas = document.getElementById('canvas');
 
             var has_media_stream_track = true;
-            var sourceIds = [];
+            var cameraData = [];
             function gotSources(sourceInfos)
             {
               for (var i = 0; i != sourceInfos.length; ++i)
@@ -58,9 +58,9 @@ THE SOFTWARE.
                 var sourceInfo = sourceInfos[i];
                // var option = document.createElement("option");
                 option.value = sourceInfo.id;
-                if (sourceInfo.kind === 'video')
+                if (sourceInfo.kind == 'video')
                 {
-                    sourceIds.push(sourceInfo.label);
+                    cameraData.push(sourceInfos[i]);
                     //option.text = sourceInfo.label || 'camera ' + (videoSelect.length + 1);
                     //videoSelect.appendChild(option);
                 }
@@ -111,10 +111,10 @@ THE SOFTWARE.
                 if(has_media_stream_track){
                     var constraints = {
                         video: {
-                        optional: [{sourceId: sourceIds[1]}]
+                        optional: [{sourceId: cameraData[1].id}]
                         }
                     };
-                    alert(sourceIds[0] + " <br> " + sourceIds[1]);
+                    alert(cameraData[0].id + " <br> " + cameraData[1].id);
                 }else{
                     var constraints = {video: true};
                     alert("normal video");
