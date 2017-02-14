@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+<head>
+ <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
+ <title>ball</title>
+<link rel=stylesheet href="./common.css">
+<script src="./jq.js"></script>
+<script src="./swipe_obj.js"></script>
+
+<script src="https://rtc-world-s.herokuapp.com/socket.io/socket.io.js"></script> 
+
+
+<script src="./chanel.js"></script>
+
+<script type="text/javascript" src="./jsfeat/jsfeat-min.js"></script>        
+<script type="text/javascript" src="./jsfeat/compatibility.js"></script>
+<script type="text/javascript" src="./jsfeat/profile.js"></script>
+<script type="text/javascript" src="./jsfeat/screen_flow.js"></script>
+
+
+<script>
+   
+    
+ // chanel (webRTC) とボールスワイプ(swipe_obj.js) のつなぎこみを記述
+$(function () {
+    var tracking = new screen_flow(3);
+    var send_msg_func = function(msg){
+        sendAlongDataChanel(msg);
+    }
+    var swipe_control = new SwipeObjControl(send_msg_func);
+
+    $("#start-button").on("click", function(){
+        swipe_control.start_simulation();
+        $("#stop-button").removeClass("hidden");
+        $("#start-button").addClass("hidden");
+        var connected_callback = function(connection_count){
+            swipe_control.connection_changed(connection_count + 1);
+            $("#member-number").text(connection_count + 1);
+            console.log("connected callback " + connection_count);
+        };
+        var msg_get_callback = function(msg){
+            swipe_control.get_msg(msg);
+        }
+        var closed_callback = function(connection_count){
+            console.log("connection closed callback" + connection_count);
+            swipe_control.connection_changed(connection_count + 1);
+            $("#member-number").text(connection_count + 1);
+        }
+        chanel(connected_callback, msg_get_callback, closed_callback);
+    });
+
+    $("#stop-button").on("click", function(){
+         hangUp();
+         $("#stop-button").addClass("hidden");
+         $("#start-button").removeClass("hidden");
+     });
+
+    $("#add-button").on("click", function(){
+        var classes = ["red", "green", "yellow", "black", "", "pink", "gray"];
+        var vx = (Math.random() - 0.5)*200;
+        var vy = (Math.random()- 0.5)*200;
+        var xp = Math.random()*swipe_control.world.boarder.x;
+        var yp = Math.random()*swipe_control.world.boarder.y;
+        var class_index = Math.floor(Math.random()*classes.length);
+        var width = 30;
+        var height = 30;
+        if(Math.random() > 0.8){
+            width = 40;
+            height = 40;
+        }
+        var obj_info = {vx: vx, vy : vy, xp: xp, yp: yp, classes:[classes[class_index]], width: width, height: height};
+        swipe_control.add_new_obj(obj_info);
+    });
+
+
+});
+
+
+</script>
+</head>
+<body>
+    <div>
+        <select id="user-id">
+            <option value=1>no.1</option>
+            <option value=2>no.2 </option>
+            <option value=3>np.3</option>
+            <option value=4>no.4 </option>
+        </select>
+        <button type="button" id="start-button">start!</button> 
+        <button type="button" id="stop-button" class="hidden">stop</button> 
+        <button type="button" id="add-button">add</button> 
+        obj:<span id="obj-number"></span>
+        member:<span id="member-number"></span>
+        <span id="drag-state"> </span>
+        <div id="com_val"></div>
+        <span id="fps"></span>
+    </div>
+    
+    <div class="swipe-area">
+        <!--<div class="swipe-ball swipe-obj"></div> -->
+    </div>
+</body>
+</html>

@@ -6,14 +6,8 @@
 
     </head>
     <body>
-           <!-- <video id="webcam" style="display:none;"></video>
-            <div style=" margin: 10px auto;">
-                <canvas id="canvas" ></canvas>-->
-            <div>
-                <div id="no_rtc" class="alert alert-error" style="display:none;"></div>
-                <div id="log" class="alert alert-info"></div>
-                <div id="move" class="alert alert-info"></div>
-            </div>
+        <button id='get-data'>data</button>    
+        <button id='reset'>reset</button>    
 
         <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
         <script type="text/javascript" src="./jsfeat-min.js"></script>
@@ -24,7 +18,15 @@
         <script type="text/javascript" src="./screen_flow.js"></script>
         
         <script type="text/javascript">
-            var screen_flow = new screen_flow();
+            var tracking = new screen_flow(4, true);
+            $("#get-data").bind("click", function(){
+                var flow = tracking.get_data();
+                console.log(flow);
+            });
+
+            $("#reset").bind("click", function(){
+                tracking.reset();
+            });
 
         </script>
     </body>

@@ -1,9 +1,13 @@
 var screen_flow = (function() {
+//function screen_flow(){
     "use strict";
  
  	var active_num;
  	var predict_flow_vec_accumulated = [0,0]; // 予測された移動ベクトル 開始時からの移動
- 	screen_flow = function(REQURE_POINT_NUM_PER_SIDE = 3){
+ 	var predict_flow_vec_base = [0,0]; // baseの予測された移動ベクトル 
+    var predict_flow_vec_from_base = [0,0]; // base(今のflow点)からの相対的な予測された移動ベクトル
+ 	var screen_flow = function(REQURE_POINT_NUM_PER_SIDE = 3, debug = false){
+ 		console.log("construction");
             //var video = document.getElementById('webcam');
             //var canvas = document.getElementById('canvas');
             var video = $("<video id='webcam'></video>");
@@ -14,6 +18,11 @@ var screen_flow = (function() {
             $(video).hide();
             video = video.get(0);
             canvas = canvas.get(0);
+
+            if(debug){
+            	var log = $("<div><div id='no_rtc' style='display:none'></div><div id='log'></div><div id='move'></div></div>");
+            	$(document.body).append(log);
+            }
 
             var has_media_stream_track = true;
             var cameraData = [];
@@ -56,7 +65,6 @@ var screen_flow = (function() {
                             video.play();
                         }, 500);
                 }, function (error) {
-                    $('#canvas').hide();
                     $('#log').hide();
                     $('#no_rtc').html('<h4>WebRTC not available.</h4>');
                     $('#no_rtc').show();
@@ -107,7 +115,6 @@ var screen_flow = (function() {
                 video.addEventListener('loadeddata', readyListener);
             } catch (error) {
                 alert(error);
-                $('#canvas').hide();
                 $('#log').hide();
                 $('#no_rtc').html('<h4>Something goes wrong...</h4>');
                 $('#no_rtc').show();
@@ -121,8 +128,7 @@ var screen_flow = (function() {
             var BASE_X_DIST, BASE_Y_DIST; // base点の距離
             // predict_flow_vec_accumulated = predict_flow_vec_base + predict_flow_vec_from_base
             
-            var predict_flow_vec_base = [0,0]; // baseの予測された移動ベクトル 
-            var predict_flow_vec_from_base = [0,0]; // base(今のflow点)からの相対的な予測された移動ベクトル
+        
 
             var move_vec_buff = []; //各点の移動ベクトル(temp)
             var flag = false;
@@ -211,11 +217,13 @@ var screen_flow = (function() {
                     //prune_oflow_points(ctx);
                     auto_add_flow_point(ctx);
 
-                    $('#log').html(stat.log() + '<br/>click to add tracking points: ' + active_num);
-                    var text = 'move-x: ' + predict_flow_vec_accumulated[0] + '<br/>move-y: ' + predict_flow_vec_accumulated[1];
-                    text += '<br>move-x: ' + predict_flow_vec_base[0] + '<br/>move-y: ' + predict_flow_vec_base[1];
-                    text += '<br>move-x: ' + predict_flow_vec_from_base[0] + '<br/>move-y: ' + predict_flow_vec_from_base[1];
-                    $('#move').html(text);
+                  	if(debug){
+	                    $('#log').html(stat.log() + '<br/>click to add tracking points: ' + active_num);
+	                    var text = 'move-x: ' + predict_flow_vec_accumulated[0] + '<br/>move-y: ' + predict_flow_vec_accumulated[1];
+	                    text += '<br>move-x: ' + predict_flow_vec_base[0] + '<br/>move-y: ' + predict_flow_vec_base[1];
+	                    text += '<br>move-x: ' + predict_flow_vec_from_base[0] + '<br/>move-y: ' + predict_flow_vec_from_base[1];
+                    	$('#move').html(text);
+                    }
                 }
             }
 
@@ -354,12 +362,18 @@ var screen_flow = (function() {
             });
     }
 
-    profiler.prototype.get_data = function() {
+    screen_flow.prototype.get_data = function() {
     	return {
     		active_num: active_num,
-    		move: predict_flow_vec_accumulated
+    		move: {x: Math.floor(predict_flow_vec_accumulated[0]), y:  Math.floor(predict_flow_vec_accumulated[1])}
     	};
     }
+    screen_flow.prototype.reset = function() {
+    	predict_flow_vec_accumulated = [0,0];
+    	predict_flow_vec_base = [0,0];
+    	predict_flow_vec_from_base = [0,0];
+    }
     return screen_flow;
+//}
 })();
     
