@@ -68,49 +68,11 @@ THE SOFTWARE.
                     //videoSelect.appendChild(option);
                 }
               }
+
+              setCamera();
             }
 
-            if (typeof MediaStreamTrack === 'undefined')
-            {
-              alert('未対応ブラウザです');
-            }
-            else
-            {
-              try{
-                MediaStreamTrack.getSources(_gotSources);
-              }
-              catch(e){
-                console.log(e);
-                alert(e);
-                has_media_stream_track = false;
-              }
-            }
-
-            try {
-                var attempts = 0;
-                var readyListener = function(event) {
-                    findVideoSize();
-                };
-                var findVideoSize = function() {
-                    if(video.videoWidth > 0 && video.videoHeight > 0) {
-                        video.removeEventListener('loadeddata', readyListener);
-                        onDimensionsReady(video.videoWidth, video.videoHeight);
-                    } else {
-                        if(attempts < 10) {
-                            attempts++;
-                            setTimeout(findVideoSize, 200);
-                        } else {
-                            onDimensionsReady(640, 480);
-                        }
-                    }
-                };
-                var onDimensionsReady = function(width, height) {
-                    demo_app(width, height);
-                    window.requestAnimationFrame(tick);
-                };
-
-                video.addEventListener('loadeddata', readyListener);
-
+            function setCamera(){
                 if(has_media_stream_track){
                     var constraints = {
                         video: {
@@ -138,6 +100,53 @@ THE SOFTWARE.
                     $('#no_rtc').html('<h4>WebRTC not available.</h4>');
                     $('#no_rtc').show();
                 });
+            }
+
+            if (typeof MediaStreamTrack === 'undefined')
+            {
+              alert('未対応ブラウザです');
+            }
+            else
+            {
+              try{
+                MediaStreamTrack.getSources(_gotSources);
+              }
+              catch(e){
+                alert(e);
+                console.log("get Source err");
+                has_media_stream_track = false;
+                setCamera();
+              }
+            }
+
+            try {
+                console.log("try");
+                var attempts = 0;
+                var readyListener = function(event) {
+                    findVideoSize();
+                };
+                var findVideoSize = function() {
+                    if(video.videoWidth > 0 && video.videoHeight > 0) {
+                        video.removeEventListener('loadeddata', readyListener);
+                        onDimensionsReady(video.videoWidth, video.videoHeight);
+                    } else {
+                        if(attempts < 10) {
+                            attempts++;
+                            setTimeout(findVideoSize, 200);
+                        } else {
+                            onDimensionsReady(640, 480);
+                        }
+                    }
+                };
+                var onDimensionsReady = function(width, height) {
+                    demo_app(width, height);
+                    window.requestAnimationFrame(tick);
+                };
+
+                video.addEventListener('loadeddata', readyListener);
+                console.log("add event list");
+
+              
             } catch (error) {
                 alert(error);
                 $('#canvas').hide();
