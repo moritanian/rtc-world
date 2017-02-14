@@ -25,7 +25,7 @@ THE SOFTWARE.
 
 <html lang="en">
     <head>
-    <title>flow1</title>
+    <title>flow2</title>
     </head>
     <body>
             <video id="webcam" width="640" height="480" style="display:none;"></video>
@@ -55,6 +55,8 @@ THE SOFTWARE.
             function _gotSources(sourceInfos)
             {
                 alert("gotSources");
+                alert(sourceInfos);
+                alert(sourceInfos.length);
               for (var i = 0; i != sourceInfos.length; i++)
               {
                 var sourceInfo = sourceInfos[i];
@@ -73,16 +75,22 @@ THE SOFTWARE.
             }
 
             function setCamera(){
-                if(has_media_stream_track){
-                    var constraints = {
-                        video: {
-                        optional: [{sourceId: cameraData[1].id}]
-                        }
-                    };
-                    alert(cameraData[0].id + " <br> " + cameraData[1].id);
-                }else{
-                    var constraints = {video: true};
-                    alert("normal video");
+                alert("setCamera");
+
+                try{
+                    if(has_media_stream_track){
+                        var constraints = {
+                            video: {
+                            optional: [{sourceId: cameraData[1].id}]
+                            }
+                        };
+                        alert(cameraData[0].id + " <br> " + cameraData[1].id);
+                    }else{
+                        var constraints = {video: true};
+                        alert("normal video");
+                    }
+                }catch(e){
+                    alert(e);
                 }
 
                 compatibility.getUserMedia(constraints, function(stream) {
@@ -120,7 +128,7 @@ THE SOFTWARE.
             }
 
             try {
-                console.log("try");
+                alert("try");
                 var attempts = 0;
                 var readyListener = function(event) {
                     findVideoSize();
@@ -144,9 +152,7 @@ THE SOFTWARE.
                 };
 
                 video.addEventListener('loadeddata', readyListener);
-                console.log("add event list");
-
-              
+                alert("add event list");
             } catch (error) {
                 alert(error);
                 $('#canvas').hide();
