@@ -25,7 +25,7 @@ THE SOFTWARE.
 
 <html lang="en">
     <head>
-    <title>flow</title>
+    <title>flow0</title>
     </head>
     <body>
             <video id="webcam" width="640" height="480" style="display:none;"></video>
@@ -71,7 +71,7 @@ THE SOFTWARE.
 
             if (typeof MediaStreamTrack === 'undefined')
             {
-              //alert('未対応ブラウザです');
+              alert('未対応ブラウザです');
             }
             else
             {
@@ -80,7 +80,7 @@ THE SOFTWARE.
               }
               catch(e){
                 console.log(e);
-                //alert(e);
+                alert(e);
                 has_media_stream_track = false;
               }
             }
