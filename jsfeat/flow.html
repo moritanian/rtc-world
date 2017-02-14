@@ -25,7 +25,7 @@ THE SOFTWARE.
 
 <html lang="en">
     <head>
-    <title>flow0</title>
+    <title>flow1</title>
     </head>
     <body>
             <video id="webcam" width="640" height="480" style="display:none;"></video>
@@ -43,7 +43,7 @@ THE SOFTWARE.
        
         <script type="text/javascript">
 
-        $(window).load(function() {
+       $(function(){
             "use strict";
 
             // lets do some fun
@@ -52,8 +52,9 @@ THE SOFTWARE.
 
             var has_media_stream_track = true;
             var cameraData = [];
-            function gotSources(sourceInfos)
+            function _gotSources(sourceInfos)
             {
+                alert("gotSources");
               for (var i = 0; i != sourceInfos.length; i++)
               {
                 var sourceInfo = sourceInfos[i];
@@ -76,7 +77,7 @@ THE SOFTWARE.
             else
             {
               try{
-                MediaStreamTrack.getSources(gotSources);
+                MediaStreamTrack.getSources(_gotSources);
               }
               catch(e){
                 console.log(e);
