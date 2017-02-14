@@ -25,6 +25,7 @@ THE SOFTWARE.
 
 <html lang="en">
     <head>
+    <title>flow</title>
     </head>
     <body>
             <video id="webcam" width="640" height="480" style="display:none;"></video>
@@ -53,11 +54,12 @@ THE SOFTWARE.
             var cameraData = [];
             function gotSources(sourceInfos)
             {
-              for (var i = 0; i != sourceInfos.length; ++i)
+              for (var i = 0; i != sourceInfos.length; i++)
               {
                 var sourceInfo = sourceInfos[i];
                // var option = document.createElement("option");
                 option.value = sourceInfo.id;
+                alert(sourceInfo.id);
                 if (sourceInfo.kind == 'video')
                 {
                     cameraData.push(sourceInfos[i]);
