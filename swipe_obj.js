@@ -46,7 +46,7 @@ var SwipeObjControl = (function(){
 		// 開始時刻を取得 
 		this.start_time = this.get_time();
 		try{
-			this.tracking = new screen_flow(3, true);
+			this.tracking = new screen_flow(2, true);
 		}catch(e){
 			console.log("cannot use camera tracking in this environment");
 		}
@@ -219,7 +219,7 @@ var SwipeObjControl = (function(){
 
 		if(this.tracking){
 			var move_data = this.tracking.get_data();
-			var scale = 4;
+			var scale = 1;
 			this.set_boarder_line_pos({x: move_data.move.x/scale, y: move_data.move.y/scale} );
 		}else// （スマホのみ）傾きによる加速
 		if(this.has_compass){

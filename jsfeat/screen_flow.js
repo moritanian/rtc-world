@@ -298,8 +298,8 @@ var screen_flow = (function() {
                 }
                 
 
-                predict_flow_vec_from_base[0] += mod_ave_xy[0];
-                predict_flow_vec_from_base[1] += mod_ave_xy[1];
+                predict_flow_vec_from_base[0] -= mod_ave_xy[0];
+                predict_flow_vec_from_base[1] -= mod_ave_xy[1];
 
                 var dx = 0, dy = 0;
                 if(predict_flow_vec_from_base[0] > BASE_X_DIST){
@@ -365,7 +365,7 @@ var screen_flow = (function() {
     screen_flow.prototype.get_data = function() {
     	return {
     		active_num: active_num,
-    		move: {x: Math.floor(predict_flow_vec_accumulated[0]), y:  Math.floor(predict_flow_vec_accumulated[1])}
+    		move: {x:  Math.floor(predict_flow_vec_accumulated[0]), y:   Math.floor(predict_flow_vec_accumulated[1])} 
     	};
     }
     screen_flow.prototype.reset = function() {
