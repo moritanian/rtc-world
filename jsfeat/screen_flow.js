@@ -7,7 +7,7 @@ var screen_flow = (function() {
  	var predict_flow_vec_base = [0,0]; // baseの予測された移動ベクトル 
     var predict_flow_vec_from_base = [0,0]; // base(今のflow点)からの相対的な予測された移動ベクトル
  	var screen_flow = function(REQURE_POINT_NUM_PER_SIDE = 3, debug = false){
- 		console.log("construction");
+ 		console.log("construction" + REQURE_POINT_NUM_PER_SIDE);
             //var video = document.getElementById('webcam');
             //var canvas = document.getElementById('canvas');
             var video = $("<video id='webcam'></video>");

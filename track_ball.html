@@ -3,7 +3,7 @@
 <head>
  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
  <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
- <title>ball</title>
+ <title>tracking ball</title>
 <link rel=stylesheet href="./common.css">
 <script src="./jq.js"></script>
 <script src="./swipe_obj.js"></script>
@@ -24,7 +24,6 @@
     
  // chanel (webRTC) とボールスワイプ(swipe_obj.js) のつなぎこみを記述
 $(function () {
-    var tracking = new screen_flow(3);
     var send_msg_func = function(msg){
         sendAlongDataChanel(msg);
     }

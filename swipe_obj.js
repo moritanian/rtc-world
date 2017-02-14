@@ -40,7 +40,7 @@ var SwipeObjControl = (function(){
 		this.members = {}; //キーをuser_id, に
 		this.init_boarder_line();
 
-		this.tracking = new screen_flow(4, true);
+		this.tracking = new screen_flow(3, true);
 	}
 
 	// start button がおされた
