@@ -39,10 +39,17 @@ var SwipeObjControl = (function(){
 		}
 		this.members = {}; //キーをuser_id, に
 		this.init_boarder_line();
+		setTimeout(function(){instance.update()}, 1000/this.f_rate);
+		
 	}
 
 	// start button がおされた
 	SwipeObjControl.prototype.start_simulation = function(){
+		this.get_world_info_flg = false;
+		this.send_my_enter_flag = false;
+		this.members = {}; //キーをuser_id, に
+		this.member_num = 0;
+		
 		// 開始時刻を取得 
 		this.start_time = this.get_time();
 		try{
@@ -50,7 +57,6 @@ var SwipeObjControl = (function(){
 		}catch(e){
 			console.log("cannot use camera tracking in this environment");
 		}
-		setTimeout(function(){instance.update()}, 1000/this.f_rate);
 	}
 
 	SwipeObjControl.prototype.init_compass_and_acc = function(){
@@ -354,9 +360,10 @@ var SwipeObjControl = (function(){
 
 	SwipeObjControl.prototype.connection_changed = function(member_num) {
 		this.member_num = member_num;
-		if(!instance.get_world_info_flg){ // 初めての dataChanelのコネクション完了時
+		if(!this.get_world_info_flg && !this.send_my_enter_flag){ // 初めての dataChanelのコネクション完了時
 			this.require_get_world_ans_num = member_num -1;
-			instance.send_my_enter_info();	 // 1回だけで帰ってこなければ誰もいないということで
+			this.send_my_enter_flag = true;
+			this.send_my_enter_info();	 // 1回だけで帰ってこなければ誰もいないということで
 		}
 	}
 
@@ -400,6 +407,8 @@ var SwipeObjControl = (function(){
 			}
 			if(msg_obj.type === "objs_all_info" && this.get_world_info_flg == false){
 				this.require_get_world_ans_num --;
+				console.log("require " + this.require_get_world_ans_num );
+				console.log("id " + msg_obj.user_id);
 				this.members[msg_obj.user_id] = "connected";
 				if(this.require_get_world_ans_num == 0){
 					this.get_world_info_flg = true;

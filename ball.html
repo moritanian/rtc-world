@@ -21,7 +21,9 @@
 $(function () {
     var chanel_control, swipe_control;
     var send_msg_func = function(msg){
-        chanel_control.sendAlongDataChanel(msg);
+        if(chanel_control){
+            chanel_control.sendAlongDataChanel(msg);
+        }
     }
     swipe_control = new SwipeObjControl(send_msg_func);
 
@@ -29,6 +31,8 @@ $(function () {
         swipe_control.start_simulation();
         $("#stop-button").removeClass("hidden");
         $("#start-button").addClass("hidden");
+        $("#member-number").text(1);
+
         var connected_callback = function(connection_count){
             swipe_control.connection_changed(connection_count + 1);
             $("#member-number").text(connection_count + 1);
