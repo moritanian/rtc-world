@@ -24,10 +24,11 @@
     
  // chanel (webRTC) とボールスワイプ(swipe_obj.js) のつなぎこみを記述
 $(function () {
+    var chanel_control, swipe_control;
     var send_msg_func = function(msg){
-        sendAlongDataChanel(msg);
+        chanel_control.sendAlongDataChanel(msg);
     }
-    var swipe_control = new SwipeObjControl(send_msg_func);
+    swipe_control = new SwipeObjControl(send_msg_func);
 
     $("#start-button").on("click", function(){
         swipe_control.start_simulation();
@@ -46,11 +47,11 @@ $(function () {
             swipe_control.connection_changed(connection_count + 1);
             $("#member-number").text(connection_count + 1);
         }
-        chanel(connected_callback, msg_get_callback, closed_callback);
+        chanel_control = new chanel(connected_callback, msg_get_callback, closed_callback);
     });
 
     $("#stop-button").on("click", function(){
-         hangUp();
+         chanel_control.hangUp();
          $("#stop-button").addClass("hidden");
          $("#start-button").removeClass("hidden");
      });
