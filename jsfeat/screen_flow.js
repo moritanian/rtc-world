@@ -6,10 +6,11 @@ var screen_flow = (function() {
  	var predict_flow_vec_accumulated = [0,0]; // 予測された移動ベクトル 開始時からの移動
  	var predict_flow_vec_base = [0,0]; // baseの予測された移動ベクトル 
     var predict_flow_vec_from_base = [0,0]; // base(今のflow点)からの相対的な予測された移動ベクトル
- 	var screen_flow = function(REQURE_POINT_NUM_PER_SIDE = 3, debug = false){
+    var is_show_canvas;
+    var render_func; // 描画のタイミングで呼ばれる関数　外部から与えられる
+ 	var screen_flow = function(REQURE_POINT_NUM_PER_SIDE = 3, debug = false, render){
  		console.log("construction" + REQURE_POINT_NUM_PER_SIDE);
-            //var video = document.getElementById('webcam');
-            //var canvas = document.getElementById('canvas');
+            render_func = render;
             var video = $("<video id='webcam'></video>");
             var canvas = $("<canvas id='canvas'></canvas>");
             $(document.body).append(video);
@@ -18,6 +19,7 @@ var screen_flow = (function() {
             $(video).hide();
             video = video.get(0);
             canvas = canvas.get(0);
+            is_show_canvas = false;
 
             if(debug){
             	var log = $("<div><div id='no_rtc' style='display:none'></div><div id='log'></div><div id='move'></div></div>");
@@ -184,6 +186,9 @@ var screen_flow = (function() {
 
             function tick() {
                 window.requestAnimationFrame(tick);
+                if(render_func){
+                    render_func();
+                }
                 stat.new_frame();
                 if (video.readyState === video.HAVE_ENOUGH_DATA) {
                    
@@ -225,6 +230,13 @@ var screen_flow = (function() {
                     	$('#move').html(text);
                     }
                 }
+            }
+
+             function draw_circle(ctx, x, y) {
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, Math.PI*2, true);
+                ctx.closePath();
+                ctx.fill();
             }
 
             /*
@@ -332,6 +344,8 @@ var screen_flow = (function() {
                         if(point_status[index] == 0){
                             curr_xy[index<<1] = base_default_point_xy[index<<1] - predict_flow_vec_from_base[0];
                             curr_xy[(index<<1) + 1] = base_default_point_xy[(index<<1) + 1] - predict_flow_vec_from_base[1];
+                        }else if(is_show_canvas){
+                            draw_circle(ctx, curr_xy[index<<1], curr_xy[(index<<1)+1]);
                         }
                     }
                 }
@@ -360,6 +374,11 @@ var screen_flow = (function() {
                 video.pause();
                 video.src=null;
             });
+    }
+
+    screen_flow.prototype.show_canvas = function() {
+        $("#canvas").show();
+        is_show_canvas = true;
     }
 
     screen_flow.prototype.get_data = function() {

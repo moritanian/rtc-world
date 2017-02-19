@@ -39,8 +39,24 @@ var SwipeObjControl = (function(){
 		}
 		this.members = {}; //キーをuser_id, に
 		this.init_boarder_line();
-		setTimeout(function(){instance.update()}, 1000/this.f_rate);
+		this.is_render_myself = true; // このクラス内でレンダー実行するか
 		
+
+		//setTimeout(function(){instance.update()}, 1000/this.f_rate);
+		this.update();
+
+		this.render_handler = 0;
+	}
+
+	// render関数を外部に渡す。
+	SwipeObjControl.prototype.get_render_func = function(is_render_outer = false){
+		if(is_render_outer){ //外部から呼び出す
+			this.is_render_myself = false;
+			if(this.render_handler){
+				window.cancelAnimationFrame(this.render_handler);
+			}
+		}
+		return function(){instance.update();};
 	}
 
 	// start button がおされた
@@ -53,6 +69,7 @@ var SwipeObjControl = (function(){
 		// 開始時刻を取得 
 		this.start_time = this.get_time();
 		try{
+			//this.tracking = new screen_flow(2, true, render=this.get_render_func());
 			this.tracking = new screen_flow(2, true);
 		}catch(e){
 			console.log("cannot use camera tracking in this environment");
@@ -214,7 +231,17 @@ var SwipeObjControl = (function(){
 
 	SwipeObjControl.prototype.update = function() {
 		var update_func_start = this.get_time();
-		setTimeout(function(){instance.update()}, 1000/this.f_rate);
+		if(this.is_render_myself){
+			//setTimeout(function(){instance.update()}, 1000/this.f_rate);
+			this.render_handler = window.requestAnimationFrame(function(){instance.update()});
+			if(this.timer){
+				this.timer.stop();
+				this.f_rate = 1000/this.timer.get_runtime();
+			}else{
+				this.timer = new stopwatch();
+			}
+			this.timer.start();
+		}
 
 		if(this.tracking){
 			var move_data = this.tracking.get_data();
@@ -237,10 +264,9 @@ var SwipeObjControl = (function(){
 			//var obj_id = $(this).attr("obj-id");
 			if(obj_id != instance.target_id){
 				
-			
 				// マサツによる減速
-				instance.swipe_objs[obj_id].vx /= 1 + 0.5/instance.f_rate; //instance.friction;
-				instance.swipe_objs[obj_id].vy /= 1 + 0.5/instance.f_rate;//instance.friction;
+				//instance.swipe_objs[obj_id].vx /= 1 + 0.5/instance.f_rate; //instance.friction;
+				//instance.swipe_objs[obj_id].vy /= 1 + 0.5/instance.f_rate;//instance.friction;
 				
 				// 位置積分
 				instance.swipe_objs[obj_id].xp += instance.swipe_objs[obj_id].vx/instance.f_rate; 
@@ -271,15 +297,16 @@ var SwipeObjControl = (function(){
 
 		// TODO
 		// かかった時間をもとにfpsを調整
+		/*
 		var elapsed_time = this.get_time() - update_func_start;
 		if( 1000/this.F_RATE_INIT < elapsed_time){
 			this.f_rate = 1000/elapsed_time;
 		}else{
 			this.f_rate = this.F_RATE_INIT;
 		}
-
+		*/
 		$("#fps").text(this.f_rate);
-
+		
 		this.show_obj_number();
 	}
 
