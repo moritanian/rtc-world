@@ -6,7 +6,11 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
     <link rel=stylesheet href="./../common.css">
 
-
+    <style>
+        .line{
+            height: 2px;
+        }
+    </style>
     </head>
     <body>
         <!--  <button id='get-data'>data</button>    
@@ -62,7 +66,9 @@
 
             var row_buff, col_buff, x0_index = 0, y0_index = 0;
             var offset;
+            var rot;
             var $col_parent, $row_parent, $content;
+            var screenWidth, screenHeight;
 
             var render = function(){
                 draw_lines(offset);
@@ -85,7 +91,7 @@
             }
 
             var create_line = function(start, goal, $parent){
-                var $line = $("<div class='line'></div>");
+                var $line = $("<div class='line' style='background-color:#188712;'></div>");
                 set_line(start, goal, $line);
                 if($parent){
                     $parent.append($line);
@@ -94,28 +100,21 @@
             }
 
             var init_lines = function(){
-                var div_num = 5;
-                var x_d = screen.width/div_num;
-                var y_d = screen.height/div_num;
-
                 var xval0 = 0;
                 var yval0 = 0;
                 row_buff = new circular_buffer();
                 col_buff = new circular_buffer();
 
-                for(var x=xval0; x< screen.width; x+= x_d){
-                    col_buff.push_back(create_line({x:x,y:0}, {x:x, y:screen.height}, $col_parent));
+                for(var x=xval0; x< screenWidth; x+= x_d){
+                    col_buff.push_back(create_line({x:x,y:0}, {x:x, y:screenHeight}, $col_parent));
                 }
-                for(var y = yval0; y< screen.height; y+= y_d){
-                    row_buff.push_back(create_line({x:0,y:y}, {x:screen.width, y:y}, $row_parent));
+                for(var y = yval0; y< screenHeight; y+= y_d){
+                    row_buff.push_back(create_line({x:0,y:y}, {x:screenWidth, y:y}, $row_parent));
                 }
             }
 
             var draw_lines = function(offSet){
-                var div_num = 5;
-                var x_d = screen.width/div_num;
-                var y_d = screen.height/div_num;
-
+                
                 var xval0 = Math.floor(offSet.x / x_d);
                 var yval0 = Math.floor(offSet.y / y_d);
 
@@ -127,13 +126,19 @@
 
                 x0_index = xval0;
                 y0_index = yval0;
-                
+
+                if(x_diff!=0){
+                    console.log(x0_index);
+                }
                 if(x_diff ==1){
                     col_buff.go_forward(1);
-                    set_position({x:  - screen.height/2 - xval0*x_d, y:screen.height/2}, col_buff.get(0));
+                    set_position({x:- screenHeight/2 - xval0*x_d, y:screenHeight/2}, col_buff.get(0));
                 }else if(x_diff == -1){
                     col_buff.go_forward(-1);
-                    set_position({x: (col_buff.len - 1) * x_d - screen.height/2 - xval0*x_d, y:screen.height/2}, col_buff.get(-1));
+                    set_position({x: (col_buff.len - 1) * x_d - screenHeight/2 - xval0*x_d, y:screenHeight/2}, col_buff.get(-1));
+                }else if(x_diff !=0){
+                    console.log("x_diff");
+                    console.log(x_diff);
                 }
                 if(y_diff ==1){
                     row_buff.go_forward(1);
@@ -141,12 +146,17 @@
                 }else if(y_diff == -1){
                     row_buff.go_forward(-1);
                     set_position({y: (row_buff.len - 1) * y_d - yval0*y_d , x:0}, row_buff.get(-1));
+                }else if(y_diff !=0){
+                    console.log("y_diff");
+                    console.log(y_diff);
                 }
 
                 set_position({x: offset.x, y:0}, $col_parent);
                 set_position({y: offset.y, x:0}, $row_parent);
 
                 //$content.css("zoom", (offset.z*2 +100) + "%");
+                $content.css("transform", "rotate(" + rot.z*180 /3.14 + "deg)");
+
                 /*
                 for(var index = 0; index+=2; index< line_len){
                     var h = (index/2);
@@ -160,7 +170,7 @@
 
 
             var tracking = new screen_flow(2, true);
-            tracking.show_canvas();
+            //tracking.show_canvas();
             /*
             $("#get-data").bind("click", function(){
                 var flow = tracking.get_data();
@@ -175,6 +185,12 @@
             $col_parent = $("#cols");
             $row_parent = $("#rows");
             $content  = $(".content");
+            screenWidth = screen.width;
+            screenHeight = screen.height;
+
+            var div_num = 3;
+            var x_d = screenWidth/div_num;
+            var y_d = screenHeight/div_num;
 
             init_lines();
 
@@ -182,6 +198,7 @@
                 window.requestAnimationFrame(anim_loop);
                 var flow = tracking.get_data();
                 offset = flow.move;
+                rot = flow.rot;
                 render();
             }
             anim_loop();

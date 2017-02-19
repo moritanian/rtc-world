@@ -6,6 +6,7 @@ var screen_flow = (function() {
  	var predict_flow_vec_accumulated = [0,0,0]; // 予測された移動ベクトル 開始時からの移動
  	var predict_flow_vec_base = [0,0,0]; // baseの予測された移動ベクトル 
     var predict_flow_vec_from_base = [0,0,0]; // base(今のflow点)からの相対的な予測された移動ベクトル
+    var predict_rotation = [0,0,0];
     var is_show_canvas;
     var is_calc_depth = true;
     var render_func; // 描画のタイミングで呼ばれる関数　外部から与えられる
@@ -225,9 +226,10 @@ var screen_flow = (function() {
 
                   	if(debug){
 	                    var text = 'move-x: ' + predict_flow_vec_accumulated[0] + '<br/>move-y: ' + predict_flow_vec_accumulated[1] + '<br/>move-z: ' + predict_flow_vec_accumulated[2]  ;
-	                    text += '<br>move-x: ' + predict_flow_vec_base[0] + '<br/>move-y: ' + predict_flow_vec_base[1];
-	                    text += '<br>move-x: ' + predict_flow_vec_from_base[0] + '<br/>move-y: ' + predict_flow_vec_from_base[1];
-                    	$('#move').html(text);
+	                    //text += '<br>move-x: ' + predict_flow_vec_base[0] + '<br/>move-y: ' + predict_flow_vec_base[1];
+	                    //text += '<br>move-x: ' + predict_flow_vec_from_base[0] + '<br/>move-y: ' + predict_flow_vec_from_base[1];
+                    	text += '<br> rot-z: ' + predict_rotation[2] * 180/3.14;
+                        $('#move').html(text);
                         $('#log').html(stat.log() + '<br/>click to add tracking points: ' + active_num);
 
                     }
@@ -274,12 +276,14 @@ var screen_flow = (function() {
                 if(is_calc_depth){
                     var center_xy = [canvasWidth/2, canvasHeight/2];
                     var depth=0, num = 0;
+                    var rot = 0;
                     for(var y=0;y<REQURE_POINT_NUM_PER_SIDE; y++){
                         for(var x=0; x<REQURE_POINT_NUM_PER_SIDE; x++){
                             index = x + y*REQURE_POINT_NUM_PER_SIDE;
                             if(point_status[index] == 1){ // 存在する
                                 var dx = (curr_xy[index << 1] - center_xy[0]) ;
                                 var dy =  (curr_xy[(index<<1) +1] - center_xy[1]);
+                                var r_2 = dx*dx + dy*dy;
                                 /*
                                 if(dx != 0){
                                     depth += (move_vec_buff[index<<1] - ave_xy[0])/ dx;
@@ -289,9 +293,10 @@ var screen_flow = (function() {
                                     depth += (move_vec_buff[(index<<1)+1] - ave_xy[1]) / dy;
                                 }
                                 */
-                                if(dx!=0 && dy!= 0){
+                                if(r_2 > 3000){
                                     num++;
-                                    depth+= ((move_vec_buff[index<<1] - ave_xy[0])*dx +  (move_vec_buff[(index<<1)+1] - ave_xy[1])*dy) / (dx*dx + dy*dy);  
+                                    depth+= ((move_vec_buff[index<<1] - ave_xy[0])*dx +  (move_vec_buff[(index<<1)+1] - ave_xy[1])*dy) / r_2;  
+                                    rot += (dx * (move_vec_buff[(index<<1)+1] - ave_xy[1]) - dy*(move_vec_buff[index<<1] - ave_xy[0])) / r_2; 
                                 }
                                
                             }
@@ -299,7 +304,9 @@ var screen_flow = (function() {
                     }
                     if(num>0){
                         depth/=num; 
-                        predict_flow_vec_accumulated[2] += depth * stat.fps;
+                        predict_flow_vec_accumulated[2] += depth *500;
+                        rot /= num;
+                        predict_rotation[2] += rot;
                     }
                 }
                
@@ -418,14 +425,16 @@ var screen_flow = (function() {
 
     screen_flow.prototype.get_data = function() {
     	return {
-    		active_num: active_num,
-    		move: {x:  Math.floor(predict_flow_vec_accumulated[0]), y:Math.floor(predict_flow_vec_accumulated[1]), z:Math.floor(predict_flow_vec_accumulated[2])} 
-    	};
+    	   active_num: active_num,
+    	   move: {x:  Math.floor(predict_flow_vec_accumulated[0]), y:Math.floor(predict_flow_vec_accumulated[1]), z:Math.floor(predict_flow_vec_accumulated[2])},
+    	   rot: {x: predict_rotation[0], y:predict_rotation[1], z: predict_rotation[2]}    
+        };
     }
     screen_flow.prototype.reset = function() {
-    	predict_flow_vec_accumulated = [0,0];
-    	predict_flow_vec_base = [0,0];
-    	predict_flow_vec_from_base = [0,0];
+    	predict_flow_vec_accumulated = [0,0,0];
+    	predict_flow_vec_base = [0,0,0];
+    	predict_flow_vec_from_base = [0,0,0];
+        predict_rotation = [0,0,0];
     }
     return screen_flow;
 //}
