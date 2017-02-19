@@ -2,13 +2,17 @@
 
 <html lang="en">
     <head>
-    <title>3d tracking</title>
+    <title>3d tracking!</title>
     <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
     <link rel=stylesheet href="./../common.css">
 
     <style>
         .line{
             height: 2px;
+        }
+        .debug{
+            position: absolute;
+            top:20px;
         }
     </style>
     </head>
@@ -170,7 +174,7 @@
 
 
             var tracking = new screen_flow(2, true);
-            //tracking.show_canvas();
+            tracking.show_canvas();
             /*
             $("#get-data").bind("click", function(){
                 var flow = tracking.get_data();
