@@ -3,11 +3,19 @@
 <html lang="en">
     <head>
     <title>2d tracking</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <link rel=stylesheet href="./../common.css">
+
 
     </head>
     <body>
-        <button id='get-data'>data</button>    
-        <button id='reset'>reset</button>    
+        <!--  <button id='get-data'>data</button>    
+        <button id='reset'>reset</button>   --> 
+
+        <div class="content" style="position: absolute;">
+            <div id="cols" style="position: absolute;"></div>
+            <div id="rows" style="position: absolute;"></div>
+        </div>
 
         <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
         <script type="text/javascript" src="./jsfeat-min.js"></script>
@@ -18,7 +26,142 @@
         <script type="text/javascript" src="./screen_flow.js"></script>
         
         <script type="text/javascript">
-            var tracking = new screen_flow(3, true);
+
+            var circular_buffer = (function(){
+                function circular_buffer(){
+                    this.arr = [];
+                    this.len = 0;
+                    this.offset = 0;
+                }
+
+                circular_buffer.prototype.push_back = function(obj){
+                    this.arr.push(obj);
+                    this.len ++;
+                }
+
+                circular_buffer.prototype.get = function(i){
+                    var index = this.offset + i;
+                    if(index >= this.len){
+                        index -= this.len;
+                    }else if(index <0){
+                        index += this.len;
+                    }
+                    return this.arr[index];
+                }
+
+                circular_buffer.prototype.go_forward = function(i){
+                    this.offset -= i;
+                    if(this.offset < 0){
+                        this.offset += this.len;
+                    }else if(this.offset >= this.len){
+                        this.offset -= this.len;
+                    }
+                }
+                return circular_buffer;
+            })();
+
+            var row_buff, col_buff, x0_index = 0, y0_index = 0;
+            var offset;
+            var $col_parent, $row_parent, $content;
+
+            var render = function(){
+                draw_lines(offset);
+            }
+
+            // 入力はグローバル座標
+            var set_line = function(start, goal, $line){
+                var d_x = goal.x - start.x;
+                var d_y = goal.y - start.y;
+                var len = Math.sqrt(d_x　* d_x + d_y * d_y);   
+                if(d_x == 0){
+                    d_x = 0.1;
+                }
+                var deg = Math.atan(d_y/d_x) * 180.0 / Math.PI;  //deg = 0;
+                $line.css("width", len).css("transform", "rotate(" + deg + "deg)").css("top", start.y  + d_y/2 + "px").css("left", start.x  + d_x/2 - len/2.0 + "px");
+            }
+
+            var set_position = function(pos, $jq_obj){
+                $jq_obj.css("top", pos.y + "px").css("left", pos.x + "px");
+            }
+
+            var create_line = function(start, goal, $parent){
+                var $line = $("<div class='line'></div>");
+                set_line(start, goal, $line);
+                if($parent){
+                    $parent.append($line);
+                }
+                return $line;
+            }
+
+            var init_lines = function(){
+                var div_num = 5;
+                var x_d = screen.width/div_num;
+                var y_d = screen.height/div_num;
+
+                var xval0 = 0;
+                var yval0 = 0;
+                row_buff = new circular_buffer();
+                col_buff = new circular_buffer();
+
+                for(var x=xval0; x< screen.width; x+= x_d){
+                    col_buff.push_back(create_line({x:x,y:0}, {x:x, y:screen.height}, $col_parent));
+                }
+                for(var y = yval0; y< screen.height; y+= y_d){
+                    row_buff.push_back(create_line({x:0,y:y}, {x:screen.width, y:y}, $row_parent));
+                }
+            }
+
+            var draw_lines = function(offSet){
+                var div_num = 5;
+                var x_d = screen.width/div_num;
+                var y_d = screen.height/div_num;
+
+                var xval0 = Math.floor(offSet.x / x_d);
+                var yval0 = Math.floor(offSet.y / y_d);
+
+                var parent_x = offSet.x - x_d * xval0;
+                var parent_y = offSet.y - y_d * yval0;
+
+                var x_diff = xval0 - x0_index;
+                var y_diff = yval0 - y0_index;
+
+                x0_index = xval0;
+                y0_index = yval0;
+                
+                if(x_diff ==1){
+                    col_buff.go_forward(1);
+                    set_position({x:  - screen.height/2 - xval0*x_d, y:screen.height/2}, col_buff.get(0));
+                }else if(x_diff == -1){
+                    col_buff.go_forward(-1);
+                    set_position({x: (col_buff.len - 1) * x_d - screen.height/2 - xval0*x_d, y:screen.height/2}, col_buff.get(-1));
+                }
+                if(y_diff ==1){
+                    row_buff.go_forward(1);
+                    set_position({y: - yval0*y_d , x:0}, row_buff.get(0));
+                }else if(y_diff == -1){
+                    row_buff.go_forward(-1);
+                    set_position({y: (row_buff.len - 1) * y_d - yval0*y_d , x:0}, row_buff.get(-1));
+                }
+
+                set_position({x: offset.x, y:0}, $col_parent);
+                set_position({y: offset.y, x:0}, $row_parent);
+
+                //$content.css("zoom", (offset.z*2 +100) + "%");
+                /*
+                for(var index = 0; index+=2; index< line_len){
+                    var h = (index/2);
+                    x = 
+                    set_line({x:0,y:y}, {x:screen.width, y:y}, lines[index].line);
+                    set_line({x:x,y:0}, {x:x, y:screen.height}, lines[index+1].line);
+                }
+                */
+            }
+            
+
+
+            var tracking = new screen_flow(2, true);
+            tracking.show_canvas();
+            /*
             $("#get-data").bind("click", function(){
                 var flow = tracking.get_data();
                 console.log(flow);
@@ -27,6 +170,21 @@
             $("#reset").bind("click", function(){
                 tracking.reset();
             });
+            */
+
+            $col_parent = $("#cols");
+            $row_parent = $("#rows");
+            $content  = $(".content");
+
+            init_lines();
+
+            var anim_loop = function(){
+                window.requestAnimationFrame(anim_loop);
+                var flow = tracking.get_data();
+                offset = flow.move;
+                render();
+            }
+            anim_loop();
 
         </script>
     </body>

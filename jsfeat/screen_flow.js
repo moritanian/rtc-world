@@ -3,10 +3,11 @@ var screen_flow = (function() {
     "use strict";
  
  	var active_num;
- 	var predict_flow_vec_accumulated = [0,0]; // 予測された移動ベクトル 開始時からの移動
- 	var predict_flow_vec_base = [0,0]; // baseの予測された移動ベクトル 
-    var predict_flow_vec_from_base = [0,0]; // base(今のflow点)からの相対的な予測された移動ベクトル
+ 	var predict_flow_vec_accumulated = [0,0,0]; // 予測された移動ベクトル 開始時からの移動
+ 	var predict_flow_vec_base = [0,0,0]; // baseの予測された移動ベクトル 
+    var predict_flow_vec_from_base = [0,0,0]; // base(今のflow点)からの相対的な予測された移動ベクトル
     var is_show_canvas;
+    var is_calc_depth = true;
     var render_func; // 描画のタイミングで呼ばれる関数　外部から与えられる
  	var screen_flow = function(REQURE_POINT_NUM_PER_SIDE = 3, debug = false, render){
  		console.log("construction" + REQURE_POINT_NUM_PER_SIDE);
@@ -22,7 +23,7 @@ var screen_flow = (function() {
             is_show_canvas = false;
 
             if(debug){
-            	var log = $("<div><div id='no_rtc' style='display:none'></div><div id='log'></div><div id='move'></div></div>");
+            	var log = $("<div><div id='no_rtc' style='display:none'></div><div id='move'></div><div id='log'></div></div>");
             	$(document.body).append(log);
             }
 
@@ -223,11 +224,12 @@ var screen_flow = (function() {
                     auto_add_flow_point(ctx);
 
                   	if(debug){
-	                    $('#log').html(stat.log() + '<br/>click to add tracking points: ' + active_num);
-	                    var text = 'move-x: ' + predict_flow_vec_accumulated[0] + '<br/>move-y: ' + predict_flow_vec_accumulated[1];
+	                    var text = 'move-x: ' + predict_flow_vec_accumulated[0] + '<br/>move-y: ' + predict_flow_vec_accumulated[1] + '<br/>move-z: ' + predict_flow_vec_accumulated[2]  ;
 	                    text += '<br>move-x: ' + predict_flow_vec_base[0] + '<br/>move-y: ' + predict_flow_vec_base[1];
 	                    text += '<br>move-x: ' + predict_flow_vec_from_base[0] + '<br/>move-y: ' + predict_flow_vec_from_base[1];
                     	$('#move').html(text);
+                        $('#log').html(stat.log() + '<br/>click to add tracking points: ' + active_num);
+
                     }
                 }
             }
@@ -268,8 +270,40 @@ var screen_flow = (function() {
                     ave_xy[0] /= active_num;
                     ave_xy[1] /= active_num;
                 }
-                 var mod_ave_xy = [0,0];
+
+                if(is_calc_depth){
+                    var center_xy = [canvasWidth/2, canvasHeight/2];
+                    var depth=0, num = 0;
+                    for(var y=0;y<REQURE_POINT_NUM_PER_SIDE; y++){
+                        for(var x=0; x<REQURE_POINT_NUM_PER_SIDE; x++){
+                            index = x + y*REQURE_POINT_NUM_PER_SIDE;
+                            if(point_status[index] == 1){ // 存在する
+                                var dx = (curr_xy[index << 1] - center_xy[0]) ;
+                                var dy =  (curr_xy[(index<<1) +1] - center_xy[1]);
+                                /*
+                                if(dx != 0){
+                                    depth += (move_vec_buff[index<<1] - ave_xy[0])/ dx;
+                                    num++;
+                                }
+                                if(dy != 0){
+                                    depth += (move_vec_buff[(index<<1)+1] - ave_xy[1]) / dy;
+                                }
+                                */
+                                if(dx!=0 && dy!= 0){
+                                    num++;
+                                    depth+= ((move_vec_buff[index<<1] - ave_xy[0])*dx +  (move_vec_buff[(index<<1)+1] - ave_xy[1])*dy) / (dx*dx + dy*dy);  
+                                }
+                               
+                            }
+                        }
+                    }
+                    if(num>0){
+                        depth/=num; 
+                        predict_flow_vec_accumulated[2] += depth * stat.fps;
+                    }
+                }
                
+               /*
                 if(active_num == 1+REQURE_POINT_NUM_PER_SIDE*REQURE_POINT_NUM_PER_SIDE){
                     console.log(active_num);
                     console.log(prev_xy);
@@ -277,9 +311,9 @@ var screen_flow = (function() {
                     console.log(move_vec_buff);
                     console.log(point_status);
                 }
+                */
 
-               mod_ave_xy[0] = ave_xy[0];
-               mod_ave_xy[1] = ave_xy[1];
+              
               
                 // 修正された平均値を移動量と考える
                 // 範囲外の場合はbaseを変更する
@@ -310,8 +344,9 @@ var screen_flow = (function() {
                 }
                 
 
-                predict_flow_vec_from_base[0] -= mod_ave_xy[0];
-                predict_flow_vec_from_base[1] -= mod_ave_xy[1];
+                predict_flow_vec_from_base[0] -= ave_xy[0];
+                predict_flow_vec_from_base[1] -= ave_xy[1];
+
 
                 var dx = 0, dy = 0;
                 if(predict_flow_vec_from_base[0] > BASE_X_DIST){
@@ -384,7 +419,7 @@ var screen_flow = (function() {
     screen_flow.prototype.get_data = function() {
     	return {
     		active_num: active_num,
-    		move: {x:  Math.floor(predict_flow_vec_accumulated[0]), y:   Math.floor(predict_flow_vec_accumulated[1])} 
+    		move: {x:  Math.floor(predict_flow_vec_accumulated[0]), y:Math.floor(predict_flow_vec_accumulated[1]), z:Math.floor(predict_flow_vec_accumulated[2])} 
     	};
     }
     screen_flow.prototype.reset = function() {
