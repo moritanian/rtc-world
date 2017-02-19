@@ -293,7 +293,7 @@ var screen_flow = (function() {
                                     depth += (move_vec_buff[(index<<1)+1] - ave_xy[1]) / dy;
                                 }
                                 */
-                                if(r_2 > 3000){
+                                if(r_2 > 30){
                                     num++;
                                     depth+= ((move_vec_buff[index<<1] - ave_xy[0])*dx +  (move_vec_buff[(index<<1)+1] - ave_xy[1])*dy) / r_2;  
                                     rot += (dx * (move_vec_buff[(index<<1)+1] - ave_xy[1]) - dy*(move_vec_buff[index<<1] - ave_xy[0])) / r_2; 
@@ -426,7 +426,7 @@ var screen_flow = (function() {
     screen_flow.prototype.get_data = function() {
     	return {
     	   active_num: active_num,
-    	   move: {x:  Math.floor(predict_flow_vec_accumulated[0]), y:Math.floor(predict_flow_vec_accumulated[1]), z:Math.floor(predict_flow_vec_accumulated[2])},
+    	   move: {x:  - Math.floor(predict_flow_vec_accumulated[0]), y:-Math.floor(predict_flow_vec_accumulated[1]), z:Math.floor(predict_flow_vec_accumulated[2])},
     	   rot: {x: predict_rotation[0], y:predict_rotation[1], z: predict_rotation[2]}    
         };
     }
