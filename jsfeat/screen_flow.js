@@ -304,9 +304,11 @@ var screen_flow = (function() {
                     }
                     if(num>0){
                         depth/=num; 
-                        predict_flow_vec_accumulated[2] += depth *500;
+                        predict_flow_vec_accumulated[2] += depth *canvasHeight; //だいたいx,yと同じスケールになるようにかけてる
                         rot /= num;
-                        predict_rotation[2] += rot;
+                        if(Math.abs(rot) <= 1.0){
+                            predict_rotation[2] += Math.asin(rot);
+                        }
                     }
                 }
                
@@ -426,7 +428,7 @@ var screen_flow = (function() {
     screen_flow.prototype.get_data = function() {
     	return {
     	   active_num: active_num,
-    	   move: {x: Math.floor(predict_flow_vec_accumulated[0]), y:Math.floor(predict_flow_vec_accumulated[1]), z:Math.floor(predict_flow_vec_accumulated[2])},
+    	   move: {x: -Math.floor(predict_flow_vec_accumulated[0]), y:-Math.floor(predict_flow_vec_accumulated[1]), z:Math.floor(predict_flow_vec_accumulated[2])},
     	   rot: {x: predict_rotation[0], y:predict_rotation[1], z: predict_rotation[2]}    
         };
     }
