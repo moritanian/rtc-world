@@ -22,15 +22,18 @@
             alert("カメラが見つかりません");
             return;
           }
-
-          $("#result").html( strCamera );
+          //カメラを取得・切り替える
+          setCamera();
+          console.log(cameraData);
+          console.log(strCamera);
         });
       }catch(e){
         console.log(e);
         has_media_stream_track = false;
+        //カメラを取得・切り替える
+        setCamera();
       }
-      //カメラを取得・切り替える
-      setCamera();
+    
 
       //カメラを取得・切り替える
       var cnt = 0;

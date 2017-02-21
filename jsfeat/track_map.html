@@ -98,7 +98,7 @@
                 
                 var render = function(){
                     if(map){
-                         map.panTo(new google.maps.LatLng(FIRST_LATING[0] + y_filter.get()/move_coff, FIRST_LATING[1] + x_filter.get()/move_coff));
+                         map.panTo(new google.maps.LatLng(FIRST_LATING[0] + y_filter.get()/move_coff, FIRST_LATING[1] - x_filter.get()/move_coff));
                          $map_element.css("zoom", (z_filter.get()/20 +100) + "%");
                          $map_element.css("transform", "rotate(" + rot.z*180 /3.14 + "deg)");
 
