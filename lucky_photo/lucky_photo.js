@@ -8,26 +8,49 @@
       var filters = ["", "grayscale", "sepia", "blur"];
       try{
         console.log(MediaStreamTrack);
-        MediaStreamTrack.getSources(function(data){
+        console.log(!!MediaStreamTrack.getSources);
+        console.log(!!MediaDevices.enumerateDevices);
 
-          //カメラ情報を取得して、出力する
-          var strCamera = "";
-          var len = data.length;
-          for( var i = 0 ; i < len ; i ++ ){
-            strCamera += "<p>種類："+ data[i].kind+"<br/>ID："+ data[i].id+"</p>";
-            if( data[i].kind == "video" ){
-              cameraData.push(data[i]);
+        if(!!MediaStreamTrack.getSources){
+          MediaStreamTrack.getSources(function(data){
+
+            //カメラ情報を取得して、出力する
+            var strCamera = "";
+            var len = data.length;
+            for( var i = 0 ; i < len ; i ++ ){
+              strCamera += "<p>種類："+ data[i].kind+"<br/>ID："+ data[i].id+"</p>";
+              if( data[i].kind == "video" ){
+                cameraData.push(data[i]);
+              }
             }
-          }
-          if( cameraData.length == 0 ){
-            alert("カメラが見つかりません");
-            return;
-          }
+            if( cameraData.length == 0 ){
+              alert("カメラが見つかりません");
+              return;
+            }
+            //カメラを取得・切り替える
+            setCamera();
+            console.log(cameraData);
+            console.log(strCamera);
+          });
+        }else if(!!MediaDevices.enumerateDevices){
+          navigator.mediaDevices.enumerateDevices()
+          .then(function(devices) {
+            devices.forEach(function(device) {
+              console.log(device.kind + ": " + device.label +
+                          " id = " + device.deviceId);
+              if(device.kind === "video"){
+                cameraData.push(device);
+              }
+            });
+          })
+          .catch(function(err) {
+            console.log(err.name + ": " + error.message);
+          });
+        }else{
+          has_media_stream_track = false;
           //カメラを取得・切り替える
-          setCamera();
-          console.log(cameraData);
-          console.log(strCamera);
-        });
+          setCamera();   
+        }
       }catch(e){
         console.log(e);
         has_media_stream_track = false;
