@@ -9,7 +9,7 @@
       try{
         console.log(MediaStreamTrack);
         console.log(!!MediaStreamTrack.getSources);
-        console.log(!!MediaDevices.enumerateDevices);
+        console.log(!!navigator.mediaDevices.enumerateDevices);
 
         if(!!MediaStreamTrack.getSources){
           MediaStreamTrack.getSources(function(data){
@@ -32,7 +32,7 @@
             console.log(cameraData);
             console.log(strCamera);
           });
-        }else if(!!MediaDevices.enumerateDevices){
+        }else if(!!navigator.mediaDevices.enumerateDevices){
           navigator.mediaDevices.enumerateDevices()
           .then(function(devices) {
             devices.forEach(function(device) {
