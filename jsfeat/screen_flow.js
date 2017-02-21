@@ -27,70 +27,10 @@ var screen_flow = (function() {
             	var log = $("<div class='debug'><div id='no_rtc' style='display:none'></div><div id='move'></div><div id='log'></div></div>");
             	$(document.body).append(log);
             }
+         
+            var camController = new camera_controller(video);
+            camController.startCamera();
 
-            var has_media_stream_track = true;
-            var cameraData = [];
-            function _gotSources(sourceInfos)
-            {
-              for (var i = 0; i != sourceInfos.length; i++)
-              {
-                var sourceInfo = sourceInfos[i];
-                if (sourceInfo.kind == 'video')
-                {
-                     cameraData.push(sourceInfos[i]);
-                }
-              }
-              setCamera();
-            }
-
-            function setCamera(){
-                try{
-                    if(has_media_stream_track){
-                        var constraints = {
-                            video: {
-                            optional: [{sourceId: cameraData[1].id}]
-                            }
-                        };
-                    }else{
-                        var constraints = {video: true};
-                    }
-                }catch(e){
-                    console.log(e);
-                }
-
-                compatibility.getUserMedia(constraints, function(stream) {
-                    try {
-                        video.src = compatibility.URL.createObjectURL(stream);
-                    } catch (error) {
-                    	console.log(error);
-                        video.src = stream;
-                    }
-                    setTimeout(function() {
-                            video.play();
-                        }, 500);
-                }, function (error) {
-                    $('#log').hide();
-                    $('#no_rtc').html('<h4>WebRTC not available.</h4>');
-                    $('#no_rtc').show();
-                });
-            }
-
-            if (typeof MediaStreamTrack === 'undefined')
-            {
-              alert('未対応ブラウザです');
-            }
-            else
-            {
-              try{
-                MediaStreamTrack.getSources(_gotSources);
-              }
-              catch(e){
-                console.log(e);
-                has_media_stream_track = false;
-                setCamera();
-
-              }
-            }
 
             try {
                 var attempts = 0;
