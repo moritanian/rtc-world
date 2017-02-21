@@ -1,38 +1,42 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no;" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta http-equiv="Content-type" content="text/html; charset=utf-8">
   <title></title>
-  <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+  <script src="./jq.js"></script>
   <script type="text/javascript">
 
     $(function(){
 
       //カメラの情報を取得
       var cameraData = [];
-      MediaStreamTrack.getSources(function(data){
+      var has_media_stream_track = true;
+      try{
+        MediaStreamTrack.getSources(function(data){
 
-        //カメラ情報を取得して、出力する
-        var strCamera = "";
-        var len = data.length;
-        for( var i = 0 ; i < len ; i ++ ){
-          strCamera += "<p>種類："+ data[i].kind+"<br/>ID："+ data[i].id+"</p>";
-          if( data[i].kind == "video" ){
-            cameraData.push(data[i]);
+          //カメラ情報を取得して、出力する
+          var strCamera = "";
+          var len = data.length;
+          for( var i = 0 ; i < len ; i ++ ){
+            strCamera += "<p>種類："+ data[i].kind+"<br/>ID："+ data[i].id+"</p>";
+            if( data[i].kind == "video" ){
+              cameraData.push(data[i]);
+            }
           }
-        }
-        if( cameraData.length == 0 ){
-          alert("カメラが見つかりません");
-          return;
-        }
+          if( cameraData.length == 0 ){
+            alert("カメラが見つかりません");
+            return;
+          }
 
-        $("#result").html( strCamera );
-
-        //カメラを取得・切り替える
-        setCamera();
-
-      });
+          $("#result").html( strCamera );
+        });
+      }catch(e){
+        console.log(e);
+        has_media_stream_track = false;
+      }
+      //カメラを取得・切り替える
+      setCamera();
 
       //カメラを取得・切り替える
       var cnt = 0;
@@ -56,21 +60,26 @@
           localStream.getTracks().forEach(function (track) { track.stop()});
         }
 
-        //カメラをIDを使用して取得する
-        navigator.getUserMedia(
-          {
+        if(has_media_stream_track){
+          var constraints = {
             video: {
               optional: [{sourceId: cameraData[cnt].id }] //カメラIDを直接指定する
             },
             audio: false
-          },
+          };
+        }else{
+          var constraints = {video: true, audio: false};
+        }
+        //カメラをIDを使用して取得する
+        navigator.getUserMedia(
+          constraints,
           function(stream) {
 
             //切り替え時にカメラを停止するため、情報を保存しておく
             localStream = stream;
-
-            $("#result_use").html( cameraData[cnt].id );
-
+            if(has_media_stream_track){
+              $("#result_use").html( cameraData[cnt].id );
+            }
             //カメラをvideoに結びつける
             video.src = window.URL.createObjectURL(stream);
 
@@ -159,5 +168,8 @@
 <button id="changeButton">カメラ切り替え</button>
 <h3>使用カメラID</h3>
 <div id="result_use"></div>
+
+
+
 </body>
 </html>
