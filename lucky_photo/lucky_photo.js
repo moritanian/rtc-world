@@ -39,10 +39,11 @@
               console.log(device.kind + ": " + device.label +
                           " id = " + device.deviceId);
               if(device.kind === "videoinput"){
-                cameraData.push(device);
+                cameraData.push({id:device.deviceId});
               }
             });
             console.log(cameraData);
+            setCamera();
           })
           .catch(function(err) {
             console.log(err.name + ": " + error.message);
