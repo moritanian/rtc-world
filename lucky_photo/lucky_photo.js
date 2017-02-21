@@ -7,6 +7,7 @@
       var effect_index = 0;
       var filters = ["", "grayscale", "sepia", "blur"];
       try{
+        console.log(MediaStreamTrack);
         MediaStreamTrack.getSources(function(data){
 
           //カメラ情報を取得して、出力する
