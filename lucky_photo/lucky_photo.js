@@ -130,7 +130,7 @@
       function download(objectURL, filename) {
         var a = document.createElement('a');
         var e = document.createEvent('MouseEvent');
-        console.log(objectURL);
+        //console.log(objectURL);
 
         //a要素のdownload属性にファイル名を設定
         a.download = filename;
