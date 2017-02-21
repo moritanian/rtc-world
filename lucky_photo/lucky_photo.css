@@ -27,11 +27,22 @@ body{
       width: 100%;
       box-shadow: 0 0 3px gray;
       border-radius: 5px;;
-      margin-bottom: 13px;
+      margin-bottom: 3px;
     }
     #canvas {
-    
+
     }
+
+    .m-button{
+      padding: 5px 5px;
+      font-weight: bold;
+      text-shadow: 0 0 3px #fff;
+      font-size: 16px;
+      min-width:90px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+    }
+
     #changeButton{
       background: #7abcff;
       background: -moz-linear-gradient(top, #7abcff 0%, #60abf8 44%, #4096ee 100%);
@@ -41,13 +52,7 @@ body{
       background: -ms-linear-gradient(top, #7abcff 0%,#60abf8 44%,#4096ee 100%);
       background: linear-gradient(to bottom, #7abcff 0%,#60abf8 44%,#4096ee 100%);
       filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#7abcff', endColorstr='#4096ee',GradientType=0 );
-      padding: 5px 12px;
-      font-weight: bold;
       border: 1px solid blue;
-      font-size: 16px;
-      text-shadow: 0 0 3px #fff;
-      border-radius: 4px;
-      margin-bottom: 13px;
     }
     #takeButton{
       background: #ffbc7a;
@@ -58,14 +63,7 @@ body{
       background: -ms-linear-gradient(top, #7abcff 0%,#60abf8 44%,#4096ee 100%);
       background: linear-gradient(to bottom, #ffbc7a 0%,#f8ab60 44%,#ee9640 100%);
       filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#7abcff', endColorstr='#ee9640',GradientType=0 );
-      padding: 5px 12px;
-      font-weight: bold;
       border: 1px solid red;
-      font-size: 16px;
-      text-shadow: 0 0 3px #fff;
-      border-radius: 4px;
-      margin-bottom: 13px;
-      width:130px;
     }
 
      #effectButton{
@@ -77,14 +75,7 @@ body{
       background: -ms-linear-gradient(top, #7abcff 0%,#60abf8 44%,#4096ee 100%);
       background: linear-gradient(to bottom, #bcff7a 0%,#abf860 44%,#96ee40 100%);
       filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#7abcff', endColorstr='#ee9640',GradientType=0 );
-      padding: 5px 12px;
-      font-weight: bold;
       border: 1px solid green;
-      font-size: 16px;
-      text-shadow: 0 0 3px #fff;
-      border-radius: 4px;
-      margin-bottom: 13px;
-      width:130px;
     }
 
     #result_use{

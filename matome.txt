@@ -73,3 +73,8 @@ bluetooth
 
 # デザイン
 http://paradise.antytle.com/2015/reallife-fps-maps/tutorial/credit/
+
+#android検証
+chrome://inspect/#devices
+実機とusb接続で、ログ確認、要素確認、スタイル操作
+さらにportforwarding でlocalhost接続できる!
