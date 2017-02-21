@@ -38,10 +38,11 @@
             devices.forEach(function(device) {
               console.log(device.kind + ": " + device.label +
                           " id = " + device.deviceId);
-              if(device.kind === "video"){
+              if(device.kind === "videoinput"){
                 cameraData.push(device);
               }
             });
+            console.log(cameraData);
           })
           .catch(function(err) {
             console.log(err.name + ": " + error.message);
