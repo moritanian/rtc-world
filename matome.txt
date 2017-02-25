@@ -105,5 +105,16 @@ pc/androidとも chrome, firefoxでpush通知され、クリックで指定URL�
 - nodejsのSDKでデータが見られない。書き込みはできる。仕方ないからデータ参照はRESTAPIを使った。
 
 
+# babel廻り
+ES2015 = ECMAScript6 = ES6 
+の記述をES5に変換する
+現状、最新ブラウザではかなりES6も実装されているよう。ただし、importはできなかった
 
+http://www.yoheim.net/blog.php?q=20160803
+でできた
+
+## まとめ
+モダンブラウザではクラスをprototypeベースでなく書けるので使いたい
+アロー演算子でsetTimeOutなどの中のコールバック関数内のthisが記述されたスコープを参照する。
+これでthisを別の変数に保管する必要がない!!
  
