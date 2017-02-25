@@ -1,3 +1,5 @@
+[春休み企画 WEBRTCと最新webAPIを使ってみよう! ]
+
 https://html5experts.jp/mganeko/19814/
 
 https://html5experts.jp/mganeko/20013/
@@ -75,6 +77,33 @@ bluetooth
 http://paradise.antytle.com/2015/reallife-fps-maps/tutorial/credit/
 
 #android検証
+http://qiita.com/syarihu/items/23f5cd9edc9d081e0d65
 chrome://inspect/#devices
 実機とusb接続で、ログ確認、要素確認、スタイル操作
 さらにportforwarding でlocalhost接続できる!
+
+# webpush通知
+## service worker
+タブの裏で動く、ページとは独立したスレッド
+
+## 2/24日report
+一通りwebpushが動くように実装した
+### 対応内容
+- 初回以下にアクセス
+http://localhost/webRTC/service-worker/push/index.html
+firebaseのdatabaseに機種のデータを登録する
+
+- 以下のnodejsを実行すると登録した機種にwebpushが届く
+/webrtc/service-worker/push/push.js
+
+### 実行結果
+pc/androidとも chrome, firefoxでpush通知され、クリックで指定URLが開く
+ただし、android/firefox はバイブレーションなし、またfirefoxを閉じている場合URLに遷移しない
+
+### 問題点
+- firebaseの書き込み権限を指定すると、書き込めない。アカウント設定か？鍵(serviceAccountCredentials.json)として「mater」アカウントを使用
+- nodejsのSDKでデータが見られない。書き込みはできる。仕方ないからデータ参照はRESTAPIを使った。
+
+
+
+ 
