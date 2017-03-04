@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>RTC World</title>
+<link rel=stylesheet href="./top.css">
+
+<script src='https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'></script>
+<script src="http://fb.me/react-0.13.3.js"></script>
+<script src="http://fb.me/JSXTransformer-0.13.3.js"></script>
+
+
+
+  
+</head>
+<body>
+    <h1> RTC World TOP</h1>
+    <div id="content"></div>
+</body>
+<!-- <script  type="text/jsx" scr="./rtc_top.js"></script> -->
+<script type="text/jsx">
+  
+
+
+var Link =  React.createClass({
+  onClick(e){
+    let fall_dis_norm = 800;
+    $(".link").each(function(){
+      $(this).addClass("fall");
+
+      let top = $(this).offset().top;
+      let ratio = fall_dis_norm/(fall_dis_norm - top);
+      $(this).css("animation-duration", ratio + "s");
+      console.log(ratio);
+    });
+   setTimeout(()=>
+     window.location.href = this.props.data.url
+    ,700);
+   
+  }, 
+  // <Link />の表示
+     render: function() {
+        return (
+           <div className="link" onClick ={this.onClick} >
+             {this.props.data.title}
+           </div>
+        );
+    }
+});
+
+var link_list = [];
+link_list.push(["Track Map", "./jsfeat/track_map.html"]);
+link_list.push(["Web Push", "./web_push/register/index.html"]);
+link_list.push(["Swipe Ball", "./ball.html"]);
+link_list.push(["Track Ball", "./track_ball.html"]);
+link_list.push(["Screen Flow", "./jsfeat/screen_flow.html"]);
+link_list.push(["lucky photo", "./lucky_photo/index.html"]);
+link_list.push(["Credit", ""]);
+
+
+var ListBox = React.createClass({
+    // 初期値を設定します
+    getInitialState: function() {
+        return {data: link_list};
+    },
+   
+    // このコンポーネントがDOMツリーに追加されたタイミングで呼ばれます
+   /* componentDidMount: function() {
+       this.setState({data: link_list});
+    },*/
+
+    render: function() {
+      var linkNodes = this.state.data.map(function (row) {
+            hash_row = {title: row[0], url: row[1]};
+            console.log(hash_row);
+            return (
+                <Link data= {hash_row} />
+            );
+        });
+
+        return (
+            <div>
+              {linkNodes}
+            </div>                                                                                           
+        );
+    }
+});
+
+React.render(
+    // ListBoxというコンポーネントを指定したタグに書き出します
+    <ListBox />,
+    document.getElementById('content')
+);
+
+</script>
+
+
+</html>

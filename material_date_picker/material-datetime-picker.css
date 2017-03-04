@@ -1,3 +1,5 @@
+@import url(material-datetime-picker-tablet.css) screen and (max-width: 768px); /* 768以下 */
+
 .c-scrim {
   position: fixed;
   left: 0;

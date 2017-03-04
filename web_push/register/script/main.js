@@ -23,6 +23,7 @@ var unix_time = "";
 
 var config = {
     apiKey: "AIzaSyCFO6UPeouZvEhY-GqZIYo1OkW3XeH6Mjo",
+    //secret_key
     authDomain: " rtc-world.firebaseapp.com",
     databaseURL: "https://rtc-world.firebaseio.com/",
     messagingSenderId: "341418178004",
@@ -53,7 +54,7 @@ var get_user_data =function(){
             navigator.serviceWorker.register('./service-worker.js?time=${d.getTime()}');
             navigator.serviceWorker.ready
                      .then((registration) => {
-                         return registration.pushManager.subscribe({userVisibleOnly: true});
+                         return registration.pushManager.subscribe({userVisibleOnly: true, userVisible: true});
                      })
                      .then((subscription) => {
                         user_data.endpoint = subscription.endpoint;

@@ -118,3 +118,8 @@ http://www.yoheim.net/blog.php?q=20160803
 アロー演算子でsetTimeOutなどの中のコールバック関数内のthisが記述されたスコープを参照する。
 これでthisを別の変数に保管する必要がない!!
  
+# 2D library
+create.js vs pixi.js
+
+## good sample
+https://github.com/ofZach/landlines

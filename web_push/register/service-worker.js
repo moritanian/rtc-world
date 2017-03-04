@@ -18,10 +18,11 @@ self.addEventListener('fetch', (event) => {
 
 self.addEventListener('push', (event) => {
     console.info('push2', event);
-    console.info("data" ,event.data.text());
-
-    var data = JSON.parse(event.data.text());
-    
+    //console.info("data" ,event.data.text());
+    var data = {};
+    if(event.data){
+        data = JSON.parse(event.data.text());
+    }
     const message = data.message ? data.message : '(・∀・)';
     
     event.waitUntil(
