@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
+
+        <title>tracking mouse</title>
+        
+        <style type="text/css">
+           
+        </style>
+        <link rel=stylesheet href="./mouse.css">
+
+        
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+        <script src="https://rtc-world-s.herokuapp.com/socket.io/socket.io.js"></script> 
+        <script src="./../chanel.js"></script>
+
+
+        <script type="text/javascript" src="./../jsfeat/jsfeat-min.js"></script>
+        
+        <script type="text/javascript" src="./../jsfeat//compatibility.js"></script>
+       
+        <script type="text/javascript" src="./../jsfeat/profile.js"></script>
+        <script type="text/javascript" src="./../device_cam.js"></script>
+        <script type="text/javascript" src="./../jsfeat/screen_flow.js"></script>
+               
+    </head>
+    <body class="no-margin">
+    <div class="mouse-content">
+        <canvas class="mouse-tail" id="tail-wave"></canvas>
+        <div class="mouse-body">
+            <div class="clicker" id="left-clicker"></div>
+            <div class="clicker" id="right-clicker"></div>
+            <div id="scroll-part"></div>
+            <div class="mouse-logo">RTC</div>
+            
+        </div>
+    </div>
+    </body>
+    <script type="text/javascript">
+    'use strict';
+    $(function () {
+        const CHANEL_ROOM_NAME = "TrackMouseRoom";
+        var click_audio, chanel_control;
+
+        /*
+            WEB RTC Connection 
+        */
+        function initConnection(){
+            var connected_callback = function(connection_count){
+            };
+            var msg_get_callback = function(msg){
+            }
+            var closed_callback = function(connection_count){
+            }
+            chanel_control = new chanel(connected_callback, msg_get_callback, closed_callback, CHANEL_ROOM_NAME);
+        }
+        initConnection();
+
+        /* 
+            マウスの設定 
+        */
+        
+        // tail 描画 
+        function create_tail() {
+          //描画コンテキストの取得
+          var canvas = document.getElementById('tail-wave');
+          if (canvas.getContext) {
+            var context = canvas.getContext('2d');
+            //ここに具体的な描画内容を指定する
+            //新しいパスを開始する
+            context.beginPath();
+            context.lineWidth = 10;
+            context.strokeStyle = 'rgb(30, 30, 62)'; 
+            // 影
+            context.shadowColor = "rgb(160, 160, 170)";
+            context.shadowOffsetX = 10;
+            context.shadowOffsetY = 5;
+            //パスの開始座標を指定する
+            context.moveTo(150,150);
+            //座標を指定してラインを引いていく
+            context.quadraticCurveTo(100,50,160,0);
+            //現在のパスを輪郭表示する
+            context.stroke();
+          }
+        }
+        create_tail();
+
+        // クリック音
+        function initSound(){
+            var click_source_file = "./click.mp3";
+            click_audio = new Audio();
+            click_audio.src = click_source_file;
+            click_audio.load();
+        }
+
+        initSound();
+
+        var clicker_status = {
+            right: false,
+            left: false
+        };
+        var mouse_events = [];
+
+        // マウスイベント設定
+        const event_ids = {
+            left_click: 1,
+            right_click: 2,
+
+            left_dblclick:3,
+
+            left_down:5,
+            right_down:6,
+            left_up :7,
+            right_up :8,
+
+            scroll_up: 9,
+            scroll_down: 10 
+        };
+
+        const clicker_ids = {
+            right:1,
+            left:2
+        };
+
+        var click_down = function(event, element, clicker_id = 0){
+            if(clicker_id == clicker_ids.right){
+                clicker_status.right = true;
+                mouse_events.push(event_ids.right_down);
+            }else if(clicker_id == clicker_ids.left){
+                clicker_status.left = true;
+                mouse_events.push(event_ids.left_down);
+            }
+            // click_audio.pause();
+            //click_audio.play();
+            $(element).addClass("clicked-clicker");
+        }
+
+        var click_up = function(event, element, clicker_id = 0){
+            if(clicker_id == clicker_ids.right){
+                clicker_status.right = false;
+                mouse_events.push(event_ids.right_up);
+            }else if(clicker_id == clicker_ids.left){
+                clicker_status.left = false;
+                mouse_events.push(event_ids.left_up);               
+            }
+            $(element).removeClass("clicked-clicker");
+        }
+
+        var publish_event = function(event_id, option = {}){
+            console.log("event" + event_id);
+            mouse_events.push(event_id);
+        }
+
+        //$("#right-clicker").bind("mousedown", function(e){click_down(e, this)});
+        $("#right-clicker").bind("touchstart", function(e){click_down(e, this, clicker_ids.right)});
+        //$("#right-clicker").bind("mouseup", function(e){click_up(e, this)});
+        $("#right-clicker").bind("touchend", function(e){click_up(e, this, clicker_ids.right)});
+
+       // $("#left-clicker").bind("mousedown", function(e){click_down(e, this)});
+        $("#left-clicker").bind("touchstart", function(e){click_down(e, this, clicker_ids.left)});
+       // $("#left-clicker").bind("mouseup", function(e){click_up(e, this)});
+       $("#left-clicker").bind("touchend", function(e){click_up(e, this, clicker_ids.left)});
+
+        $("#right-clicker").click(function(){
+                    click_audio.play();
+                    publish_event(event_ids.right_click)
+
+        });
+        $("#left-clicker").click(function(){
+                    click_audio.play();
+                    publish_event(event_ids.left_click);
+        });
+        $("#left-clicker").dblclick(function(){
+                    click_audio.play();
+                    publish_event(event_ids.left_dblclick);
+        });
+
+
+        /*
+            tracking flow
+        */
+
+        // low pass filter class
+        var lp_filter = (function(){
+            var lp_filter = function(ratio = 0.1){
+                this.data = 0;
+                this.ratio = ratio;
+            }
+
+            lp_filter.prototype.set = function(new_data){
+                this.data = this.data*(1 - this.ratio) + new_data * this.ratio; 
+            }
+
+            lp_filter.prototype.get = function(){
+                return this.data;
+            }
+            return lp_filter
+        })();
+       
+        var tracking = new screen_flow(2, /* debug = */false);
+        var offset, rot;
+        var x_filter = new lp_filter(0.5);
+        var y_filter = new lp_filter(0.5);
+        var z_filter = new lp_filter(0.5);
+        var data_hash = {};               
+        /* 
+            loop
+        */ 
+        var render = function(){
+                   
+        };
+
+        (function loop(){
+            window.requestAnimationFrame(loop);
+            var flow = tracking.get_data();
+            offset = flow.move;
+            rot = flow.rot;
+
+            x_filter.set(offset.x);
+            y_filter.set(offset.y);
+            z_filter.set(offset.z);
+            data_hash.x = x_filter.get();
+            data_hash.y = y_filter.get();
+            data_hash.z = z_filter.get();
+            data_hash.rot = rot.z;
+            data_hash.status = 0;
+            data_hash.left  = clicker_status.left;
+            data_hash.right = clicker_status.right;
+            data_hash.mouse_events = mouse_events;
+            // send data
+            chanel_control.sendAlongDataChanel( JSON.stringify(data_hash));
+            mouse_events = []; // 
+            //render();
+        })();
+    });            
+
+    </script>
+</html>

@@ -24,7 +24,7 @@ var chanel = (function(){
   let get_msg_callback;
   let closed_callback;
   // connected_callback: 接続した際のコールバック関数, get_msg_callback, _closed_callback : データチャネル切断時のｃａｌｌｂａｃｋ
-  var chanel = function(_connected_callback, _get_msg_callback, _closed_callback){
+  var chanel = function(_connected_callback, _get_msg_callback, _closed_callback, room = "_testroom"){
     connected_callback = _connected_callback;
     get_msg_callback = _get_msg_callback;
     closed_callback = _closed_callback;
@@ -41,7 +41,7 @@ var chanel = (function(){
     
     // ----- use socket.io ---
     
-    let room = getRoomName();
+    //let room = getRoomName();
     socket.on('connect', function(evt) {
       console.log('socket.io connected. enter room=' + room );
       socket.emit('enter', room);
@@ -106,6 +106,7 @@ var chanel = (function(){
       socket.emit('message', msg);
     }
     // -- room名を取得 --
+    /*
     function getRoomName() { // たとえば、 URLに  ?roomname  とする
       let url = document.location.href;
       let args = url.split('?');
@@ -117,6 +118,7 @@ var chanel = (function(){
       }
       return '_testroom';
     }
+    */
     // --- RTCPeerConnections ---
     function getConnectionCount() {
       return Object.keys(peerConnections).length;

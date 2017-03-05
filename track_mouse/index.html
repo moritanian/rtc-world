@@ -1,0 +1,165 @@
+ 
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<link rel=stylesheet href="./mouse.css">
+ <title>mouse</title>
+
+<script src="./../jq.js"></script>
+
+<script src="https://rtc-world-s.herokuapp.com/socket.io/socket.io.js"></script> 
+<script src="./../chanel.js"></script>
+
+<script type="text/javascript" src="./../node_module/node_module.js"></script>
+<link href="./../node_module/node.css" rel="stylesheet" />
+
+
+
+
+</head>
+<body class="hide_original_cursor"> 
+<div class="cursor-content hide_original_cursor">
+
+<div class="node-container" style="width: inherit; height: inherit;">
+  <div class="node-map" style="width: inherit; height: inherit;">
+  </div>
+</div>
+
+<div class="cursor"></div>
+
+
+</div>
+
+<div class="node ellipse shadowing swipable" id="ori-node" style="top: 20px;"><div class="node-title flexiblebox">server</div></div>
+
+</body>
+<script type="text/javascript">
+'use strict';
+$(function () {
+	const CHANEL_ROOM_NAME = "TrackMouseRoom";
+    var click_audio, chanel_control;
+    var $cursor_content = $(".cursor-content");
+    var screenWidth,screenHeight;
+	screenWidth = window.innerWidth;
+	screenHeight = window.innerHeight;
+    $cursor_content.css("width", screenWidth + "px");
+    $cursor_content.css("height", screenHeight + "px");
+    var $cursor = $(".cursor");
+    var mouse_pos = [0,0,0,0];
+    var get_pos = [0,0];
+    var possess_obj = null;
+
+    // マウスイベント設定
+        const event_ids = {
+            left_click: 1,
+            right_click: 2,
+
+            left_dblclick:3,
+
+            left_down:5,
+            right_down:6,
+            left_up :7,
+            right_up :8,
+
+            scroll_up: 9,
+            scroll_down: 10 
+        };
+
+    var node_list = [
+        {type: "client", name: "webGL", pos: [487,516], is_active: true},
+        {type: "server", name: "server", pos: [523,213], is_active: true},
+        {type: "local", name: "image recognition", pos: [300, 227], is_active: true}, //3
+        {type: "main-node", name: "main", pos: [260 ,338], is_active: true},
+        {type: "local", name: "camera input", pos: [210, 440], is_active: true},//5
+        {type: "control", name: "control panel", pos: [212,139], is_active: true},
+        {type: "local", name: "wroom master", pos: [61, 396], is_active: true},
+        {type: "local", name: "apery thread", pos: [69, 266], is_active: true}, //8
+        {type: "control", name: "CGIHttpServer", pos: [174, 221], is_active: true},
+        {type: "real-world", name: "webcam", pos: [219, 554], is_active: true},//10
+        {type: "client", name: "wroom", pos: [73, 562], is_active: true},
+        {type: "local", name: "DNN", pos: [323, 130], is_active: false}
+    ];
+    var connect_list = [
+        {nodes: [1,2]} , 
+        {nodes: [2,4]},
+        {nodes: [3,4]},
+        {nodes: [4,5]},
+        {nodes: [6,9]},
+        {nodes: [4,7]},
+        {nodes: [7,11]},
+        {nodes: [4,8]},
+        {nodes: [4,9]},
+        {nodes: [3,12]},
+        {nodes: [5,10]}
+        ];
+    var node_module = new NodeModule(node_list, connect_list);
+
+    function setCursor(pos){
+    	$cursor.css("left", pos[0] + "px");
+    	$cursor.css("top", pos[1] + "px");
+    	$cursor.css("transform", "rotate(" + (- pos[3]*180 /3.14) + "deg)");
+        //$cursor.css("zoom", (pos[2]/10.0 +100) + "%");
+
+    }
+
+    function initConnection(){
+    	var connected_callback = function(connection_count){
+        };
+        var msg_get_callback = function(msg){
+        	var msg_obj = JSON.parse(msg);
+        	var move_speed = 3.0;
+        	//console.log(msg_obj);
+        	mouse_pos[0] -= (msg_obj.x - get_pos[0]) * move_speed;
+        	mouse_pos[1] -= (msg_obj.y - get_pos[1]) * move_speed;
+        	get_pos[0] = msg_obj.x;
+        	get_pos[1] = msg_obj.y;
+        	if(mouse_pos[0] < 0){
+        		mouse_pos[0] = 0;
+        	}
+        	if(mouse_pos[1] < 0){
+        		mouse_pos[1] = 0;
+        	}
+        	if(mouse_pos[0] > screenWidth){
+        		mouse_pos[0] = screenWidth;
+        	}
+        	if(mouse_pos[1] > screenHeight){
+        		mouse_pos[1] = screenHeight;
+        	}
+        	mouse_pos[2] = msg_obj.z;
+        	mouse_pos[3] = msg_obj.rot;
+        	//console.log(mouse_pos);
+        	setCursor(mouse_pos);
+        	for(let event_id of msg_obj.mouse_events){
+        		if(event_id == event_ids.left_down){
+        			let elm = document.elementFromPoint(mouse_pos[0], mouse_pos[1]);
+        			console.log($(elm).parent());
+        			let obj = $(elm).parent();
+        			if($(obj).hasClass("swipable")){
+        				console.log("swipable");
+        				possess_obj = obj;
+        			}
+        		}else if(event_id == event_ids.left_up){
+        			possess_obj = null;
+        		}
+        	}
+        	if(msg_obj.left){
+        		if(possess_obj){
+        			$(possess_obj).css("left", mouse_pos[0] + "px");
+    				$(possess_obj).css("top", mouse_pos[1] + "px");
+    				node_module.update_connects();
+        		}
+        	}
+        };
+        var closed_callback = function(connection_count){
+        };
+        chanel_control = new chanel(connected_callback, 
+        							msg_get_callback, 
+        							closed_callback, 
+        							CHANEL_ROOM_NAME);
+    }
+	initConnection();
+
+});            
+</script>
+</head>
