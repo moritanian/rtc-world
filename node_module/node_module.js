@@ -1,7 +1,8 @@
 var NodeModule = function(node_list, connect_list){
 
     this.node = $(".node");
-    this.node_id = 0;
+    this.node_count = 0;
+    this.connect_count = 0;
     this.map_parent = $(".node-map");
     this.detail_node_id = 0;
     this.node_list = node_list;
@@ -47,11 +48,18 @@ var NodeModule = function(node_list, connect_list){
         // 単にサーバへデータをアクセスするのではなくリロードする（サーバのノードがおちててもキャッシュから拾われるっぽい）
         location.reload();
         //get_status();
-    })
+    });
+
     $("button.clear-log").click(function(){
         node_list[detail_node_id - 1]["log"] = "";
         renown_node_detail(detail_node_id);
-    })
+    });
+
+    // ノード外を押すとfocus外す
+    $(this.map_parent).click(() =>{
+        this.renown_node_detail(0);
+        console.log("click");
+    });
     
     this.is_update = false;
     if(this.is_update){
@@ -72,6 +80,9 @@ var NodeModule = function(node_list, connect_list){
     $(".node").each(function(){
         $(this).on("mousedown", {my_node_obj: my_node_obj}, my_node_obj.mdown);
         $(this).on("touchstart", {my_node_obj, my_node_obj}, my_node_obj.mdown);
+        $(this).click(function(e){
+            e.stopPropagation(); //　親へのバブリングを停止して親要素のクリックイベントを発生させない
+        })
     });
 
 
@@ -85,6 +96,7 @@ NodeModule.prototype.mdown = function(e){
     //クラス名に .drag を追加
     //this.classList.add("drag");
     $(this).addClass("drag");
+    var instance = e.data.my_node_obj;
     var node_id = $(this).attr("node_id");
     e.data.my_node_obj.renown_node_detail(node_id);
     //タッチデイベントとマウスのイベントの差異を吸収
@@ -110,6 +122,10 @@ NodeModule.prototype.mdown = function(e){
     $(drag).on("touchend", {my_node_obj: e.data.my_node_obj}, e.data.my_node_obj.mup);
     //document.body.addEventListener("touchleave", mup, false); 
     $(e.data.my_node_obj.map_parent).on("touchleave", {my_node_obj: e.data.my_node_obj}, e.data.my_node_obj.mup);
+
+    if(instance.click_callback){
+        instance.click_callback(node_id);
+    }
 }
 
 //マウスカーソルが動いたときに発火
@@ -189,14 +205,22 @@ NodeModule.prototype.get_status = function(){
         timeout: 4000
     })
     .done(function(){
-        set_toggle_node($("#node" + 4), true);
+        set_toggle_node(this.get_node_dom(4), true);
     })
     .fail(function(){
         console.log("get status failed");
         for (var i=0; i< node_ids.length; i++){
-            set_toggle_node($("#node" + node_ids[i]), false);
+            set_toggle_node(this.get_node_dom(node_ids[i]), false);
         }
     });
+}
+
+NodeModule.prototype.get_node_dom = function(node_id){
+    return $("#node" + node_id);
+}
+
+NodeModule.prototype.get_connect_dom = function(connect_id){
+    return $("#line" + connect_id);
 }
 
 NodeModule.prototype.init_nodes = function(){
@@ -208,10 +232,10 @@ NodeModule.prototype.init_nodes = function(){
 
 NodeModule.prototype.create_node = function(node_type, txt, pos){
     var c_node = this.node.clone(true);
-    this.node_id += 1;
+    this.node_count += 1;
     c_node.addClass(node_type);
-    c_node.attr("id", "node" + this.node_id);
-    c_node.attr("node_id", this.node_id);
+    c_node.attr("id", "node" + this.node_count);
+    c_node.attr("node_id", this.node_count);
     this.map_parent.append(c_node);
     c_node.children().text(txt);
     var offset = $(this.map_parent).offset();
@@ -243,12 +267,15 @@ NodeModule.prototype.redraw_line = function(start, goal, line){
 
 NodeModule.prototype.update_connects = function(){
     for(var i=0; i< this.connect_list.length; i++){
-        this.redraw_connect(this.connect_list[i]);
+        if(this.connect_list[i] != null){
+            this.redraw_connect(this.connect_list[i]);
+        }
     }
 }
 
 NodeModule.prototype.init_connects = function(){
     for(var i=0; i< this.connect_list.length; i++){
+        this.connect_count++;
         this.connect_list[i]['id'] = i+1;
         this.draw_connect(this.connect_list[i]);
     }
@@ -261,12 +288,16 @@ NodeModule.prototype.draw_connect = function(con){
 }
     
 NodeModule.prototype.redraw_connect = function(con){
-    var start_node = $("#node" + con.nodes[0]);
-    var goal_node = $("#node" + con.nodes[1]);
+    var start_node = this.get_node_dom(con.nodes[0]); // $("#node" + con.nodes[0]);
+    var goal_node =  this.get_node_dom(con.nodes[1]); //$("#node" + con.nodes[1]);
     var start = [$(start_node).position().left + $(start_node).width()/2.0, $(start_node).position().top + $(start_node).height()/2.0];
     var goal = [$(goal_node).position().left + $(goal_node).width()/2.0, $(goal_node).position().top + $(goal_node).height()/2.0];
-    var line = $("#line" + con.id);
+    var line = this.get_connect_dom(con.id); //$("#line" + con.id);
     this.redraw_line(start, goal, line);
+}
+
+NodeModule.prototype.remove_connect = function(con){
+    con.remove();
 }
 
 NodeModule.prototype.toggle_node = function(e){
@@ -301,40 +332,40 @@ NodeModule.prototype.set_toggle_node = function(node, is_active){
         if( node_list[node_id - 1].is_active){
             //相手がoffの時、lineもoffのまま
             if(node_list[another_node_id - 1].is_active){
-                $("#line" + con_id).removeClass(blk_out);
+                this.get_connect_dom(con.id).removeClass(blk_out);
             }
         }else{
-            $("#line" + con_id).addClass(blk_out);
+            this.get_connect_dom(con.id).addClass(blk_out);
         }
     }
 }
 
 NodeModule.prototype.find_connect_by_node_id = function(node_id){
-    var connects = [];
+    var connects = {};
     for(var i=0; i<connect_list.length; i++){
         if(connect_list[i].nodes[0] == node_id || connect_list[i].nodes[1] == node_id ){
-            connects.push(connect_list[i]);
+            connects[i+1] = connect_list[i];
         }
     }
     return connects;
 }
     
 NodeModule.prototype.renown_node_detail = function(node_id){
-    $(".node-detail .node-name").text(this.node_list[node_id - 1].name);
-    $(".node-status").text( this.node_list[node_id - 1].is_active );
-    $(".node-log").text( this.node_list[node_id - 1]["log"]);
-    if(node_id == 5){
-        $(".ban-capture").removeClass("hidden");
-        $(".node-log").text("<h2>TODO  画像に認識を表す赤枠つけたい</h2>");
-    }else{
-        $(".ban-capture").addClass("hidden");
-    }
-    if(this.detail_node_id != node_id){
-        $("#node" + this.detail_node_id).removeClass("large");
-        $("#node" + node_id).addClass("large");
+     if(this.detail_node_id != node_id || node_id == 0){
+        this.get_node_dom(this.detail_node_id).removeClass("large");
+        this.get_node_dom(node_id).addClass("large");
         this.detail_node_id = node_id;
         this.shadow_anim($(".node-detail"));
     }       
+    if(node_id == 0){
+        return;
+    }
+
+    $(".node-detail .node-name").text(this.node_list[node_id - 1].name);
+    $(".node-status").text( this.node_list[node_id - 1].is_active );
+    $(".node-log").text( this.node_list[node_id - 1]["log"]);
+    $(".ban-capture").addClass("hidden");
+   
 }
 
 NodeModule.prototype.shadow_anim = function(element, end_params, time = 1000){
@@ -345,7 +376,7 @@ NodeModule.prototype.shadow_anim = function(element, end_params, time = 1000){
 NodeModule.prototype.update_status = function(data){
     for (var i=0; i<data.length; i++){
         var node_id = data[i].node_id;
-        set_toggle_node($("#node" + node_id), data[i].status == 1);
+        set_toggle_node(this.get_node_dom(node_id), data[i].status == 1);
         if(data[i]["log"] != ""){
             this.node_list[i]["log"] += "\n" +  data[i]["log"];
         }
@@ -357,3 +388,113 @@ NodeModule.prototype.update_status = function(data){
     $('.ban-capture img').attr('src', 'capture.jpg?' + now);
 }
 
+/* 以下は編集用に追加した部分 */
+NodeModule.prototype.create_new_node = function(node_data){
+    node_data = node_data || {pos:[50,20]};
+    this.node_list.push(node_data);
+    var node_id = this.node_count++;
+    this.update_node_data(node_id, node_data);
+    this.create_node(node_data.node_type, node_data.name, node_data.pos);
+}
+
+NodeModule.prototype.create_new_connect = function(node_id1, node_id2){
+
+}
+
+NodeModule.prototype.update_node_data = function(node_id, node_data){
+    var target_node_dom = this.get_node_dom(node_id)
+    if(node_data.type){
+        target_node_dom.removeClass(this.node_list[node_id - 1].type);
+        this.node_list[node_id - 1].type = node_data.type;
+        target_node_dom.addClass(node_data.type); 
+    }
+    if(node_data.name){  
+        console.log(node_id);  
+        this.node_list[node_id - 1].name = node_data.name;
+        target_node_dom.children().text(node_data.name);
+    }
+
+    if("is_active" in node_data){
+        var blk_out = "black-out";
+        this.node_list[node_id - 1].is_active = node_data.is_active;
+        if(node_data.is_active){
+            target_node_dom.removeClass(blk_out);
+        }else{
+            target_node_dom.addClass(blk_out);
+        }
+    }
+}
+
+NodeModule.prototype.delete_node = function(node_id){
+    var target_node_dom = this.get_node_dom(node_id)
+    target_node_dom.remove();
+    this.node_list[node_id-1] = null;
+
+}
+
+// 関係するラインも消去
+NodeModule.prototype.delete_node_with_connects = function(node_id){
+    this.delete_node(node_id);
+
+    let connect_id_list = this.get_connect_id_list_by_node_id(node_id);
+    console.log(connect_id_list);
+    for(let connect_id of connect_id_list){
+        this.delete_connect(connect_id);
+    }
+}
+
+NodeModule.prototype.generate_connect = function(connect_data){ 
+    connect_data.id = ++this.connect_count;
+    this.connect_list.push(connect_data);
+    console.log(connect_data);
+    this.draw_connect(connect_data);
+}
+
+NodeModule.prototype.delete_connect = function(connect_id){ 
+    this.remove_connect(this.get_connect_dom(connect_id));
+    this.connect_list[connect_id -1] = null;
+}
+
+NodeModule.prototype.generate_node = function(node_id, node_data){
+}
+
+NodeModule.prototype.focused_id = function(){
+    return this.detail_node_id;
+}
+
+NodeModule.prototype.get_connect_id_list_by_node_id = function(node_id){
+    var connect_id_list = [];
+    for(var index=0; index <this.connect_list.length; index++){
+        if(this.connect_list[index] == null){
+            continue;
+        }
+        if(this.connect_list[index].nodes[0] == node_id ||
+            this.connect_list[index].nodes[1] == node_id){
+            connect_id_list.push(index + 1);
+        }
+    }
+    return connect_id_list;
+}
+
+NodeModule.prototype.get_connect_id_by_node_ids = function(node_id1, node_id2){
+    var connect_id = 0;
+    for(var index in this.connect_list){
+        if(this.connect_list[index] == null){
+            continue;
+        }
+        if((this.connect_list[index].nodes[0] == node_id1 &&
+            this.connect_list[index].nodes[1] == node_id2) ||
+            (this.connect_list[index].nodes[0] == node_id2 &&
+            this.connect_list[index].nodes[1] == node_id1)){
+            connect_id = index + 1;
+            break;
+        }
+    }
+    return connect_id;
+}
+/*
+Object.defineProperty(NodeModule, "focused_id", {
+    get: function focused_id() {
+        return this.node_id;
+    }
+});*/

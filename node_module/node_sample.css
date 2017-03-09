@@ -1,0 +1,127 @@
+.editor-content{
+	height : 40px;
+	background-color: #e8e5e5;
+	font-size: 1.5px;
+}
+
+.editor-button{
+	width: 80px;
+    height: 40px;
+    line-height: 40px;
+    float: left;
+    text-align: center;
+    border-left: medium solid #66c6f9;
+	box-shadow: 0px 0px 2px 0px #76c7ce;
+	cursor: pointer;
+}
+
+.editor-button.momentary:hover{
+	box-shadow: 4px 0px 8px 2px;
+}
+
+.editor-button.toggle.on{
+	box-shadow: inset 0px 0px 1px 3px #8b8c8c;
+} 
+            
+
+
+.cover-for-dialog{
+  position:absolute;
+  top:0px;
+  left:0px;
+
+  width:100%;
+  height:100%;
+
+  background-color:#000000;
+  opacity:0.5;
+  display: none;
+  z-index:10;
+}
+
+.dialog{
+	position: absolute;
+    width: 80%;
+    top: 20%;
+    margin: 20px;
+    display: none;
+    z-index: 20;
+    background-color: #5d7ebf;
+    padding: 10px;
+}
+
+.node-map {
+	height:88%;
+}
+.node-detail {
+	width: 17%;
+	height: 88%;
+	margin-left: 80%;
+	margin-top: 0px;
+	padding: 0px;
+	background-color: #a2a2a2;
+}
+.node-detail .select-parent{
+	position: relative;
+}
+.node-detail .select-parent:before {
+  	z-index: 1;
+    position: absolute;
+    right: 1px;
+    top: 0;
+    #content: "\f123";
+    content: "▼"; // ⋁
+    font-family: "IonIcons";
+    line-height: 23px;
+    color: white;
+    pointer-events: none;
+    background-color: wheat;
+    margin-top: 1px;
+    width: 15px;
+    font-size: 12px;
+}
+
+.node-detail select{
+	width: 100%;
+	padding: 4px 20px 4px 20px;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	appearance: none;
+	border: 1px solid #999;
+	background: #ffffff;
+	//background: url(arrow01.png) right 50% no-repeat, -webkit-linear-gradient(top, #fff 0%,#efebe1 100%);
+	//background: url(arrow01.png) right 50% no-repeat, linear-gradient(to bottom, #fff 0%,#efebe1 100%);
+	
+}
+
+.node-detail select option{
+	text-align: center;
+}
+
+
+.node-detail .key-column{
+	background-color: #343535;
+    color: wheat;
+    font-size: 17px;
+    text-align: center;
+}
+
+.node-detail .value-column{
+	background-color: white;
+    text-align: center;
+    color: black;
+
+}
+
+/* for syntax high light */
+.hljs-line-numbers {
+    text-align: right;
+    border-right: 1px solid #ccc;
+    color: #999;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}

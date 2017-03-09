@@ -17,6 +17,7 @@
 	border-radius: 90px 90px 90px 90px / 45px 45px 45px 45px;
 	width:90px; 
 	height:45px; 
+	z-index: 3;
 }
 
 .main-node {
@@ -63,14 +64,14 @@
 .node{
 	cursor: pointer;
     position: absolute;
-    z-index: 1000;
+    z-index: 2;
     box-shadow: 10px 10px 8px;
 
     #transform: rotate3d(0.6, 0.8, 0, 20deg);
 }
 
 .drag {
-    z-index: 1001;
+    z-index: 3;
 }
 
 .line {
@@ -78,6 +79,7 @@
 	height: 3px;
 	position: absolute;
 	background-color: #d0d0d0;
+	box-shadow: 8px 8px 8px 0px;
 
 	-webkit-transform:rotate(30deg);
 	-moz-transform:rotate(30deg);
