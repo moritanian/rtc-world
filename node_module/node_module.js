@@ -58,6 +58,7 @@ var NodeModule = function(node_list, connect_list){
     // ノード外を押すとfocus外す
     $(this.map_parent).click(() =>{
         this.renown_node_detail(0);
+        this.click_callback(0);
         console.log("click");
     });
     
@@ -225,8 +226,12 @@ NodeModule.prototype.get_connect_dom = function(connect_id){
 
 NodeModule.prototype.init_nodes = function(){
     for(var i=0; i<this.node_list.length; i++){
-        this.node_list[i]['log'] = "";
-        this.create_node(this.node_list[i].type, this.node_list[i].name, this.node_list[i].pos);
+        if(this.node_list[i] != null){
+            this.node_list[i]['log'] = "";
+            this.create_node(this.node_list[i].type, this.node_list[i].name, this.node_list[i].pos);
+        }else{
+            this.node_count ++; // ファイルからデータ読み込んだ際にnode_id を一致させるため
+        }
     }
 }
 
@@ -240,6 +245,11 @@ NodeModule.prototype.create_node = function(node_type, txt, pos){
     c_node.children().text(txt);
     var offset = $(this.map_parent).offset();
     c_node.css("top", pos[1] + offset.top ).css("left", pos[0] + offset.left);
+}
+
+NodeModule.prototype.get_node_dom_pos = function(dom){
+    var offset = $(this.map_parent).offset();
+    return [dom.position().left - offset.left, dom.position().top - offset.top];
 }
     
 // 二点間直線
@@ -276,8 +286,10 @@ NodeModule.prototype.update_connects = function(){
 NodeModule.prototype.init_connects = function(){
     for(var i=0; i< this.connect_list.length; i++){
         this.connect_count++;
-        this.connect_list[i]['id'] = i+1;
-        this.draw_connect(this.connect_list[i]);
+        if(this.connect_list[i] != null){
+            this.connect_list[i]['id'] = i+1;
+            this.draw_connect(this.connect_list[i]);
+        }
     }
 }
 
@@ -390,11 +402,11 @@ NodeModule.prototype.update_status = function(data){
 
 /* 以下は編集用に追加した部分 */
 NodeModule.prototype.create_new_node = function(node_data){
-    node_data = node_data || {pos:[50,20]};
+    node_data = node_data || {type: "", name: "", pos:[50,20]};
     this.node_list.push(node_data);
-    var node_id = this.node_count++;
-    this.update_node_data(node_id, node_data);
     this.create_node(node_data.node_type, node_data.name, node_data.pos);
+    this.update_node_data(this.node_count, node_data);
+
 }
 
 NodeModule.prototype.create_new_connect = function(node_id1, node_id2){
@@ -455,7 +467,33 @@ NodeModule.prototype.delete_connect = function(connect_id){
     this.connect_list[connect_id -1] = null;
 }
 
-NodeModule.prototype.generate_node = function(node_id, node_data){
+// 現在のノード、コネクトの状態をコードとして出力
+NodeModule.prototype.generate_code = function(node_id, node_data){
+    this.apply_position_to_node_data(); // pos を適用
+    var code_text = "";
+    code_text += "<script type=\"text/javascript\"> \n\n";
+    code_text += "var node_list = [ \n";
+    for(var index = 0; index < this.node_list.length; index++){
+        let node_data = this.node_list[index];
+        if(node_data != null){
+            code_text += `      {type: ${node_data.type}, name: ${node_data.type}, pos: [${node_data.pos[0]}, ${node_data.pos[1]}]}, \n`;
+        }else{
+            code_text += "      {null},\n";
+        }
+    }
+    code_text += "];\n\n";
+    code_text += "var connect_list = [ \n";
+    for(var index = 0; index < this.connect_list.length; index++){
+        let connect_data = this.connect_list[index];
+        if(connect_data != null){
+            code_text += `      {nodes: [${connect_data.nodes[0]}, ${connect_data.nodes[1]}]}, \n`;
+        }else{
+            code_text += "      {null},\n";
+        }
+    }
+    code_text += "]; \n";
+    code_text += "</script>";
+    return code_text;
 }
 
 NodeModule.prototype.focused_id = function(){
@@ -478,7 +516,7 @@ NodeModule.prototype.get_connect_id_list_by_node_id = function(node_id){
 
 NodeModule.prototype.get_connect_id_by_node_ids = function(node_id1, node_id2){
     var connect_id = 0;
-    for(var index in this.connect_list){
+    for(var index = 0; index < this.connect_list.length; index++){
         if(this.connect_list[index] == null){
             continue;
         }
@@ -492,6 +530,26 @@ NodeModule.prototype.get_connect_id_by_node_ids = function(node_id1, node_id2){
     }
     return connect_id;
 }
+
+// node_list にposition 情報を更新する
+NodeModule.prototype.apply_position_to_node_data = function(){
+    for(let index =0; index<this.node_list.length; index++){
+        let node_data = this.node_list[index];
+        if(node_data != null){
+            node_data.pos = this.get_node_dom_pos(this.get_node_dom(index + 1));
+        }
+    }
+}
+
+NodeModule.prototype.reload = function(){
+    this.map_parent.html(""); //もとのノードを空に
+    this.node_count = 0;
+    this.connect_count = 0;
+    this.init_nodes();
+    this.init_connects();
+}
+
+
 /*
 Object.defineProperty(NodeModule, "focused_id", {
     get: function focused_id() {

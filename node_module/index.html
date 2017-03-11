@@ -20,30 +20,29 @@
 <script src="../highlightjs-line-numbers.js/dist/highlightjs-line-numbers.min.js"></script>
 <link href="../highlight/styles/solarized-dark.css" rel="stylesheet" />
 
+<!-- capture -->
+<script src="../third_party/html2canvas.js"></script>
 
 
 </head>
 <body style="margin: 0px"> 
-<div class="cover-for-dialog"></div>
-<div class="dialog">
-    <pre><code class="html">
-        var a = 2;
-        for(var i=0; i<2;i++){
-
-        };
-
-    </code></pre>
-</div>
 
 <div class="node-container" style=" height: inherit;">
-    <div class="editor-content">
-        <!--<div class="editor-button" id="edit-button"> edit </div> -->
-        <div class="editor-button momentary" id="add-node-button"> add node </div>
-        <div class="editor-button toggle" id="add-line-button"> add connect </div>
-        <div class="editor-button momentary" id="delete-button"> delete node </div>
-        <div class="editor-button momentary" id="generate-button"> generate </div>
-    </div>
-    
+    <ul class="editor-content">
+        <li class="editor-button drop-down" id="edit-button">
+                <div class="parent-menu"> file </div>
+                <ul class="children-menu">
+                    <li id="load-button" class="child-menu"> load </li>
+                    <li id="save-button" class="child-menu"> save </li>
+                </ul>
+        </li>
+        <li class="editor-button momentary" id="add-node-button"> add node </li>
+        <li class="editor-button toggle" id="add-connect-button"> add connect </li>
+        <li class="editor-button momentary" id="delete-node-button"> delete node </li>
+        <li class="editor-button toggle" id="delete-connect-button"> delete connect </li>
+        <li class="editor-button momentary" id="generate-button"> generate </li>
+    </ul>
+
     <div class="node-map" style="width: 80%;"></div>
     <div class="node-detail">
         <div class="key-column">node type </div>
@@ -55,6 +54,38 @@
     </div>
 </div>
 <div class="node ellipse shadowing swipable" id="ori-node" style="top: 20px;"><div class="node-title flexiblebox">server</div></div>
+
+<div class="file" id="ori-file">
+    <div class="thumbnail"><img></img></div>
+    <div class="file-name">ok</div>
+    <div class="last-date">2017/12/12 3:30</div>
+    <div class="unselect select-cover" ></div>
+    <div class="cover"></div>
+</div>
+
+<div class="cover-for-dialog"></div>
+<div class="dialog" id="code-dialog">
+    <pre><code class="html">
+        var a = 2;
+        for(var i=0; i<2;i++){
+
+        };
+
+    </code></pre>
+</div>
+<div class="dialog" id="file-dialog">
+    <div class="dialog-title"> title </div>
+    <div id="add-file-button"><span class="plus-icon"></span></div>
+    <!--<div class="file-list">-->
+        <div class="files">
+           
+        </div>
+    <!--</div> -->
+    <div id="delete-all-storage-button"><span class="cross-icon"></span></div>
+
+
+</div>
+
 </body>
 <script type="text/javascript">
 'use strict';
@@ -93,20 +124,45 @@ $(function () {
         ];
     var node_module = new NodeModule(node_list, connect_list);
 
+    // 初めは詳細タブ隠す
+     $(".node-detail").hide();
+
     // nodeをクリックした際に呼ばれる
     node_module.click_callback = function(node_id){
-        console.log(node_id + "dbclick");
+        if(node_id == 0){
+            $(".node-detail").hide();
+            return;
+        }else{
+            $(".node-detail").show();
+        }
         var node_data = this.node_list[node_id - 1];
         $("#node-type-select").val(node_data.type);
         $("#node-name").text(node_data.name);
     
         // connect　を追加
         if(is_add_connect_active){
-            var node_id = node_module.focused_id();
-            // 二つのnode間にconnectがなければ追加
-            if(node_module.get_connect_id_by_node_ids(node_id, add_connect_id) == 0){
-                var connect_data = {nodes:[add_connect_id, node_id]};
-                node_module.generate_connect(connect_data);
+            if(prev_connect_id == 0){
+                prev_connect_id = node_module.focused_id();
+            }else{
+                var node_id = node_module.focused_id();
+                // 二つのnode間にconnectがなければ追加
+                if(node_module.get_connect_id_by_node_ids(node_id, prev_connect_id) == 0){
+                    var connect_data = {nodes:[prev_connect_id, node_id]};
+                    node_module.generate_connect(connect_data);
+                    prev_connect_id = 0;
+                }
+            }
+        }else if(is_delete_connect_active){
+            if(prev_connect_id == 0){
+                prev_connect_id = node_module.focused_id();
+            }else{
+                var node_id = node_module.focused_id();
+                // 二つのnode間にconnectがあれば削除
+                var connect_id = node_module.get_connect_id_by_node_ids(node_id, prev_connect_id)
+                if(connect_id){
+                    node_module.delete_connect(connect_id);
+                    prev_connect_id = 0;
+                }
             }
         }
     }   
@@ -117,6 +173,153 @@ $(function () {
         $cursor.css("transform", "rotate(" + (- pos[3]*180 /3.14) + "deg)");
         //$cursor.css("zoom", (pos[2]/10.0 +100) + "%");
     }
+
+    /* webStorage データfile
+        file-list = {
+            1: {
+                name: "sample",
+                state: 1  
+            },
+        }
+    */
+    var FileMode = {
+        save: 0,
+        load: 1
+    };
+    var file_mode = FileMode.load;
+
+    var getFileList = function(){
+        var json = localStorage.getItem("file-list");
+        return json == null ? {} : JSON.parse(json); 
+    }
+
+    var setFileList = function(fileList){
+        localStorage.setItem("file-list", JSON.stringify(fileList));
+    }
+
+    var getFileData = function(file_id){
+        var json = localStorage.getItem("file" + file_id);
+        return json == null ? null : JSON.parse(json);
+    }
+
+    var setFileData = function(file_id, obj){
+        localStorage.setItem("file" + file_id, JSON.stringify(obj));
+    }
+
+    var removeFiledata = function(file_id){
+        localStorage.removeItem("file" + file_id);
+    }
+
+    var setThumbnail = function(file_id, base64_img){
+        localStorage.setItem("thumbnail" + file_id, base64_img);
+    }
+
+    var loadThumbnail = function(file_id){
+        return localStorage.getItem("thumbnail" + file_id);
+    }
+
+    var getHashFromNodeModule = function(){
+        node_module.apply_position_to_node_data();
+        return {
+            node_list: node_module.node_list,
+            connect_list: node_module.connect_list
+        };
+    }       
+
+    var createNewFile = function(file_name, obj){
+        obj = obj || getHashFromNodeModule();
+        let file_id = 1;
+        while(true){
+            if(fileList[file_id] == null){
+                break;
+            }
+            file_id++;
+        }
+        fileList[file_id] = {"name" : file_name, "state": 1};
+        saveNodeData(file_id, obj);
+        return file_id;
+    }
+
+    var getTime = function(){
+        let now = new Date();
+        let y = now.getFullYear();
+        let M = now.getMonth() + 1;
+        let d = now.getDate();
+        let h = now.getHours();
+        let m = now.getMinutes();
+
+        return `${y}/${zero_padding(M, 2)}/${zero_padding(d,2)} ${zero_padding(h,2)}:${zero_padding(m,2)}`;
+    }
+
+    function zero_padding(num, digit){
+        return (new Array(digit).join("0") + num).slice(-digit); 
+    }
+
+    var saveNodeData = function(file_id, obj){
+        obj = obj || getHashFromNodeModule();
+        fileList[file_id].last_date = getTime();
+        setFileList(fileList);
+        setFileData(file_id, obj);
+        generateThumbnail(file_id, function(base64_img){
+            setThumbnail(file_id, base64_img);
+        });
+       
+    }
+
+    var loadNodeData = function(file_id){
+        let hashData = getFileData(file_id);
+        node_module.node_list = hashData.node_list;
+        node_module.connect_list = hashData.connect_list;
+        node_module.reload();
+    }
+
+    var fileList = getFileList();
+    console.log(fileList);
+    var file_dom = $(".file");
+
+    var generateThumbnail = function(file_id, callback){
+        html2canvas($(".node-map").get(0),{
+            onrendered: function(canvas){
+                //aタグのhrefにキャプチャ画像のURLを設定
+                let base64_img = canvas.toDataURL("image/png");
+                callback(base64_img);
+               // setThumbnail(file_id, base64_img);
+            },
+            //width: 300,
+            //height: 300
+        });
+    }
+
+    var renderOneFile = function(file_id){
+        let file_data = fileList[file_id];
+        if(!file_data)return;
+        file_data.file_id = file_id;
+        addFileDom(file_data);
+    }
+
+    var addFileDom = function(file_data, is_last = true){
+        let dom = file_dom.clone(true);
+        dom.removeAttr("id");
+        dom.attr("file-id", file_data.file_id);
+        dom.find(".file-name").text(file_data.name);
+        dom.find(".last-date").text(file_data.last_date);
+        if(is_last){
+            $(".files").append(dom);
+        }else{
+            $(".files").prepend(dom);          
+        }
+        dom.find(".thumbnail").children().attr("src", loadThumbnail(file_data.file_id));
+        return dom;
+    }
+
+    var renderFileList = function(){
+        for(let file_id in fileList){
+            renderOneFile(file_id);
+        }
+    }
+
+    renderFileList();
+
 
     var node_types = [
         "client",
@@ -129,11 +332,13 @@ $(function () {
 
     // add line の状態
     var is_add_connect_active = false;
-    var add_connect_id = 0;
+    var is_delete_connect_active = false;
+    var prev_connect_id = 0;
 
 
     /* editor buttons */ 
     $("#generate-button").bind("click",function(){
+        /*
         $.get("./index.html", function(data){
              // syntax highlight
             //hljs.initHighlightingOnLoad();
@@ -150,23 +355,68 @@ $(function () {
             $(".cover-for-dialog").show();
             $(".dialog").show();
         });
+        */
+        $("#code-dialog pre").html("<code class='html'></code>");
+        $("#code-dialog pre code").text(node_module.generate_code());
+        $('pre code').each(function(i, block) {
+            hljs.highlightBlock(block);
+            hljs.lineNumbersBlock(block);
+        }); 
+        $(".cover-for-dialog").show();
+        $("#code-dialog").show();  
+        code_highlight_flag = true;    
+
+    });
+
+    $("#load-button").bind("click", function(){
+        file_mode = FileMode.load;
+        $(".dialog-title").text("load");
+        $("#add-file-button").hide();
+        $(".cover-for-dialog").show();
+        $("#file-dialog").show();
+
+    });
+
+     $("#save-button").bind("click", function(){
+        file_mode = FileMode.save;
+        $(".dialog-title").text("save");
+        $("#add-file-button").show();
+
+        $(".cover-for-dialog").show();
+        $("#file-dialog").show();
     });
 
     $("#add-node-button").bind("click", function(){
         node_module.create_new_node();
     });
 
-    $("#add-line-button").bind("click", function(){
+    $("#add-connect-button").bind("click", function(){
         is_add_connect_active = !(is_add_connect_active);
+        is_delete_connect_active = false;
+        $("#delete-connect-button").removeClass("on");
         if(is_add_connect_active){
             $(this).addClass("on");
-            add_connect_id = node_module.focused_id();
+            prev_connect_id = 0;
         }else{
             $(this).removeClass("on");
         }
     });
 
-    $("#delete-button").bind("click", function(){
+    $("#delete-connect-button").bind("click", function(){
+        is_delete_connect_active = !(is_delete_connect_active);
+        is_add_connect_active = false;
+        $("#add-connect-button").removeClass("on");
+        if(is_delete_connect_active){
+            $(this).addClass("on");
+            prev_connect_id = 0;
+            
+        }else{
+            $(this).removeClass("on");
+        }
+    });
+
+
+    $("#delete-node-button").bind("click", function(){
         node_module.delete_node_with_connects(node_module.focused_id());
     });
 
@@ -177,9 +427,55 @@ $(function () {
         
     });
     var code_highlight_flag = false;
-   /*  $('pre code').each(function(i, block) {
+    /*  $('pre code').each(function(i, block) {
     hljs.highlightBlock(block);
-  });*/
+    });*/
+
+
+    /* file */
+    $(".file").bind("click", function(){
+        $(".select-cover").each(function(){
+            $(this).removeClass("select");
+        });
+        $(this).find(".select-cover").addClass("select");
+    });
+
+    $(".file").bind("dblclick", function(){
+        let file_id = $(this).attr("file-id");
+        if(file_mode == FileMode.load){
+            loadNodeData(file_id);
+        }else if(file_mode == FileMode.save){
+            if(file_id){
+                saveNodeData(file_id);
+            }else{
+                let file_name = $(this).find(".file-name").text();
+                file_id = createNewFile(file_name);
+                $(this).attr("file-id", file_id);
+            }
+        }
+        // dialog 閉じる
+        $(".cover-for-dialog").hide();
+        $(".dialog").hide();
+
+    });
+
+    $("#add-file-button").bind("click", function(){
+        let dom = addFileDom({"name": "unnamed", "status" : 0}, /* is_last = */ false) ;
+        dom.find(".last-date").text("");
+        dom.find(".file-name").html(`<input type='text'/>`);
+             dom.find("input").focus().blur(function(){
+                var inputVal = $(this).val();
+                if(inputVal===''){
+                    inputVal = this.defaultValue;
+                }
+                $(this).parent().removeClass('on').text(inputVal);
+            });
+    });
+
+    // for debug
+    $("#delete-all-storage-button").bind("click", function(){
+        localStorage.clear();
+    });
 
 
 

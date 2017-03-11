@@ -1,10 +1,22 @@
+body{
+	background-color: #555;
+	background-image: linear-gradient(30deg, #444 12%, transparent 12.5%, transparent 87%, #444 87.5%, #444), linear-gradient(150deg, #444 12%, transparent 12.5%, transparent 87%, #444 87.5%, #444), linear-gradient(30deg, #444 12%, transparent 12.5%, transparent 87%, #444 87.5%, #444), linear-gradient(150deg, #444 12%, transparent 12.5%, transparent 87%, #444 87.5%, #444), linear-gradient(60deg, #888 25%, transparent 25.5%, transparent 75%, #888 75%, #888), linear-gradient(60deg, #888 25%, transparent 25.5%, transparent 75%, #888 75%, #888);
+	background-position: 0 0, 0 0, 25px 50px, 25px 50px, 0 0, 25px 50px;
+	background-size: 50px 100px;
+}
 .editor-content{
-	height : 40px;
+	//height : 40px;
 	background-color: #e8e5e5;
 	font-size: 1.5px;
+	padding-left: 5px;
+	margin: 1px;
+	display: inline-block;
+	top: 4px;
+    position: relative;
 }
 
 .editor-button{
+	//background-color: #e8e5e5;
 	width: 80px;
     height: 40px;
     line-height: 40px;
@@ -13,6 +25,7 @@
     border-left: medium solid #66c6f9;
 	box-shadow: 0px 0px 2px 0px #76c7ce;
 	cursor: pointer;
+	list-style-type: none;
 }
 
 .editor-button.momentary:hover{
@@ -20,10 +33,54 @@
 }
 
 .editor-button.toggle.on{
-	box-shadow: inset 0px 0px 1px 3px #8b8c8c;
+	box-shadow: inset 0px 0px 6px 1px rgba(90, 108, 108, 0.79);
 } 
-            
+  
+.editor-button.drop-down{
 
+}      
+
+.editor-button.drop-down:hover {
+	//display: none;
+	//box-shadow: 4px 0px 8px 2px;
+}
+
+.editor-button.drop-down .parent-menu {
+	text-align: center;
+}
+
+li.editor-button.drop-down ul.children-menu {
+	//display: none;
+	overflow: hidden;
+  	height: 0;
+	transition: 0.2s;
+	margin: 0px;
+	padding: 0px;
+}
+
+li.editor-button.drop-down:hover ul.children-menu {
+	//display: block;
+	height: 200px;
+	overflow: visible;
+	transition: 0.2s;
+}
+
+
+.editor-button.drop-down li.child-menu:first-child {
+	border-top: 1px solid #a1b4ce;
+}
+.editor-button.drop-down li.child-menu {
+	background-color: #e8e5e5;
+	margin: 0px;
+	padding: 0px;
+	border-bottom: 1px solid #a1b4ce;
+	border-right: 1px solid #a1b4ce;
+	border-left: 1px solid #a1b4ce;
+}
+
+.editor-button.drop-down li.child-menu:hover {
+	box-shadow: inset 0px 0px 6px 1px rgba(90, 108, 108, 0.79);
+}
 
 .cover-for-dialog{
   position:absolute;
@@ -50,6 +107,97 @@
     padding: 10px;
 }
 
+#add-file-button {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    /* float: right; */
+    top: 5px;
+    right: 5px;
+    cursor: pointer;
+}
+
+#delete-all-storage-button {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    /* float: right; */
+    top: 5px;
+    right: -20px;
+    cursor: pointer;
+
+}
+
+#file-dialog{
+	background-color: rgb(91, 90, 90);
+
+}
+
+#file-dialog .dialog-title {
+	color: white;
+	text-align: center;
+	line-height: 40px;
+}
+
+
+#file-dialog .files .file{
+	background: linear-gradient(to bottom, rgba(84,84,84,0.9) 0%,rgba(53,53,53,0.9) 50%,rgba(41,41,41,0.9) 50%,rgba(15,15,15,0.9) 100%);
+	height: 50px;
+	color: white;
+	position: relative;
+	cursor: pointer;
+	padding-right: 15%;
+}
+
+#file-dialog .files .file::after{
+	//right: 0;
+	background: linear-gradient(90deg, rgba(255,255,255,0) 0, rgba(255,255,255,1) 100%);
+}
+
+#file-dialog .files .file .thumbnail{
+	background-size: 40px, 35px;
+	width: 35px;
+	height: 40px;
+	float: left;
+	padding-left: 15%;
+}
+
+#file-dialog .files .file .thumbnail img{
+	height: 50px;
+}
+
+#file-dialog .files .file .file-name{
+	text-align: center;
+}
+
+#file-dialog .files .file .last-date{
+	text-align: center;
+}
+
+.select{
+	position: absolute;
+	top: 0px;
+	width: 100%;
+	height: 50px;
+	background: linear-gradient(0deg, rgba(6, 207, 249, 0.58) 0, rgba(108, 220, 242, 0.03) 50%, rgba(6, 207, 249, 0.73) 100%);
+}
+
+#file-dialog .files .file .cover{
+	position: absolute;
+	top: 0px;
+	width: 100%;
+	height: 50px;
+	background: linear-gradient(90deg,  rgb(91, 90, 90) 0, rgba(65, 151, 168, 0) 20% , rgba(65, 151, 168, 0) 80%,  rgb(91, 90, 90) 100%);
+}
+
+#file-dialog .files .file .cover.hidden {
+	display: none;
+}
+
+#ori-file {
+	display: none;
+}
+
 .node-map {
 	height:88%;
 }
@@ -73,9 +221,9 @@
     content: "▼"; // ⋁
     font-family: "IonIcons";
     line-height: 23px;
-    color: white;
+    color: wheat;
+    background-color: #b78832;
     pointer-events: none;
-    background-color: wheat;
     margin-top: 1px;
     width: 15px;
     font-size: 12px;
@@ -110,7 +258,13 @@
 	background-color: white;
     text-align: center;
     color: black;
+	min-height:  25px;
+}
 
+.node-detail .value-column input{
+	width: 96%;
+	font-size: 15px; 
+	text-align:center;
 }
 
 /* for syntax high light */
@@ -124,4 +278,44 @@
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+}
+
+/* icon */
+
+.plus-icon:before,.plus-icon:after{
+	display: block;
+    content: '';
+    width: 5px;
+    height: 20px;
+    background-color: #8e8a8c;
+    border-radius: 2px;
+    position: absolute;
+    top: 8px;
+    left: 18px;
+}
+.plus-icon:before{
+	    width: 20px;
+    height: 5px;
+    top: 15px;
+    left: 10px;
+}
+
+.cross-icon:before,.cross-icon:after{
+  display: block;
+  content: '';
+  width: 7px;
+  height: 40px;
+  -webkit-transform: rotate(-45deg);
+  -o-transform: rotate(-45deg);
+  transform: rotate(-45deg);
+  background-color: #b13368;
+  border-radius: 10px;
+  position: absolute;
+  top: 25px;
+  left: 41px;
+}
+.cross-icon:after{
+  -webkit-transform: rotate(45deg);
+  -o-transform: rotate(45deg);
+  transform: rotate(45deg);
 }
