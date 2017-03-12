@@ -3,6 +3,7 @@
 <head>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
  <title>node sample</title>
+ <link rel="shortcut icon" type="image/x-icon" href="icon.png">
 
 <script src="./../jq.js"></script>
 
@@ -29,11 +30,12 @@
 
 <div class="node-container" style=" height: inherit;">
     <ul class="editor-content">
-        <li class="editor-button drop-down" id="edit-button">
+        <li class="editor-button drop-down" id="file-button">
                 <div class="parent-menu"> file </div>
                 <ul class="children-menu">
                     <li id="load-button" class="child-menu"> load </li>
                     <li id="save-button" class="child-menu"> save </li>
+                    <li id="new-button" class="child-menu"> new </li>
                 </ul>
         </li>
         <li class="editor-button momentary" id="add-node-button"> add node </li>
@@ -59,6 +61,7 @@
     <div class="thumbnail"><img></img></div>
     <div class="file-name">ok</div>
     <div class="last-date">2017/12/12 3:30</div>
+    <div id="delete-file-button"><span class="cross-icon"></span></div>
     <div class="unselect select-cover" ></div>
     <div class="cover"></div>
 </div>
@@ -81,9 +84,10 @@
            
         </div>
     <!--</div> -->
+    <!-- debug 用　全消去ボタン
     <div id="delete-all-storage-button"><span class="cross-icon"></span></div>
-
-
+    -->
+    
 </div>
 
 </body>
@@ -96,6 +100,7 @@ $(function () {
     //$(".node-container").css("width", screenWidth + "px");
     $(".node-container").css("height", screenHeight + "px");
     var node_list = [
+    /*
         {type: "client", name: "webGL", pos: [487,516], is_active: true},
         {type: "server", name: "server", pos: [523,213], is_active: true},
         {type: "local", name: "image recognition", pos: [300, 227], is_active: true}, //3
@@ -108,8 +113,10 @@ $(function () {
         {type: "real-world", name: "webcam", pos: [219, 554], is_active: true},//10
         {type: "client", name: "wroom", pos: [73, 562], is_active: true},
         {type: "local", name: "DNN", pos: [323, 130], is_active: false}
+    */
     ];
     var connect_list = [
+    /*
         {nodes: [1,2]} , 
         {nodes: [2,4]},
         {nodes: [3,4]},
@@ -121,7 +128,7 @@ $(function () {
         {nodes: [4,9]},
         {nodes: [3,12]},
         {nodes: [5,10]}
-        ];
+        */];
     var node_module = new NodeModule(node_list, connect_list);
 
     // 初めは詳細タブ隠す
@@ -218,6 +225,10 @@ $(function () {
         return localStorage.getItem("thumbnail" + file_id);
     }
 
+    var removeThumbnail = function(file_id){
+        return localStorage.removeItem("thumbnail" + file_id);
+    }
+
     var getHashFromNodeModule = function(){
         node_module.apply_position_to_node_data();
         return {
@@ -225,20 +236,6 @@ $(function () {
             connect_list: node_module.connect_list
         };
     }       
-
-    var createNewFile = function(file_name, obj){
-        obj = obj || getHashFromNodeModule();
-        let file_id = 1;
-        while(true){
-            if(fileList[file_id] == null){
-                break;
-            }
-            file_id++;
-        }
-        fileList[file_id] = {"name" : file_name, "state": 1};
-        saveNodeData(file_id, obj);
-        return file_id;
-    }
 
     var getTime = function(){
         let now = new Date();
@@ -255,6 +252,29 @@ $(function () {
         return (new Array(digit).join("0") + num).slice(-digit); 
     }
 
+    // 新しくファイルを作成し保存する
+    var createNewFile = function(file_name, obj){
+        obj = obj || getHashFromNodeModule();
+        let file_id = 1;
+        while(true){
+            if(fileList[file_id] == null){
+                break;
+            }
+            file_id++;
+        }
+        fileList[file_id] = {"name" : file_name, "state": 1};
+        saveNodeData(file_id, obj);
+        return file_id;
+    }
+
+    // ファイルを消去し、file list からも削除、
+    var deleteNodeData = function(file_id){
+        removeFiledata(file_id);
+        removeThumbnail(file_id);
+        delete fileList[file_id];
+        setFileList(fileList);
+    }
+
     var saveNodeData = function(file_id, obj){
         obj = obj || getHashFromNodeModule();
         fileList[file_id].last_date = getTime();
@@ -262,14 +282,20 @@ $(function () {
         setFileData(file_id, obj);
         generateThumbnail(file_id, function(base64_img){
             setThumbnail(file_id, base64_img);
-        });
-       
+        });   
     }
 
     var loadNodeData = function(file_id){
         let hashData = getFileData(file_id);
         node_module.node_list = hashData.node_list;
         node_module.connect_list = hashData.connect_list;
+        node_module.reload();
+    }
+
+    // 新しく
+    var clearNodeData = function(){
+        node_module.node_list = [];
+        node_module.connect_list = [];
         node_module.reload();
     }
 
@@ -312,14 +338,32 @@ $(function () {
         return dom;
     }
 
+    var sortFileListByLastDate = function(file_list){
+        let ittr_array = [];
+        for(let file_id in file_list){
+            ittr_array.push({"file_id": file_id, "last_date": file_list[file_id].last_date});
+        }
+        ittr_array.sort(function(ele1, ele2){
+            if( Date.parse(ele1.last_date) < Date.parse(ele2.last_date)){
+                return 1;
+            }
+            return -1;
+        });
+        console.log(ittr_array);
+        return ittr_array;
+    }
+
     var renderFileList = function(){
+        $(".files").html(""); //空にする
+        /*
         for(let file_id in fileList){
             renderOneFile(file_id);
         }
+        */
+        for(let ele of sortFileListByLastDate(fileList)){
+            renderOneFile(ele.file_id);
+        }
     }
-
-    renderFileList();
-
 
     var node_types = [
         "client",
@@ -338,6 +382,7 @@ $(function () {
 
     /* editor buttons */ 
     $("#generate-button").bind("click",function(){
+        clearAllToggleButton();  
         /*
         $.get("./index.html", function(data){
              // syntax highlight
@@ -368,8 +413,20 @@ $(function () {
 
     });
 
+   // $(".parent-menu").hover(function(){
+    $(".drop-down").hover(function(){
+        $(".children-menu").css("height", "100%");
+        $(".children-menu").css("overflow", "visible");
+    },
+    function(){
+        $(".children-menu").css("height", "0");
+        $(".children-menu").css("overflow", "hidden");
+    });
+
     $("#load-button").bind("click", function(){
+        clearAllToggleButton();
         file_mode = FileMode.load;
+        renderFileList();
         $(".dialog-title").text("load");
         $("#add-file-button").hide();
         $(".cover-for-dialog").show();
@@ -378,7 +435,9 @@ $(function () {
     });
 
      $("#save-button").bind("click", function(){
+        clearAllToggleButton();
         file_mode = FileMode.save;
+        renderFileList();
         $(".dialog-title").text("save");
         $("#add-file-button").show();
 
@@ -386,14 +445,36 @@ $(function () {
         $("#file-dialog").show();
     });
 
+    $("#new-button").bind("click", function(){
+        clearAllToggleButton();
+        clearNodeData();
+        $(this).parent().css("height", 0);
+        $(this).parent().css("overflow", "hidden");
+    });
+
+    function clearAllToggleButton(){
+        if(is_add_connect_active){ 
+            is_add_connect_active = false;
+            $("#add-connect-button").removeClass("on");
+        }
+        if(is_delete_connect_active){
+            is_delete_connect_active = false;
+            $("#delete-connect-button").removeClass("on");
+        }
+    }
+
     $("#add-node-button").bind("click", function(){
+        clearAllToggleButton();
         node_module.create_new_node();
     });
 
     $("#add-connect-button").bind("click", function(){
-        is_add_connect_active = !(is_add_connect_active);
-        is_delete_connect_active = false;
-        $("#delete-connect-button").removeClass("on");
+        if(is_add_connect_active){
+            is_add_connect_active = false; 
+        }else{
+            clearAllToggleButton();
+            is_add_connect_active = true;
+        }
         if(is_add_connect_active){
             $(this).addClass("on");
             prev_connect_id = 0;
@@ -403,13 +484,15 @@ $(function () {
     });
 
     $("#delete-connect-button").bind("click", function(){
-        is_delete_connect_active = !(is_delete_connect_active);
-        is_add_connect_active = false;
-        $("#add-connect-button").removeClass("on");
+        if(is_delete_connect_active){
+            is_delete_connect_active = false;
+        }else{
+            clearAllToggleButton();
+            is_delete_connect_active = true;
+        }
         if(is_delete_connect_active){
             $(this).addClass("on");
-            prev_connect_id = 0;
-            
+            prev_connect_id = 0;    
         }else{
             $(this).removeClass("on");
         }
@@ -417,6 +500,7 @@ $(function () {
 
 
     $("#delete-node-button").bind("click", function(){
+        clearAllToggleButton();
         node_module.delete_node_with_connects(node_module.focused_id());
     });
 
@@ -433,11 +517,15 @@ $(function () {
 
 
     /* file */
-    $(".file").bind("click", function(){
+    $(".file").hover( function(){
         $(".select-cover").each(function(){
             $(this).removeClass("select");
         });
         $(this).find(".select-cover").addClass("select");
+    },
+    function(){
+        $(this).find(".select-cover").removeClass("select");
+
     });
 
     $(".file").bind("dblclick", function(){
@@ -463,13 +551,31 @@ $(function () {
         let dom = addFileDom({"name": "unnamed", "status" : 0}, /* is_last = */ false) ;
         dom.find(".last-date").text("");
         dom.find(".file-name").html(`<input type='text'/>`);
-             dom.find("input").focus().blur(function(){
-                var inputVal = $(this).val();
+            var $input =  dom.find("input");
+            var submit = function(){
+                var inputVal = $input.val();
                 if(inputVal===''){
-                    inputVal = this.defaultValue;
+                    inputVal = $input.get(0).defaultValue;
                 }
-                $(this).parent().removeClass('on').text(inputVal);
+                $input.parent().removeClass('on').text(inputVal);
+            }
+            $input.focus().blur(submit);
+            $input.focus().keypress(function(e){
+                if ( e.which == 13 ) {
+                    submit();    
+                    return false;
+                }
             });
+    });
+
+    //fileを削除
+    $("#delete-file-button").bind("click", function(){
+        let $file_data = $(this).parent();
+        let file_id = $file_data.attr("file-id");
+        if(file_id){
+            deleteNodeData(file_id);
+        }
+        $file_data.remove();
     });
 
     // for debug
@@ -494,14 +600,22 @@ $(function () {
             $(this).addClass("on");
             var node_name = $(this).text();
             $(this).html(`<input type='text' value='${node_name}'/>`);
-             $('#node-name > input').focus().blur(function(){
-                var inputVal = $(this).val();
+            var $input =  $('#node-name > input');
+            var submit = function(){
+                var inputVal = $input.val();
                 if(inputVal===''){
-                    inputVal = this.defaultValue;
+                    inputVal = $input.get(0).defaultValue;
                 }else{
                     node_module.update_node_data(node_module.focused_id(), {name: inputVal})
                 }
-                $(this).parent().removeClass('on').text(inputVal);
+                $input.parent().removeClass('on').text(inputVal);
+            }
+            $('#node-name > input').focus().blur(submit);
+            $('#node-name > input').focus().keypress(function(e){
+                if ( e.which == 13 ) {
+                    submit();    
+                    return false;
+                }
             });
         }
     });
@@ -510,3 +624,14 @@ $(function () {
 });            
 </script>
 </html>
+
+<!--
+
+残タスク
+- 負荷軽減 回転アニメーション
+- 画像サイズ
+- css二回読み込まれている？
+
+
+
+-->

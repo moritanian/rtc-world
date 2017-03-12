@@ -32,6 +32,10 @@ body{
 	box-shadow: 4px 0px 8px 2px;
 }
 
+.editor-button.momentary:active{
+	box-shadow: inset 0px 0px 5px 1px rgba(100, 108, 108, 0.79);
+}
+
 .editor-button.toggle.on{
 	box-shadow: inset 0px 0px 6px 1px rgba(90, 108, 108, 0.79);
 } 
@@ -50,19 +54,23 @@ body{
 }
 
 li.editor-button.drop-down ul.children-menu {
-	//display: none;
 	overflow: hidden;
   	height: 0;
 	transition: 0.2s;
 	margin: 0px;
 	padding: 0px;
+	position: relative;
+	z-index: 10;
 }
 
-li.editor-button.drop-down:hover ul.children-menu {
-	//display: block;
-	height: 200px;
+li.editor-button.drop-down:hover ul.children-menu.show {
+	height: 100%;
 	overflow: visible;
 	transition: 0.2s;
+}
+
+li.editor-button.drop-down ul.children-menu li:active{	
+
 }
 
 
@@ -82,6 +90,12 @@ li.editor-button.drop-down:hover ul.children-menu {
 	box-shadow: inset 0px 0px 6px 1px rgba(90, 108, 108, 0.79);
 }
 
+.editor-button.drop-down li.child-menu:active {
+	box-shadow: inset 0px 0px 5px 1px rgba(50, 58, 58, 0.79);
+	background-color: #cccccc;
+	//display: none;
+}
+
 .cover-for-dialog{
   position:absolute;
   top:0px;
@@ -91,9 +105,9 @@ li.editor-button.drop-down:hover ul.children-menu {
   height:100%;
 
   background-color:#000000;
-  opacity:0.5;
+  opacity:0.55;
   display: none;
-  z-index:10;
+  z-index:100;
 }
 
 .dialog{
@@ -102,19 +116,47 @@ li.editor-button.drop-down:hover ul.children-menu {
     top: 20%;
     margin: 20px;
     display: none;
-    z-index: 20;
+    z-index: 200;
     background-color: #5d7ebf;
     padding: 10px;
 }
 
 #add-file-button {
     position: absolute;
-    width: 40px;
-    height: 40px;
+    width: 30px;
+    height: 30px;
     /* float: right; */
     top: 5px;
     right: 5px;
     cursor: pointer;
+	background-color: rgba(79, 79, 79, 0.87);
+    box-shadow: inset 0px 0px 2px 1px rgba(63, 73, 73, 0.79);
+    border-radius: 30px;
+}
+
+#add-file-button:active {
+	box-shadow: inset 0px 0px 5px 1px rgba(100, 108, 108, 0.79);
+    background-color: rgba(30, 30, 35, 0.87);
+}
+
+#delete-file-button{
+	position: absolute;
+    top: 6px;
+    right: 20px;
+    width: 36px;
+    height: 36px;
+    border-radius: 36px;
+    z-index: 1;
+}
+
+#delete-file-button:hover{
+	background-color: rgba(222, 221, 221, 0.77);
+	box-shadow: 0px 0px 8px 1px rgba(245, 249, 249, 0.95);
+}
+
+#delete-file-button:active{
+	background-color: rgba(68, 63, 63, 0.77);
+    box-shadow: 0px 0px 12px 1px rgba(220, 220, 220, 0.95);
 }
 
 #delete-all-storage-button {
@@ -122,15 +164,14 @@ li.editor-button.drop-down:hover ul.children-menu {
     width: 40px;
     height: 40px;
     /* float: right; */
-    top: 5px;
-    right: -20px;
+    top: -90px;
+    right: -50px;
     cursor: pointer;
 
 }
 
 #file-dialog{
 	background-color: rgb(91, 90, 90);
-
 }
 
 #file-dialog .dialog-title {
@@ -174,7 +215,7 @@ li.editor-button.drop-down:hover ul.children-menu {
 	text-align: center;
 }
 
-.select{
+.select {
 	position: absolute;
 	top: 0px;
 	width: 100%;
@@ -188,6 +229,10 @@ li.editor-button.drop-down:hover ul.children-menu {
 	width: 100%;
 	height: 50px;
 	background: linear-gradient(90deg,  rgb(91, 90, 90) 0, rgba(65, 151, 168, 0) 20% , rgba(65, 151, 168, 0) 80%,  rgb(91, 90, 90) 100%);
+}
+
+#file-dialog .files .file .cover:active{
+	background: linear-gradient(90deg, rgb(91, 90, 90) 0, rgba(32, 191, 223, 0.36) 20% , rgba(35, 175, 202, 0.3) 80%, rgb(91, 90, 90) 100%);
 }
 
 #file-dialog .files .file .cover.hidden {
@@ -290,29 +335,29 @@ li.editor-button.drop-down:hover ul.children-menu {
     background-color: #8e8a8c;
     border-radius: 2px;
     position: absolute;
-    top: 8px;
-    left: 18px;
+    top: 5px;
+    left: 13px;
 }
 .plus-icon:before{
-	    width: 20px;
+	width: 20px;
     height: 5px;
-    top: 15px;
-    left: 10px;
+    top: 12px;
+    left: 5px;
 }
 
 .cross-icon:before,.cross-icon:after{
-  display: block;
-  content: '';
-  width: 7px;
-  height: 40px;
-  -webkit-transform: rotate(-45deg);
-  -o-transform: rotate(-45deg);
-  transform: rotate(-45deg);
-  background-color: #b13368;
-  border-radius: 10px;
-  position: absolute;
-  top: 25px;
-  left: 41px;
+ 	display: block;
+    content: '';
+    width: 4px;
+    height: 30px;
+    -webkit-transform: rotate(-45deg);
+    -o-transform: rotate(-45deg);
+    transform: rotate(-45deg);
+    background-color: rgba(137, 137, 137, 0.95);
+    border-radius: 10px;
+    position: absolute;
+    top: 3px;
+    left: 16px;
 }
 .cross-icon:after{
   -webkit-transform: rotate(45deg);
