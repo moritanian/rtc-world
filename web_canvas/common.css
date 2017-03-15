@@ -1,0 +1,105 @@
+.top-bar-area{
+	background-color: #e5e554;
+    display: inline-block;
+    position: relative;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+}
+
+.top-bar-area .button{
+	float: left;
+    text-align: center;
+    border-left: medium solid #66c6f9;
+    box-shadow: 0px 0px 14px 1px #9d8787;
+    cursor: pointer;
+    list-style-type: none;
+    width: 33%;
+    height: 32px;
+    line-height: 32px;
+    background: linear-gradient(0deg, rgba(248, 203, 5, 0.96) 0, rgb(255, 235, 165) 100%);
+    color: white;
+    text-shadow: 2px 1px 1px #383737;
+
+}
+.top-bar-area .button:active {
+	    box-shadow: inset 0px 0px 0px 1px #e7d3d3;
+}
+
+.chat-canvas{
+	position: absolute;
+}
+
+.drag{
+	z-index: 100;
+}
+
+.front-obj{
+	z-index: 100;
+}
+
+.swipable{
+	position: absolute;
+}
+
+.baloon {
+    position: absolute;
+    display: inline-block;
+    cursor: pointer;
+	
+}
+
+.hidden{
+	display: none;
+}
+
+.baloon:before{
+	content: "";
+    border: 10px solid transparent;
+    border-right: 9px solid beige;
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0);
+    left: -18px;
+    top: 20%;
+}
+
+.baloon:after{
+	content: "";
+    border: 10px solid transparent;
+    /* border-right: 9px solid beige; */
+    position: absolute;
+    background-color: rgba(243, 240, 208, 0.99);
+    left: -9px;
+    top: 20%;
+    transform: rotateZ(45deg);
+    border: solid 0.1px #a5a1a1;
+    width: 20px;
+    height: 20px;
+    display: none;
+}
+
+.baloon .baloon-text{
+	width: 200px;
+    min-height: 20px;
+    background-color: beige;
+    border-radius: 10px;
+    padding: 4px 7px 2px;
+    border: solid 1px #b5b4b4;
+    font-size: 0.8em;
+}
+
+.baloon textarea{
+	background-color: beige;
+    border-radius: 10px;
+    padding: 10px;
+    //rows: 2;
+    width: 200px;
+    min-height: 20px;
+    font-size: 1em;
+    line-height: 1em;
+
+}
+
+.image-frame img{
+	width: 200px;
+}

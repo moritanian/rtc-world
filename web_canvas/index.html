@@ -1,0 +1,281 @@
+<!doctype html>
+<html>
+<head>
+ <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
+ <title> web canvas</title>
+<link rel=stylesheet href="./common.css">
+<script src="./../jq.js"></script>
+
+<script src="https://rtc-world-s.herokuapp.com/socket.io/socket.io.js"></script> 
+
+<script src="./../chanel.js"></script>
+<script src="swipable_control.js"></script>
+
+<script>
+ 
+$(function () {
+	const SwipableModels = {
+		Baloon: "baloon",
+		ImageFrame: "image_frame"
+	};
+
+	let chanel_control;
+	let $baloon_model = $(".baloon").clone(true);
+	let $image_frame_model = $(".image-frame").clone(true);
+	$baloon_model.css("display", "block");
+	$image_frame_model.css("display", "block");
+	var send_msg_func = function(msg){
+		if(chanel_control){
+            chanel_control.sendAlongDataChanel(msg);
+        }
+	};
+
+	let get_obj_info_callback = function(obj_info, obj){
+		if("text" in obj_info){
+			console.log(obj_info);
+
+			$(obj).find(".baloon-text").text(obj_info.text);
+		}
+		if("image_src" in obj_info){
+			$(obj).find("img").attr("src", obj_info.image_src)
+		}
+    };
+
+	let swipable_control = new SwipableControl(send_msg_func, get_obj_info_callback);
+	swipable_control.setDomModel(SwipableModels.Baloon, $baloon_model);
+	swipable_control.setDomModel(SwipableModels.ImageFrame, $image_frame_model);
+
+	 	var connected_callback = function(connection_count){
+            swipable_control.connection_changed(connection_count + 1);
+            $("#member-number").text(connection_count + 1);
+            console.log("connected callback " + connection_count);
+        };
+        var msg_get_callback = function(msg){
+            swipable_control.get_msg(msg);
+        }
+        var closed_callback = function(connection_count){
+            console.log("connection closed callback" + connection_count);
+            swipable_control.connection_changed(connection_count + 1);
+            $("#member-number").text(connection_count + 1);
+        }
+
+      
+
+	// PC はダブルクリックで、　スマホ、tabletはクリックで編集できるように
+	let is_touch = ('ontouchstart' in window);
+	let text_edit_start = function(){
+		let $baloon = this;
+		let $baloon_text = $(this).find(".baloon-text");
+		$baloon_text.hide();
+		let $text_area = $(this).find("textarea");
+		$text_area.val($baloon_text.text());
+		$text_area.show();
+		/*
+		var submit = function(){
+        	var inputVal = $text_area.val();
+            if(inputVal===''){
+            	inputVal = $text_area.get(0).defaultValue;
+            }
+            $baloon_text.text(inputVal);
+        	$text_area.hide();
+        	$baloon_text.show();
+        }
+        $text_area.focus().blur(submit);
+
+        $text_area.focus().keydown(function(e){
+        	var elem, end, start, value;
+  			// tab 
+  			if (e.keyCode === 9) {
+			    if (e.preventDefault) {
+			      e.preventDefault();
+			    }
+			    elem = e.target;
+			    start = elem.selectionStart;
+			    end = elem.selectionEnd;
+			    value = elem.value;
+			    elem.value = "" + (value.substring(0, start)) + "\t" + (value.substring(end));
+			    elem.selectionStart = elem.selectionEnd = start + 1;
+			    return false;
+			}
+        });
+        $text_area.focus().keypress(function(e){
+            if ( e.which == 13 ) {
+                submit();    
+                return false;
+            }
+        });
+        $text_area.focus().keyup(function(){
+        	let old_text = $(this).attr("text-val");
+        	let crt_text = $(this).val();
+        	if(old_text !== crt_text){  // 内容が変わった
+        		$(this).attr("text-val", crt_text);
+        		swipable_control.setObjInfoAttr($baloon, "text", crt_text, once =  true);
+        	}	
+        });
+		*/
+	};
+
+	let add_editable = function(dom){
+		if(is_touch){
+			$(dom).bind("click", text_edit_start);
+		}else{
+			$(dom).bind("dblclick", text_edit_start);
+		}
+
+		let $baloon = $(dom);
+		let $baloon_text = $baloon.find(".baloon-text");
+		let $text_area = $baloon.find("textarea");
+
+		var submit = function(){
+        	var inputVal = $text_area.val();
+            if(inputVal===''){
+            	inputVal = $text_area.get(0).defaultValue;
+            }
+            $baloon_text.text(inputVal);
+        	$text_area.hide();
+        	$baloon_text.show();
+        }
+        $text_area.focus().blur(submit);
+
+        $text_area.focus().keydown(function(e){
+        	var elem, end, start, value;
+  			// tab 
+  			if (e.keyCode === 9) {
+			    if (e.preventDefault) {
+			      e.preventDefault();
+			    }
+			    elem = e.target;
+			    start = elem.selectionStart;
+			    end = elem.selectionEnd;
+			    value = elem.value;
+			    elem.value = "" + (value.substring(0, start)) + "\t" + (value.substring(end));
+			    elem.selectionStart = elem.selectionEnd = start + 1;
+			    return false;
+			}
+        });
+        $text_area.focus().keypress(function(e){
+            // enter
+            /*if ( e.which == 13 ) {
+                submit();    
+                return false;
+            }*/
+        });
+        $text_area.focus().keyup(function(){
+        	let old_text = $(this).attr("text-val");
+        	let crt_text = $(this).val();
+        	if(old_text !== crt_text){  // 内容が変わった
+        		$(this).attr("text-val", crt_text);
+        		swipable_control.setObjInfoAttr($baloon, "text", crt_text, /* once = */ true);
+        	}	
+        });
+
+		$text_area.focus().bind("input",function(evt){
+			console.log("textarea input");
+			console.log(evt.target.scrollHeight);
+			console.log( evt.target.offsetHeight);
+		    if(evt.target.scrollHeight > evt.target.offsetHeight){   
+		        $(evt.target).height(evt.target.scrollHeight);
+		    }else{          
+		        var lineHeight = Number($(evt.target).css("lineHeight").split("px")[0]);
+		        let cnt = 10;
+		        while (true){
+		            $(evt.target).height($(evt.target).height() - lineHeight); 
+		            if(evt.target.scrollHeight > evt.target.offsetHeight){
+		                $(evt.target).height(evt.target.scrollHeight);
+		                break;
+		            }
+		            cnt--;
+		            if(cnt==0){
+		            	break;
+		            }
+		        }
+		    }
+		});
+
+	}
+
+	let add_baloon = function(){
+  		var classes = ["red", "green", "yellow", "black", "", "pink", "gray"];
+	    var xp =200;
+	    var yp = 300;
+	    var class_index = Math.floor(Math.random()*classes.length);
+	    var width = 0;
+	    var height = 0;
+	    var obj_info = {xp: xp, yp: yp, 
+	    				classes:[classes[class_index]], 
+	    				width: width, height: height,
+	    				model: SwipableModels.Baloon
+	    			};
+		let dom = swipable_control.add_new_obj(obj_info);
+    	add_editable(dom);
+	}
+
+    chanel_control = new chanel(connected_callback, msg_get_callback, closed_callback);
+
+
+    /* buttons in top bar */
+    $("#add-baloon-button").bind("click", function(){
+	  add_baloon();
+    });
+
+    $("#upload-file-button").bind("click", function(){
+  		$("#file-input").click();
+    });
+
+    var reader = new FileReader();
+ 
+	function fileChange(ev) {
+	  var target = ev.target;
+	  var file = target.files[0];
+	  var type = file.type;
+	  var size = file.size;
+	 
+	  /*if ( type !== 'image/jpeg' ) {
+	    alert('選択できるファイルはJPEG画像だけです。');
+	    inputFile.value = '';
+	    return;
+	  }*/
+	 
+	  reader.readAsDataURL(file);
+	};
+	 
+	function fileLoad() {
+	  //console.log(reader.result);
+	  	//let obj_info = {xp: 20, yp: 100, image_src: reader.result};
+	  	let obj_info = {xp: 20, yp: 100, model: SwipableModels.ImageFrame};
+		let dom = swipable_control.add_new_obj(obj_info, $image_frame_model);
+        swipable_control.setObjInfoAttr(dom , "image_src", reader.result, /* once = */ true);
+
+		$(dom).find("img").attr("src", reader.result);
+	};
+
+	$("#file-input").bind("change", fileChange);
+	reader.addEventListener('load', fileLoad, false);
+
+});
+</script>
+
+<body>
+
+<ul class="top-bar-area">
+	<li class="button" id="add-baloon-button"> comment </li>
+	<li class="button" id="edit-baloon-button"> </li>
+	<li class="button" id="upload-file-button"> file +</li>
+	
+</ul>
+<div id="user-id"></div>
+
+<div class="chat-canvas">
+	<div class="baloon swipable" style="top: 20px;left: 100px; display: none;">
+		<div class="baloon-text"></div>
+		<textarea class="hidden"></textarea>
+	</div>
+	<div class="image-frame swipable" style="top: 20px;left: 100px; display: none;"><img /></div>
+
+</div>
+
+<input id="file-input" class="hidden" type="file"/> 
+
+</body>
+</head>
