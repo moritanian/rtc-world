@@ -24,6 +24,8 @@
 <!-- capture -->
 <script src="../third_party/html2canvas.js"></script>
 
+<!-- octicons -->
+<link href="../octicons/octicons.css" rel="stylesheet">
 
 </head>
 <body style="margin: 0px"> 
@@ -45,6 +47,8 @@
         <li class="editor-button momentary" id="generate-button"> generate </li>
     </ul>
 
+<a href="https://github.com/moritanian/rtc-world/blob/gh-pages/node_module/index.html" class="link-github"><span class="mega-octicon octicon octicon-mark-github "></span></a>
+
     <div class="node-map" style="width: 80%;"></div>
     <div class="node-detail">
         <div class="key-column">node type </div>
@@ -56,6 +60,7 @@
     </div>
 </div>
 <div class="node ellipse shadowing swipable" id="ori-node" style="top: 20px;"><div class="node-title flexiblebox">server</div></div>
+
 
 <div class="file" id="ori-file">
     <div class="thumbnail"><img></img></div>
@@ -99,36 +104,8 @@ $(function () {
     screenHeight = window.innerHeight;
     //$(".node-container").css("width", screenWidth + "px");
     $(".node-container").css("height", screenHeight + "px");
-    var node_list = [
-    /*
-        {type: "client", name: "webGL", pos: [487,516], is_active: true},
-        {type: "server", name: "server", pos: [523,213], is_active: true},
-        {type: "local", name: "image recognition", pos: [300, 227], is_active: true}, //3
-        {type: "main-node", name: "main", pos: [260 ,338], is_active: true},
-        {type: "local", name: "camera input", pos: [210, 440], is_active: true},//5
-        {type: "control", name: "control panel", pos: [212,139], is_active: true},
-        {type: "local", name: "wroom master", pos: [61, 396], is_active: true},
-        {type: "local", name: "apery thread", pos: [69, 266], is_active: true}, //8
-        {type: "control", name: "CGIHttpServer", pos: [174, 221], is_active: true},
-        {type: "real-world", name: "webcam", pos: [219, 554], is_active: true},//10
-        {type: "client", name: "wroom", pos: [73, 562], is_active: true},
-        {type: "local", name: "DNN", pos: [323, 130], is_active: false}
-    */
-    ];
-    var connect_list = [
-    /*
-        {nodes: [1,2]} , 
-        {nodes: [2,4]},
-        {nodes: [3,4]},
-        {nodes: [4,5]},
-        {nodes: [6,9]},
-        {nodes: [4,7]},
-        {nodes: [7,11]},
-        {nodes: [4,8]},
-        {nodes: [4,9]},
-        {nodes: [3,12]},
-        {nodes: [5,10]}
-        */];
+    var node_list = [];
+    var connect_list = [];
     var node_module = new NodeModule(node_list, connect_list);
 
     // 初めは詳細タブ隠す
@@ -189,44 +166,60 @@ $(function () {
             },
         }
     */
-    var FileMode = {
+    const FileMode = {
         save: 0,
         load: 1
     };
     var file_mode = FileMode.load;
 
+    const StorageKeys = {
+        file_list : "file-list",
+        file_data : "file",
+        thumbnail : "thumbnail",
+        last_file_id : "last-file-id"
+    }
+
+
     var getFileList = function(){
-        var json = localStorage.getItem("file-list");
+        var json = localStorage.getItem(StorageKeys.file_list);
         return json == null ? {} : JSON.parse(json); 
     }
 
     var setFileList = function(fileList){
-        localStorage.setItem("file-list", JSON.stringify(fileList));
+        localStorage.setItem(StorageKeys.file_list, JSON.stringify(fileList));
     }
 
     var getFileData = function(file_id){
-        var json = localStorage.getItem("file" + file_id);
+        var json = localStorage.getItem(StorageKeys.file_data + file_id);
         return json == null ? null : JSON.parse(json);
     }
 
     var setFileData = function(file_id, obj){
-        localStorage.setItem("file" + file_id, JSON.stringify(obj));
+        localStorage.setItem(StorageKeys.file_data + file_id, JSON.stringify(obj));
     }
 
     var removeFiledata = function(file_id){
-        localStorage.removeItem("file" + file_id);
+        localStorage.removeItem(StorageKeys.file_data + file_id);
     }
 
     var setThumbnail = function(file_id, base64_img){
-        localStorage.setItem("thumbnail" + file_id, base64_img);
+        localStorage.setItem(StorageKeys.thumbnail + file_id, base64_img);
     }
 
     var loadThumbnail = function(file_id){
-        return localStorage.getItem("thumbnail" + file_id);
+        return localStorage.getItem(StorageKeys.thumbnail + file_id);
     }
 
     var removeThumbnail = function(file_id){
-        return localStorage.removeItem("thumbnail" + file_id);
+        return localStorage.removeItem(StorageKeys.thumbnail + file_id);
+    }
+
+    var setLastFileId = function(file_id){
+        localStorage.setItem(StorageKeys.last_file_id, file_id);
+    }
+
+    var getLastFileId = function(){
+        return localStorage.getItem(StorageKeys.last_file_id);
     }
 
     var getHashFromNodeModule = function(){
@@ -277,6 +270,7 @@ $(function () {
 
     var saveNodeData = function(file_id, obj){
         obj = obj || getHashFromNodeModule();
+        setLastFileId(file_id);
         fileList[file_id].last_date = getTime();
         setFileList(fileList);
         setFileData(file_id, obj);
@@ -287,6 +281,7 @@ $(function () {
 
     var loadNodeData = function(file_id){
         let hashData = getFileData(file_id);
+        setLastFileId(file_id);
         node_module.node_list = hashData.node_list;
         node_module.connect_list = hashData.connect_list;
         node_module.reload();
@@ -299,7 +294,12 @@ $(function () {
         node_module.reload();
     }
 
+    /*  初期処理 */
     var fileList = getFileList();
+    let last_file_id = getLastFileId();
+    if(last_file_id && fileList[last_file_id]){ // 前回作業ファイルある場合は表示
+        loadNodeData(last_file_id);
+    }
     console.log(fileList);
     var file_dom = $(".file");
 

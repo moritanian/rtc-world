@@ -476,9 +476,9 @@ NodeModule.prototype.generate_code = function(node_id, node_data){
     for(var index = 0; index < this.node_list.length; index++){
         let node_data = this.node_list[index];
         if(node_data != null){
-            code_text += `      {type: ${node_data.type}, name: ${node_data.type}, pos: [${node_data.pos[0]}, ${node_data.pos[1]}]}, \n`;
+            code_text += `      {type: "${node_data.type}", name: "${node_data.name}", pos: [${node_data.pos[0]}, ${node_data.pos[1]}]}, \n`;
         }else{
-            code_text += "      {null},\n";
+            code_text += "      null,\n";
         }
     }
     code_text += "];\n\n";
@@ -488,7 +488,7 @@ NodeModule.prototype.generate_code = function(node_id, node_data){
         if(connect_data != null){
             code_text += `      {nodes: [${connect_data.nodes[0]}, ${connect_data.nodes[1]}]}, \n`;
         }else{
-            code_text += "      {null},\n";
+            code_text += "      null,\n";
         }
     }
     code_text += "]; \n";

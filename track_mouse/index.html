@@ -66,33 +66,48 @@ $(function () {
             scroll_down: 10 
         };
 
-    var node_list = [
-        {type: "client", name: "webGL", pos: [487,516], is_active: true},
-        {type: "server", name: "server", pos: [523,213], is_active: true},
-        {type: "local", name: "image recognition", pos: [300, 227], is_active: true}, //3
-        {type: "main-node", name: "main", pos: [260 ,338], is_active: true},
-        {type: "local", name: "camera input", pos: [210, 440], is_active: true},//5
-        {type: "control", name: "control panel", pos: [212,139], is_active: true},
-        {type: "local", name: "wroom master", pos: [61, 396], is_active: true},
-        {type: "local", name: "apery thread", pos: [69, 266], is_active: true}, //8
-        {type: "control", name: "CGIHttpServer", pos: [174, 221], is_active: true},
-        {type: "real-world", name: "webcam", pos: [219, 554], is_active: true},//10
-        {type: "client", name: "wroom", pos: [73, 562], is_active: true},
-        {type: "local", name: "DNN", pos: [323, 130], is_active: false}
-    ];
-    var connect_list = [
-        {nodes: [1,2]} , 
-        {nodes: [2,4]},
-        {nodes: [3,4]},
-        {nodes: [4,5]},
-        {nodes: [6,9]},
-        {nodes: [4,7]},
-        {nodes: [7,11]},
-        {nodes: [4,8]},
-        {nodes: [4,9]},
-        {nodes: [3,12]},
-        {nodes: [5,10]}
-        ];
+    var node_list = [ 
+      {type: "real-world", name: "Rome", pos: [362, 297]}, 
+      {type: "real-world", name: "Genova", pos: [86, 191]}, 
+      {type: "local", name: "Trino", pos: [8, 79]}, 
+      {type: "real-world", name: "Firenze", pos: [264, 211]}, 
+      {type: "local", name: "Bologna", pos: [351, 168]}, 
+      {type: "real-world", name: "Napoli", pos: [523, 348]}, 
+      {type: "control", name: "Ancona", pos: [538, 225]}, 
+      {type: "real-world", name: "venezia", pos: [378, 57]}, 
+      {type: "local", name: "Trento", pos: [226, 1]}, 
+      {type: "local", name: "Milano", pos: [138, 74]}, 
+      null,
+      {type: "control", name: "Pisa", pos: [168, 262]}, 
+      {type: "control", name: "Taormina", pos: [618, 510]}, 
+      {type: "control", name: "Messina", pos: [734, 482]}, 
+      {type: "control", name: "Bari", pos: [695, 306]}, 
+      {type: "control", name: "Catanzaro", pos: [826, 403]}, 
+      null,
+];
+
+var connect_list = [ 
+      {nodes: [2, 3]}, 
+      {nodes: [2, 10]}, 
+      null,
+      {nodes: [10, 5]}, 
+      {nodes: [5, 4]}, 
+      {nodes: [5, 7]}, 
+      {nodes: [5, 8]}, 
+      {nodes: [8, 9]}, 
+      {nodes: [1, 6]}, 
+      {nodes: [2, 12]}, 
+      {nodes: [12, 4]}, 
+      {nodes: [12, 1]}, 
+      {nodes: [14, 13]}, 
+      {nodes: [5, 9]}, 
+      {nodes: [10, 8]}, 
+      {nodes: [7, 15]}, 
+      {nodes: [14, 14]}, 
+      {nodes: [6, 16]}, 
+      {nodes: [16, 15]}, 
+]; 
+  
     var node_module = new NodeModule(node_list, connect_list);
 
     function setCursor(pos){

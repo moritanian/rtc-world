@@ -21,6 +21,9 @@ ICE Candidate
 - p2p通信するための情報
 - 経路情報など
 
+## スクリーン共有
+http://qiita.com/yusuke84/items/3f781909e3b975dd9db5
+
 
 # データ共有方法
 
@@ -104,6 +107,10 @@ pc/androidとも chrome, firefoxでpush通知され、クリックで指定URL�
 - firebaseの書き込み権限を指定すると、書き込めない。アカウント設定か？鍵(serviceAccountCredentials.json)として「mater」アカウントを使用
 - nodejsのSDKでデータが見られない。書き込みはできる。仕方ないからデータ参照はRESTAPIを使った。
 
+## unity push 
+nifity clud 使えそう
+http://mb.cloud.nifty.com/doc/current/introduction/quickstart_unity.html
+https://codezine.jp/article/detail/8024
 
 # babel廻り
 ES2015 = ECMAScript6 = ES6 
@@ -140,4 +147,27 @@ http://csharpvbcomparer.blogspot.jp/2015/10/blog-highlight-js-show-line-numbers.
 ## 情報源　
 - IE
 http://itlifehack.jp/archives/8152636.html
+
+
+# リアルタイム画像チャットツール
+「canvas」
+
+入力内容の量に応じたtextareaの自動サイズ変更
+http://qiita.com/YoshiyukiKato/items/507b8022e6df5e996a59
+
+## コンセプト
+複数のグループユーザが同じ紙の上でやりとりするような
+自由な場所に文字を書ける
+吹き出しを使う? 吹き出しの色でユーザを分ける
+
+## 場面
+- 地図をみて旅行の話し合い
+- 間取りを見てイベントの話し合い
+- デザインの話し合い
+
+
+## 画像のやりとり
+base64流してlocalstorage 
+サイズ的に流れるか
+
 
