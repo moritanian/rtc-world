@@ -379,6 +379,20 @@ var screen_flow = (function() {
         predict_rotation = [0,0,0];
     }
     return screen_flow;
-//}
+})();
+
+// low pass filter class
+var LpFilter = (function(){
+    var LpFilter = function(ratio = 0.1){
+        this.data = 0;
+        this.ratio = ratio;
+    }
+    LpFilter.prototype.set = function(new_data){
+        this.data = this.data*(1 - this.ratio) + new_data * this.ratio; 
+    }
+    LpFilter.prototype.get = function(){
+        return this.data;
+    }
+    return LpFilter
 })();
     
