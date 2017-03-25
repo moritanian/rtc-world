@@ -12,6 +12,8 @@
 <script src="./../chanel.js"></script>
 <script src="swipable_control.js"></script>
 
+<script src="../third_party/ncmb.min.js"></script>
+
 <script>
  
 $(function () {
@@ -20,9 +22,17 @@ $(function () {
 		ImageFrame: "image_frame"
 	};
 
+	const BackgroundThemes = {
+		1: "background-gray",
+		2: "background-wood",
+		3: "background-sun",
+		4: "background-military"
+	};
+
 	let chanel_control;
 	let $baloon_model = $(".baloon").clone(true);
 	let $image_frame_model = $(".image-frame").clone(true);
+	let user_id = 0;
 	$baloon_model.css("display", "block");
 	$image_frame_model.css("display", "block");
 	var send_msg_func = function(msg){
@@ -31,18 +41,33 @@ $(function () {
         }
 	};
 
-	let get_obj_info_callback = function(obj_info, obj){
-		if("text" in obj_info){
-			console.log(obj_info);
-
-			$(obj).find(".baloon-text").text(obj_info.text);
-		}
-		if("image_src" in obj_info){
-			$(obj).find("img").attr("src", obj_info.image_src)
+	let get_obj_info_callback = function(obj_info, obj, is_new){
+		if(obj_info.model === SwipableModels.Baloon){
+			if("text" in obj_info){
+				console.log(obj_info);
+				$(obj).find(".baloon-text").text(obj_info.text);
+			}
+			if(is_new && obj_info.user_id){
+				$(obj).find(".baloon-text").addClass(BackgroundThemes[obj_info.user_id]);	
+				$(obj).find("textarea").addClass(BackgroundThemes[obj_info.user_id]);	
+				console.log("add userid class");
+				console.log(BackgroundThemes[obj_info.user_id]);
+			}
+		}else if(obj_info.model === SwipableModels.ImageFrame){
+			if("image_src" in obj_info){
+				$(obj).find("img").attr("src", obj_info.image_src)
+			}
 		}
     };
 
-	let swipable_control = new SwipableControl(send_msg_func, get_obj_info_callback);
+    let get_user_id_callback = function(_user_id){
+		$("#user-id").text(_user_id);
+		user_id = _user_id;
+		console.log("user_id");
+		console.log(user_id);
+    };
+
+	let swipable_control = new SwipableControl(send_msg_func, get_obj_info_callback, get_user_id_callback);
 	swipable_control.setDomModel(SwipableModels.Baloon, $baloon_model);
 	swipable_control.setDomModel(SwipableModels.ImageFrame, $image_frame_model);
 
@@ -132,7 +157,11 @@ $(function () {
             if(inputVal===''){
             	inputVal = $text_area.get(0).defaultValue;
             }
-            $baloon_text.text(inputVal);
+            // 改行
+            // TODO 改行ごとにわけたほうがいい
+            inputVal = inputVal.replace(/\r\n/g, "<br />");
+			inputVal = inputVal.replace(/(\n|\r)/g, "<br />");
+            $baloon_text.html(inputVal);
         	$text_area.hide();
         	$baloon_text.show();
         }
@@ -166,7 +195,7 @@ $(function () {
         	let crt_text = $(this).val();
         	if(old_text !== crt_text){  // 内容が変わった
         		$(this).attr("text-val", crt_text);
-        		swipable_control.setObjInfoAttr($baloon, "text", crt_text, /* once = */ true);
+        		swipable_control.setObjInfoAttr($baloon, {"text": crt_text}, /* once = */ false);
         	}	
         });
 
@@ -174,6 +203,7 @@ $(function () {
 			console.log("textarea input");
 			console.log(evt.target.scrollHeight);
 			console.log( evt.target.offsetHeight);
+			
 		    if(evt.target.scrollHeight > evt.target.offsetHeight){   
 		        $(evt.target).height(evt.target.scrollHeight);
 		    }else{          
@@ -187,10 +217,13 @@ $(function () {
 		            }
 		            cnt--;
 		            if(cnt==0){
+		            	console.log(lineHeight);
+		            	console.log("break");
 		            	break;
 		            }
 		        }
 		    }
+		    
 		});
 
 	}
@@ -205,7 +238,8 @@ $(function () {
 	    var obj_info = {xp: xp, yp: yp, 
 	    				classes:[classes[class_index]], 
 	    				width: width, height: height,
-	    				model: SwipableModels.Baloon
+	    				model: SwipableModels.Baloon,
+	    				user_id: user_id
 	    			};
 		let dom = swipable_control.add_new_obj(obj_info);
     	add_editable(dom);
@@ -245,7 +279,7 @@ $(function () {
 	  	//let obj_info = {xp: 20, yp: 100, image_src: reader.result};
 	  	let obj_info = {xp: 20, yp: 100, model: SwipableModels.ImageFrame};
 		let dom = swipable_control.add_new_obj(obj_info, $image_frame_model);
-        swipable_control.setObjInfoAttr(dom , "image_src", reader.result, /* once = */ true);
+        swipable_control.setObjInfoAttr(dom , {"image_src": reader.result}, /* once = */ true);
 
 		$(dom).find("img").attr("src", reader.result);
 	};

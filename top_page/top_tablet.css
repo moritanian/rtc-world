@@ -1,0 +1,53 @@
+.background{
+	background: radial-gradient(#244459,#171717);
+	background-image: url("./../images/dark_background.png");
+	position: fixed;
+	width: 100%;
+	height: 100%;
+	padding: 0px;
+	margin: 0px;
+}
+
+/*:beforeにぼかし効果を設定する*/
+.background:before{
+  content: '';
+  background: inherit;/*.bgImageで設定した背景画像を継承する*/
+  -webkit-filter: blur(5px);
+  -moz-filter: blur(5px);
+  -o-filter: blur(5px);
+  -ms-filter: blur(5px);
+  filter: blur(5px);
+  position: absolute;
+  /*ブラー効果で画像の端がボヤけた分だけ位置を調整*/
+  top: -5px;
+  left: -5px;
+  right: -5px;
+  bottom: -5px;
+  z-index: -1;/*重なり順序を一番下にしておく*/
+}
+
+.top{
+	position: fixed !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+}
+
+.top h1 {
+	padding-left: 10px;
+}
+
+.top .link-github{
+	margin: 10px;
+}
+
+#content {
+	overflow: scroll;
+    top: 100px;
+    position: absolute;
+    width: 100%;
+    bottom: 0px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}

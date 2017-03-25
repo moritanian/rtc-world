@@ -1,6 +1,6 @@
 var SwipableControl = (function(){
 	var instance ; // イベント関数にクラスインスタンスを参照するための苦肉の策
-	var SwipableControl = function(send_msg_func, get_obj_info_func){
+	var SwipableControl = function(send_msg_func, get_obj_info_func, get_user_id_callback){
 		instance = this;
 		this.MAX_USER_ID = 4;
 		this.obj_class = ".swipable";
@@ -33,6 +33,8 @@ var SwipableControl = (function(){
 		
 		// 生成するdom
 		this.dom_models = {};
+
+		this.get_user_id_callback = get_user_id_callback;
 	}
 
 	SwipableControl.prototype.setDomModel = function(key, dom_model){
@@ -43,7 +45,7 @@ var SwipableControl = (function(){
 		// これまで前面にあったものを指定解除
 		$(".front-obj").removeClass("front-obj");
 		$(this).addClass("front-obj");
-		
+
 	    //クラス名に .drag を追加
 	    $(this).addClass("drag");
 	    //タッチデイベントとマウスのイベントの差異を吸収
@@ -160,7 +162,11 @@ var SwipableControl = (function(){
 
 	SwipableControl.prototype.set_user_id = function(user_id) {
 		this.user_id = user_id;
-		$("#user-id").text(user_id);
+		console.log("set user id");
+		console.log(user_id);
+		if(this.get_user_id_callback){
+			this.get_user_id_callback(user_id);
+		}
 	}
 
 	SwipableControl.prototype.set_pos = function(jq_obj, x, y) {
@@ -272,6 +278,7 @@ var SwipableControl = (function(){
 		if(msg_obj.type === "objs_info" || msg_obj.type === "objs_all_info"){ //追加するobj情報// 参加者への初期情報もこれで伝える
 			for(var obj_id in msg_obj.objs){
 				var jqobj;
+				let is_new = false;
 				if(this.swipe_objs[obj_id]){ // 存在する場合は更新
 					jqobj = this.swipe_objs[obj_id].jqobj; //jqobj 退避
 					this.swipe_objs[obj_id] = msg_obj.objs[obj_id];
@@ -281,12 +288,13 @@ var SwipableControl = (function(){
 					console.log(this.swipe_objs);
 					this.add_obj(obj_id,  msg_obj.objs[obj_id]);
 					jqobj = this.swipe_objs[obj_id].jqobj;
+					is_new = true;
 				}
 				
 				this.set_pos(jqobj , this.swipe_objs[obj_id].xp, this.swipe_objs[obj_id].yp);
 				// 外部で定義された処理
 				if(this.get_obj_info_func){
-					this.get_obj_info_func(msg_obj.objs[obj_id], jqobj);
+					this.get_obj_info_func(msg_obj.objs[obj_id], jqobj, is_new);
 				}
 			}
 			if(msg_obj.type === "objs_all_info" && this.get_world_info_flg == false){
@@ -328,12 +336,17 @@ var SwipableControl = (function(){
 	// 外部から呼ばれる
 	// obj_info に付加情報を更新する
 	// sync = true でチャネルに送る
-	SwipableControl.prototype.setObjInfoAttr = function($obj, key, val, once){
+	SwipableControl.prototype.setObjInfoAttr = function($obj, attrHash, once){
 		let obj_id = this.get_obj_id_from_dom($obj);
-		this.swipe_objs[obj_id][key] = val;
+		for(let key in attrHash){
+			this.swipe_objs[obj_id][key] = attrHash[key];	
+		}
+		
+		this.send_obj_info(obj_id);
 		if(once){
-			this.send_obj_info(obj_id);
-			delete this.swipe_objs[obj_id][key] // 一度きりの送信
+			for (let key in attrHash){
+				delete this.swipe_objs[obj_id][key]; // 一度きりの送信
+			}
 		}
 	}
 
