@@ -1,0 +1,127 @@
+body {
+    color: #000;
+    font-family:Monospace;
+    font-size:13px;
+    margin: 0px;
+    overflow: hidden;
+}
+
+.info{
+    position: absolute;
+    margin-left: 15px;
+}
+
+.info ul {
+    list-style: none;
+    width: 100%;
+    color: white;
+    margin: 0;
+    padding: 0;
+}
+
+.info-li {
+    border-left: 3px solid #2fa1d6;
+    background: rgba(26, 26, 26, 0.88);
+    border-bottom: 1px solid #2c2c2c;   
+    cursor: auto;
+    height: 27px;
+    line-height: 27px;
+    overflow: hidden;
+    padding: 0 4px 0 5px;
+}
+.item-value input {
+    color: #2fa1d6;
+    background: #303030;
+    outline: none;
+    width: 30%;
+    border: 0;
+    margin-top:4px;
+}
+
+.info-button{
+    color: #2fa1d6;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: 0px 0px 4px 2px rgba(140, 150, 138, 0.98);
+}
+
+.info-button:active{    
+    box-shadow: inset 0px 0px 8px 1px rgba(140, 150, 138, 0.98);
+}
+
+.on-off-title{
+    top: -10px;
+    position: relative;
+}
+
+input[type="checkbox"].info-on-off-button {
+    appearance: none;
+    -webkit-appearance: none;
+    -ms-appearance: none;
+    -moz-appearance: none;
+    margin: 4px 4px 4px 10px;
+    width: 50px;
+    height: 20px;
+    border: 0px solid rgba(0,0,0,0.0);
+    border-radius: 50px;
+    background-color: #ddd;
+    transition: background-color .4s ease;
+}
+
+input[type="checkbox"].info-on-off-button:checked {
+    background-color: #bbb;
+}
+
+ input[type="checkbox"].info-on-off-button + label {
+    position: relative;
+    display: inline-block;
+    left: -60px;
+    width: 24px;
+    height: 24px;
+    border: 0px solid rgba(0,0,0,0.0);
+    border-radius: 50%;
+    background-color: #eee;
+    box-shadow: 0 0 4px rgba(0,0,0,0.4);
+    transition: left .4s ease, background-color .4s ease;
+    top: -3px;
+}
+
+input[type="checkbox"].info-on-off-button:checked + label {
+   position: relative;
+    display: inline-block;
+    top: -2px;
+    left: -20px;
+    width: 24px;
+    height: 24px;
+    border: 0px solid rgba(0,0,0,0.0);
+    border-radius: 50%;
+    background-color: #00bbd3;
+    box-shadow: 0 0 4px rgba(0,0,0,0.4);
+}
+
+input[type="checkbox"].info-on-off-button:focus {
+    outline: none;
+}
+
+.info-toggle-button{
+    webkit-transition: opacity 0.1s linear;
+    -o-transition: opacity 0.1s linear;
+    -moz-transition: opacity 0.1s linear;
+    transition: opacity 0.1s linear;
+    border: 0;
+    position: absolute;
+    line-height: 19px;
+    height: 20px;
+    cursor: pointer;
+    text-align: center;
+    background-color: rgba(1, 25, 22, 0.87);
+    width: 100%;
+    color: white;
+}
+
+
+
+.open-button{
+    width: 200px;
+}
+
