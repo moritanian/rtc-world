@@ -86,15 +86,36 @@
         }
         create_tail();
 
-        // クリック音
-        function initSound(){
-            var click_source_file = "./click.mp3";
-            click_audio = new Audio();
-            click_audio.src = click_source_file;
-            click_audio.load();
-        }
+        // Click sound
+        var ClickSounder = (function(){
+            var click_audio;
+            var instance;
+            var ClickSounder = function(dom){
+                instance = this;
+                this.first_flg = false;
+                var click_source_file = "./click.mp3";
+                click_audio = new Audio();
+                click_audio.src = click_source_file;
+                click_audio.load();
+                var dummy = document.createElement('div');
+                var first_click_func = function(){
+                    click_audio.play();
+                    dom.removeEventListener('click', first_click_func, false);
+                    instance.first_flg = true;
+                };
+                dom.addEventListener('click', first_click_func, false);
+                dummy.click();
+            };
 
-        initSound();
+            ClickSounder.prototype.play = function(){
+                if(this.first_flg){
+                    click_audio.play();
+                }    
+            };
+            return ClickSounder;
+        })();
+
+        var  click_audio = new ClickSounder($("#left-clicker").get(0));
 
         var clicker_status = {
             right: false,
@@ -134,6 +155,9 @@
             // click_audio.pause();
             //click_audio.play();
             $(element).addClass("clicked-clicker");
+            vibration.start(20);
+            click_audio.play();
+
         }
 
         var click_up = function(event, element, clicker_id = 0){
@@ -163,19 +187,14 @@
        $("#left-clicker").bind("touchend", function(e){click_up(e, this, clicker_ids.left)});
 
         $("#right-clicker").click(function(){
-                    click_audio.play();
-                    publish_event(event_ids.right_click)
-
+            publish_event(event_ids.right_click);
         });
         $("#left-clicker").click(function(){
-                    click_audio.play();
-                    publish_event(event_ids.left_click);
+            publish_event(event_ids.left_click);
         });
         $("#left-clicker").dblclick(function(){
-                    click_audio.play();
-                    publish_event(event_ids.left_dblclick);
+            publish_event(event_ids.left_dblclick);
         });
-
 
         /*
             tracking flow
@@ -197,13 +216,44 @@
             }
             return lp_filter
         })();
+
+        // vibration
+        var Vibration = (function(){
+            var Vibration = function(){
+                this.vibrate =  navigator.vibrate || navigator.webkitVibrate || navigator.mozVibrate || navigator.msVibrate;
+            };
+
+            Vibration.prototype.isVibrate = function(){
+                return (!!this.vibrate);
+            };
+
+            Vibration.prototype.start = function(time = 1000){
+                this.stop();
+                this._vibrate(time);
+            };
+
+            Vibration.prototype._vibrate = function(arg){
+                if(!this.isVibrate){
+                    console.warn("cannot use vibration in this device.");
+                    return;
+                }
+                navigator.vibrate(arg);
+            };
+
+            Vibration.prototype.stop = function(){
+                this._vibrate([]);
+            };
+            return Vibration;
+        })();
        
         var tracking = new screen_flow(2, /* debug = */false);
         var offset, rot;
         var x_filter = new lp_filter(0.5);
         var y_filter = new lp_filter(0.5);
         var z_filter = new lp_filter(0.5);
-        var data_hash = {};               
+        var data_hash = {};    
+        var vibration = new Vibration();
+
         /* 
             loop
         */ 
