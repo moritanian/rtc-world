@@ -13,9 +13,64 @@
 				overflow: hidden;
 			}
 
+			.info{
+				position: absolute;
+				margin-left: 15px;
+			}
+
+			.info ul {
+				list-style: none;
+				width: 100%;
+				color: white;
+				margin: 0;
+				padding: 0;
+			}
+
+			.info-li {
+				border-left: 3px solid #2fa1d6;
+				background: rgba(26, 26, 26, 0.88);
+    			border-bottom: 1px solid #2c2c2c;	
+				cursor: auto;
+    			height: 27px;
+    			line-height: 27px;
+    			overflow: hidden;
+    			padding: 0 4px 0 5px;
+			}
+			.item-value input {
+				    color: #2fa1d6;
+				    background: #303030;
+    				outline: none;
+    				width: 30%;
+    				border: 0;
+    				margin-top:4px;
+			}
+
+			.info-toggle-button{
+				webkit-transition: opacity 0.1s linear;
+			    -o-transition: opacity 0.1s linear;
+			    -moz-transition: opacity 0.1s linear;
+			    transition: opacity 0.1s linear;
+			    border: 0;
+			    position: absolute;
+			    line-height: 19px;
+			    height: 20px;
+			    cursor: pointer;
+			    text-align: center;
+			    background-color: rgba(1, 25, 22, 0.87);
+			    width: 100%;
+			    color: white;
+			}
+
+			.open-button{
+				width: 200px;
+
+			}
+
 		</style>
 	</head>
 	<body>
+			<audio src="sound/wave.mp3" preload="auto" autoplay loop></audio>
+			<audio src="sound/whistle.mp3" preload="auto" autoplay ></audio>
 
 		<script src="https://threejs.org/build/three.js"></script>
 
@@ -35,8 +90,43 @@
         <script type="text/javascript" src="./../device_cam.js"></script>
         <script type="text/javascript" src="./../jsfeat/screen_flow.js"></script>
 
-
+        <div class="info">
+        	<ul class="info-items">
+        		<li class="info-li">
+        			<span class="item-title">x_pos</span>
+        			<span class="item-value x_pos"><input type="text"></span>
+        		</li>
+        		<li class="info-li">
+        			<span class="item-title">y_pos</span>
+        			<span class="item-value y_pos"><input type="text"></span>
+        		</li>
+        		<li class="info-li">
+        			<span class="item-title">z_pos</span>
+        			<span class="item-value z_pos"><input type="text"></span>
+        		</li>
+        	</ul>
+        	<div class="close-button info-toggle-button">Close Controls</div>
+        </div>
 		<script>
+
+			let info_contorls = {
+				$x_pos: $(".x_pos input"),
+				$y_pos: $(".y_pos input"),
+				$z_pos: $(".z_pos input")
+			};
+			$(".info-toggle-button").bind("click", function(){
+				if($(this).hasClass("close-button")){
+					$(this).removeClass("close-button");
+					$(this).addClass("open-button");
+					$(".info-items").hide();
+					$(this).text("Open Controls");
+				}else{
+					$(this).removeClass("open-button");
+					$(this).addClass("close-button");
+					$(".info-items").show();
+					$(this).text("Close Controls");					
+				}
+			});
 
 			if ( ! Detector.webgl ) {
 
@@ -67,7 +157,8 @@
 	        var x_filter = new LpFilter(0.5);
 	        var y_filter = new LpFilter(0.5);
 	        var z_filter = new LpFilter(0.5);
-	        var camera_init_pos = [2000, 750, 2000];
+	        const camera_init_pos = [2000, 750, 2000];
+	        const camera_init_target_pos = [2000, 700, 0];
 	       
 			init();
 			animate();
@@ -87,13 +178,14 @@
 				camera = new THREE.PerspectiveCamera( 55, window.innerWidth / window.innerHeight, 0.5, 3000000 );
 				camera.position.set( camera_init_pos[0], camera_init_pos[1], camera_init_pos[2] );
 
+				/*
 				controls = new THREE.OrbitControls( camera, renderer.domElement );
 				controls.enablePan = false;
 				controls.minDistance = 1000.0;
 				controls.maxDistance = 5000.0;
 				controls.maxPolarAngle = Math.PI * 0.495;
-				controls.target.set( 2000, 700, 0 );
-
+				controls.target.set( camera_init_target_pos[0], camera_init_target_pos[1], camera_init_target_pos[2] );
+*/
 				scene.add( new THREE.AmbientLight( 0x444444 ) );
 
 				var light = new THREE.DirectionalLight( 0xffffbb, 1 );
@@ -198,6 +290,7 @@
 			}
 
 			//
+			var count = 0;
 
 			function animate() {
 
@@ -209,9 +302,18 @@
 	            y_filter.set(offset.y);
 	            z_filter.set(offset.z);
 	            let move_ratio = 10;
-	            camera.position.x = camera_init_pos[0] - x_filter.get() * move_ratio;
-	            camera.position.y = camera_init_pos[1] + y_filter.get() * move_ratio;
-	            camera.position.z = camera_init_pos[2] - z_filter.get() * move_ratio;
+	            count -= 10;
+	            let camera_pos = {
+	            	x: camera_init_pos[0] - x_filter.get() * move_ratio,	
+	            	y: camera_init_pos[1] - y_filter.get() * move_ratio,	
+	            	z: camera_init_pos[2] - z_filter.get() * move_ratio + count	
+	            };
+	            camera.position.x = camera_pos.x;
+	            camera.position.y = camera_pos.y;
+	            camera.position.z = camera_pos.z;
+	            info_contorls.$x_pos.val(Math.floor(camera_pos.x));
+	            info_contorls.$y_pos.val(Math.floor(camera_pos.y));
+	            info_contorls.$z_pos.val(Math.floor(camera_pos.z));
 
 				render();
 
