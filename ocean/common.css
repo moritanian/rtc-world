@@ -6,6 +6,10 @@ body {
     overflow: hidden;
 }
 
+.hide {
+    display: none;
+}
+
 .info{
     position: absolute;
     margin-left: 15px;
@@ -43,6 +47,7 @@ body {
     text-align: center;
     cursor: pointer;
     box-shadow: 0px 0px 4px 2px rgba(140, 150, 138, 0.98);
+    user-select: none;
 }
 
 .info-button:active{    
@@ -123,5 +128,37 @@ input[type="checkbox"].info-on-off-button:focus {
 
 .open-button{
     width: 200px;
+}
+
+
+.sighting {
+   width: 200px;
+    height: 200px;
+    border-radius: 100px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    background-image: url(images/sighting.png);
+    background-size: cover;
+    box-shadow: inset 0px 0px 8px 1px;
+    background-color: rgba(251, 173, 7, 0.16);  
+
+}
+
+.sighting:active{
+    background-color: rgba(152, 52, 24, 0.43);    
+}
+
+.blood-splash {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-image: url(images/blood_splash.png);
+    pointer-events: none;
+    opacity: 0.9;
 }
 

@@ -7,8 +7,8 @@
 		<link rel=stylesheet href="./common.css">	
 	</head>
 	<body>
-			<audio src="sound/wave.mp3" preload="auto" autoplay loop></audio>
-			<audio src="sound/whistle.mp3" preload="auto" autoplay ></audio>
+			<!--<audio src="sound/wave.mp3" preload="auto" autoplay loop></audio>
+			<audio src="sound/whistle.mp3" preload="auto" autoplay></audio> -->
 
 		<script src="https://threejs.org/build/three.js"></script>
 
@@ -49,12 +49,22 @@
         			<span class="on-off-title"> ship move </span> 
         			<input type="checkbox" id="ship-move-toggle" class="info-on-off-button"><label for="toggleButton"></label>
         		</li>
+        		<li class="info-li">
+        			<span class="on-off-title"> sound </span> 
+        			<input type="checkbox" id="sound-toggle" class="info-on-off-button"><label for="toggleButton"></label>
+        		</li>
         	</ul>
         	<div class="close-button info-toggle-button">Close Controls</div>
         </div>
 		<script>
+			'use strict';
 			const isOrbitControl = false;
 			let isShipMove = false;
+			let wave_audio = new Audio("./sound/wave.mp3");
+			wave_audio.loop = "true";
+			wave_audio.load();
+			let whistle_audio = new Audio("./sound/whistle.mp3");
+			whistle_audio.load();
 			// 情報表示
 			let info_contorls = {
 				$x_pos: $(".x_pos input"),
@@ -87,6 +97,23 @@
 				}	
 			});
 
+			$("#sound-toggle").bind("change", function(){
+				if($(this).is(":checked")){
+					wave_audio.play();
+					whistle_audio.play();
+				}else{
+					wave_audio.pause();
+					whistle_audio.pause();
+
+				}	
+			});
+
+			$(".info-on-off-button").parent().bind("click", function(){
+				var $input = $(this).find("input");
+				$input.prop("checked", !$input.prop("checked")).change();
+			});	
+
+
 			if ( ! Detector.webgl ) {
 
 				Detector.addGetWebGLMessage();
@@ -96,8 +123,7 @@
 
 			var container, stats;
 			var camera, scene, renderer;
-			var sphere;
-			var ship;
+			var sphere, water;
 
 			var parameters = {
 				width: 2000,
@@ -112,13 +138,82 @@
 			var waterNormals;
 
 			// tracking
-			var tracking = new screen_flow(2, /* debug = */false);
+			var tracking = new screen_flow(7, /* debug = */false);
 	        var offset, rot;
 	        var x_filter = new LpFilter(0.5);
 	        var y_filter = new LpFilter(0.5);
 	        var z_filter = new LpFilter(0.5);
 	        const camera_init_pos = [2000, 550, 2000];
 	        const camera_init_target_pos = [2000, 700, 0];
+
+	        let nationalityList = {
+				Japan:{
+					en: "Japan",
+					jp: "日本"
+				},
+				Russia:{
+					en: "Russia",
+					jp: "ロシア"
+				},
+				Soviet:{
+					en: "Soviet Union",
+					jp: "ソ連"
+				},
+				Ameriaca:{
+					en: "America",
+					jp: "アメリカ"
+				}
+			};
+
+	        let models = {
+				battle_ship: {
+					path: "./objs/battle_ship/ship.json",
+					nationality: nationalityList.Russia,
+					explain: "ステレグシュチイ級フリゲート",
+					instances:[
+						{
+							scale: [10, 10, 10],
+							pos: [1800, 50, 500],
+							rot: [0, Math.PI/2, 0],
+							mesh: {}
+						},
+						{
+							scale: [10, 10, 10],
+							pos: [1800, 200, 0],
+							rot: [-Math.PI/5.0, -Math.PI/3, Math.PI/100]
+						}
+					]
+				},
+				zero_fighter: {
+					path: "./objs/zero_fighter/scene.json",
+					nationality: nationalityList.Japan,
+					explain: "零戦",
+					instances: [
+						{
+							scale: [10, 10, 10],
+							pos: [1800, 300, -500],
+							rot: [0,Math.PI/4, Math.PI/8]
+						}
+					]
+				},
+				p51_mustang: {
+					path: "./objs/p51_mustang/scene.json",
+					nationality: nationalityList.Ameriaca,
+					explain: "P51 マスタング",
+					instances: [
+						{
+							scale: [0.2, 0.2, 0.2],
+							pos: [1200, 1000, -2500],
+							rot: [ Math.PI/4 ,Math.PI/4,0]
+						},
+						{
+							scale: [0.2, 0.2, 0.2],
+							pos: [1200, 1000, -1000],
+							rot: [ Math.PI/4 , -Math.PI/6,0]
+						}
+					]
+				}
+			};
 	       
 			init();
 			animate();
@@ -154,37 +249,55 @@
 				scene.add( light );
 
 				// import battle ship mpdel
-				let modelPath = "./objs/ship.json";//書き出したjsonファイル 　
-				//let json_loader = new THREE.JSONLoader();　　
-				let json_loader = new THREE.ObjectLoader();　　
-			    json_loader.load(modelPath, function(obj) {　
-            		ship = obj;
-            		ship.scale.set(10,10,10);
-            		ship.position.set(1800, 50, 500); // x:  y: z: 前-
-            		ship.rotation.set(0, Math.PI/2, 0);
-            		scene.add(ship);　　
-            		let ship2 = ship.clone();
-            		ship2.position.set(1800, 260,0);
-            		ship2.rotation.set(-Math.PI/5.0, -Math.PI/3, Math.PI/100);
-			    	scene.add(ship2);
-			    });　　
+				
 
+				
+				//let json_loader = new THREE.JSONLoader();　　
+				for(var key in models){
+					let model = models[key];
+					var json_loader = new THREE.ObjectLoader();　　
+					json_loader.load(model.path, function(obj) {　
+						console.log(model.explain);
+						let count = 0;
+						for(let index in model.instances){
+							let instance = model.instances[index];
+							if(count >0){
+								model.instances[index].mesh = obj.clone();
+							}else{
+								model.instances[index].mesh = obj;
+							}
+							console.log(instance);
+							instance.mesh.scale.set(instance.scale[0], instance.scale[1], instance.scale[2]);
+							instance.mesh.rotation.set(instance.rot[0], instance.rot[1], instance.rot[2]);
+							
+							instance.mesh.position.set(instance.pos[0], instance.pos[1], instance.pos[2]);
+							scene.add(model.instances[index].mesh);
+							count++;	
+						}
+			    	});　　
+				}
+			   
 				waterNormals = new THREE.TextureLoader().load( 'textures/waternormals.jpg' );
 				waterNormals.wrapS = waterNormals.wrapT = THREE.RepeatWrapping;
 
-				water = new THREE.Water( renderer, camera, scene, {
-					textureWidth: 512,
-					textureHeight: 512,
-					waterNormals: waterNormals,
-					alpha: 	1.0,
-					sunDirection: light.position.clone().normalize(),
-					sunColor: 0xffffff,
-					waterColor: 0x001e0f,
-					distortionScale: 50.0
-				} );
+				water = new THREE.Water( 
+					renderer, 
+					camera, 
+					scene, 
+					{
+						textureWidth: 512,
+						textureHeight: 512,
+						waterNormals: waterNormals,
+						alpha: 	1.0,
+						sunDirection: light.position.clone().normalize(),
+						sunColor: 0xffffff,
+						waterColor: 0x001e0f,
+						distortionScale: 50.0
+					} 
+				);
 
 
-				mirrorMesh = new THREE.Mesh(
+				let mirrorMesh = new THREE.Mesh(
 					new THREE.PlaneBufferGeometry( parameters.width * 500, parameters.height * 500 ),
 					water.material
 				);
@@ -295,7 +408,7 @@
 	            info_contorls.$z_pos.val(Math.floor(camera_pos.z));
 
 	            if(isShipMove){
-	            	ship.position.x += 1;
+	            	models.battle_ship.instances[0].mesh.position.x += 1;
 	            }
 
 				render();
