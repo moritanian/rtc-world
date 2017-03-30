@@ -13,10 +13,16 @@
 <script src="swipable_control.js"></script>
 
 <script src="../third_party/ncmb.min.js"></script>
+<script src="ncmb_file.js"></script>
 
 <script>
  
 $(function () {
+	const chatRoomName = "web_canvas"; // chat group ごとに一意な名前つけること
+
+	let ncmb_file = new NCMBFile();
+	let new_image_dom;
+
 	const SwipableModels = {
 		Baloon: "baloon",
 		ImageFrame: "image_frame"
@@ -54,9 +60,20 @@ $(function () {
 				console.log(BackgroundThemes[obj_info.user_id]);
 			}
 		}else if(obj_info.model === SwipableModels.ImageFrame){
+			console.log("image frame ");
+			if(is_new){
+				let uploadFileName = obj_info.upload_file_name;
+				if(uploadFileName){
+					console.log(uploadFileName);
+					ncmb_file.getFile(uploadFileName, $(obj).find("img"));
+				}
+			}
+			
+			/*
 			if("image_src" in obj_info){
 				$(obj).find("img").attr("src", obj_info.image_src)
 			}
+			*/
 		}
     };
 
@@ -241,11 +258,11 @@ $(function () {
 	    				model: SwipableModels.Baloon,
 	    				user_id: user_id
 	    			};
-		let dom = swipable_control.add_new_obj(obj_info);
+		dom = swipable_control.add_new_obj(obj_info);
     	add_editable(dom);
 	}
 
-    chanel_control = new chanel(connected_callback, msg_get_callback, closed_callback);
+    chanel_control = new chanel(connected_callback, msg_get_callback, closed_callback, chatRoomName);
 
 
     /* buttons in top bar */
@@ -271,21 +288,35 @@ $(function () {
 	    return;
 	  }*/
 	 
-	  reader.readAsDataURL(file);
+		reader.readAsDataURL(file);
+		let fileName = file.name;
+		console.log(fileName);
+		let uploadFileName = chatRoomName + getTime() + fileName;
+
+		let obj_info = {xp: 20, yp: 100, 
+						file_name: fileName,
+						upload_file_name: uploadFileName, 
+						model: SwipableModels.ImageFrame};
+		new_image_dom = swipable_control.add_new_obj(obj_info, $image_frame_model);
+
+		ncmb_file.upload(uploadFileName, file);
 	};
 	 
-	function fileLoad() {
-	  //console.log(reader.result);
+	function fileLoad(e) {
+	  	//console.log(reader.result);
 	  	//let obj_info = {xp: 20, yp: 100, image_src: reader.result};
-	  	let obj_info = {xp: 20, yp: 100, model: SwipableModels.ImageFrame};
-		let dom = swipable_control.add_new_obj(obj_info, $image_frame_model);
-        swipable_control.setObjInfoAttr(dom , {"image_src": reader.result}, /* once = */ true);
-
-		$(dom).find("img").attr("src", reader.result);
+	  
+        //swipable_control.setObjInfoAttr(dom , {"image_src": reader.result}, /* once = */ true);
+		$(new_image_dom).find("img").attr("src", reader.result);
 	};
 
 	$("#file-input").bind("change", fileChange);
 	reader.addEventListener('load', fileLoad, false);
+
+	var getTime = function() {
+		var date_obj = new Date();
+		return date_obj.getTime();
+	}
 
 });
 </script>
