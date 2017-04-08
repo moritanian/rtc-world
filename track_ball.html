@@ -11,13 +11,13 @@
 <script src="https://rtc-world-s.herokuapp.com/socket.io/socket.io.js"></script> 
 
 
-<script src="./chanel.js"></script>
+<script src="./webrtc/chanel.js"></script>
 
 <script type="text/javascript" src="./jsfeat/jsfeat-min.js"></script>        
 <script type="text/javascript" src="./jsfeat/compatibility.js"></script>
 <script type="text/javascript" src="./jsfeat/profile.js"></script>
 <script type="text/javascript" src="./jsfeat/screen_flow.js"></script>
-<script type="text/javascript" src="./device_cam.js"></script>
+<script type="text/javascript" src="./webrtc/device_cam.js"></script>
 
 
 <script>
@@ -48,7 +48,7 @@ $(function () {
             swipe_control.connection_changed(connection_count + 1);
             $("#member-number").text(connection_count + 1);
         }
-        chanel_control = new chanel(connected_callback, msg_get_callback, closed_callback);
+        chanel_control = new Chanel(connected_callback, msg_get_callback, closed_callback);
     });
 
     $("#stop-button").on("click", function(){

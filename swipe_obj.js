@@ -236,7 +236,7 @@ var SwipeObjControl = (function(){
 			this.render_handler = window.requestAnimationFrame(function(){instance.update()});
 			if(this.timer){
 				this.timer.stop();
-				this.f_rate = 1000/this.timer.get_runtime();
+				this.f_rate = Math.floor(1000/this.timer.get_runtime());
 			}else{
 				this.timer = new stopwatch();
 			}

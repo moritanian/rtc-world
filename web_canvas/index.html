@@ -9,7 +9,7 @@
 
 <script src="https://rtc-world-s.herokuapp.com/socket.io/socket.io.js"></script> 
 
-<script src="./../chanel.js"></script>
+<script src="./../webrtc/chanel.js"></script>
 <script src="swipable_control.js"></script>
 
 <script src="../third_party/ncmb.min.js"></script>
@@ -262,7 +262,7 @@ $(function () {
     	add_editable(dom);
 	}
 
-    chanel_control = new chanel(connected_callback, msg_get_callback, closed_callback, chatRoomName);
+    chanel_control = new Chanel(connected_callback, msg_get_callback, closed_callback, chatRoomName);
 
 
     /* buttons in top bar */

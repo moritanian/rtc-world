@@ -1,4 +1,4 @@
-var chanel = (function(){
+var Chanel = (function(){
    function _assert(desc, v) {
      if (v) {
        return;
@@ -24,7 +24,7 @@ var chanel = (function(){
   let get_msg_callback;
   let closed_callback;
   // connected_callback: 接続した際のコールバック関数, get_msg_callback, _closed_callback : データチャネル切断時のｃａｌｌｂａｃｋ
-  var chanel = function(_connected_callback, _get_msg_callback, _closed_callback, room = "_testroom"){
+  var Chanel = function(_connected_callback, _get_msg_callback, _closed_callback, room = "_testroom"){
     connected_callback = _connected_callback;
     get_msg_callback = _get_msg_callback;
     closed_callback = _closed_callback;
@@ -47,25 +47,25 @@ var chanel = (function(){
       socket.emit('enter', room);
     });
     socket.on('message', function(message) {
-      console.log('message:', message);
+  //    console.log('message:', message);
       let fromId = message.from;
       if (message.type === 'offer') {
         // -- got offer ---
-        console.log('Received offer ...');
+  //      console.log('Received offer ...');
         let offer = new RTCSessionDescription(message);
         setOffer(fromId, offer);
       }
       else if (message.type === 'answer') {
         // --- got answer ---
-        console.log('Received answer ...');
+  //      console.log('Received answer ...');
         let answer = new RTCSessionDescription(message);
         setAnswer(fromId, answer);
       }
       else if (message.type === 'candidate') {
         // --- got ICE candidate ---
-        console.log('Received ICE candidate ...');
+  //      console.log('Received ICE candidate ...');
         let candidate = new RTCIceCandidate(message.ice);
-        console.log(candidate);
+  //      console.log(candidate);
         addIceCandidate(fromId, candidate);
       }
       else if (message.type === 'call me') {
@@ -163,19 +163,19 @@ var chanel = (function(){
     }
    
     function sendSdp(id, sessionDescription) {
-      console.log('---sending sdp ---');
+  //    console.log('---sending sdp ---');
       /*---
       textForSendSdp.value = sessionDescription.sdp;
       textForSendSdp.focus();
       textForSendSdp.select();
       ----*/
       let message = { type: sessionDescription.type, sdp: sessionDescription.sdp };
-      console.log('sending SDP=' + message);
+  //    console.log('sending SDP=' + message);
       //ws.send(message);
       emitTo(id, message);
     }
     function sendIceCandidate(id, candidate) {
-      console.log('---sending ICE candidate ---');
+ //     console.log('---sending ICE candidate ---');
       let obj = { type: 'candidate', ice: candidate };
       //let message = JSON.stringify(obj);
       //console.log('sending candidate=' + message);
@@ -195,12 +195,12 @@ var chanel = (function(){
       // --- on get local ICE candidate
       peer.onicecandidate = function (evt) {
         if (evt.candidate) {
-          console.log(evt.candidate);
+   //       console.log(evt.candidate);
           // Trickle ICE の場合は、ICE candidateを相手に送る
           sendIceCandidate(id, evt.candidate);
           // Vanilla ICE の場合には、何もしない
         } else {
-          console.log('empty ice event');
+   //       console.log('empty ice event');
           // Trickle ICE の場合は、何もしない
           
           // Vanilla ICE の場合には、ICE candidateを含んだSDPを相手に送る
@@ -348,7 +348,7 @@ var chanel = (function(){
       }
     }
     // close PeerConnection
-    chanel.prototype.hangUp = function() {
+    Chanel.prototype.hangUp = function() {
       /*
       if (peerConnection) {
         console.log('Hang up.');
@@ -403,7 +403,7 @@ var chanel = (function(){
       };
     }
 
-    chanel.prototype.sendAlongDataChanel = function(msg, id){
+    Chanel.prototype.sendAlongDataChanel = function(msg, id){
       if(id){
         if(dataChannels[id]){
           dataChannels[id].send(msg);
@@ -416,5 +416,5 @@ var chanel = (function(){
         }
       }
     }
-    return chanel;
+    return Chanel;
 })();

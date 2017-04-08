@@ -40,7 +40,6 @@ var camera_controller = (function(){
               			cameraData.push({id:device.deviceId});
               		}
             	});
-            	console.log(cameraData);
             	setCamera();
           	})
           	.catch(function(err) {

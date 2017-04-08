@@ -9,7 +9,7 @@
 <script src="./../jq.js"></script>
 
 <script src="https://rtc-world-s.herokuapp.com/socket.io/socket.io.js"></script> 
-<script src="./../chanel.js"></script>
+<script src="./../webrtc/chanel.js"></script>
 
 <script type="text/javascript" src="./../node_module/node_module.js"></script>
 <link href="./../node_module/node.css" rel="stylesheet" />
@@ -168,7 +168,7 @@ var connect_list = [
         };
         var closed_callback = function(connection_count){
         };
-        chanel_control = new chanel(connected_callback, 
+        chanel_control = new Chanel(connected_callback, 
         							msg_get_callback, 
         							closed_callback, 
         							CHANEL_ROOM_NAME);
