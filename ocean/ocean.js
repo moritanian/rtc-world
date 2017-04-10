@@ -8,9 +8,15 @@ var Ocean = (function(){
 	// 
 	var scene, camera, water, renderer, controls, tracking, meshModels = {};
 	var x_filter, y_filter, z_filter;
-	var count = 0, isFlowTracking, camInitPos;
+	var count = 0, isFlowTracking, camInitPos, lastTime, deltaTime;
 	var Instance;
-
+	var isLockSideScreen; // 横に画面を固定する
+	var bulletData;　
+	var controlCallback; // control用callback
+	var controlFighterId;
+	var screenDirection = function(){
+		return window.innerWidth / window.innerHeight < 1.0 ? true : false;
+	}
 	
 	// constructor
 	/*
@@ -36,8 +42,12 @@ var Ocean = (function(){
 		this.animateCallback = option.animateCallback;
 		camInitPos = option.camera.pos || [0,0,0];
 		this.isUseChanel = option.isUseChanel || false;
+		isLockSideScreen = option.isLockSideScreen || false;
 
+		if(isLockSideScreen){
+			$("body").addClass("side-screen");
 
+		}
 		if(isFlowTracking){
 			// tracking
 			tracking = new screen_flow(7, /* debug = */false);
@@ -79,13 +89,33 @@ var Ocean = (function(){
 		document.body.appendChild( container );
 
 		renderer = new THREE.WebGLRenderer();
-		renderer.setPixelRatio( window.devicePixelRatio );
-		renderer.setSize( window.innerWidth, window.innerHeight );
-		container.appendChild( renderer.domElement );
+		if(isLockSideScreen && screenDirection()){ // 横に倒す
+			renderer.setPixelRatio( window.devicePixelRatio );
+			renderer.setSize(screen.availHeight,  $(document).width() /*window.innerWidth*/);
+			container.appendChild( renderer.domElement );
+			scene = new THREE.Scene();
+			camera = new THREE.PerspectiveCamera( 55,  screen.availHeight/ window.innerWidth, 0.5, 3000000 );
+			
+		} else {
+			renderer.setPixelRatio( window.devicePixelRatio );
+			renderer.setSize($(document).width() /* window.innerWidth */, screen.availHeight );
+			container.appendChild( renderer.domElement );
+			scene = new THREE.Scene();
+			camera = new THREE.PerspectiveCamera( 55, window.innerWidth / screen.availHeight, 0.5, 3000000 );
+		}
+		console.log("innerheight", window.innerHeight);
+		console.log("height", $(document).height());
+		console.log("height", screen.availHeight);
 
-		scene = new THREE.Scene();
-
-		camera = new THREE.PerspectiveCamera( 55, window.innerWidth / window.innerHeight, 0.5, 3000000 );
+		console.log("innerWidth", window.innerWidth);
+		console.log("width", $(document).width());
+		
+		// 検索バー非標示
+		 setTimeout(function(){
+		 	console.log("scroll");
+    		window.scrollTo(0,1);
+  		}, 5000);
+		
 		camera.position.set( camInitPos[0], camInitPos[1], camInitPos[2]);
 
 		if(this.isOrbitControl){
@@ -146,8 +176,11 @@ var Ocean = (function(){
 				var size = 1024;
 
 				var canvas = document.createElement( 'canvas' );
+				//let canvas = $("canvas");
+				//canvas = canvas.get(0);
 				canvas.width = size;
 				canvas.height = size;
+				//canvas.classList.add("side-screen");
 
 				var context = canvas.getContext( '2d' );
 				context.drawImage( image, - x * size, - y * size );
@@ -245,9 +278,16 @@ var Ocean = (function(){
 
 	function animate(){
 		requestAnimationFrame( animate );
+		let option = {}; // option for animateCallback
+
+		if(controlCallback){
+			let result = controlCallback();
+			Instance.controlFighter(result.instanceId, result.control);
+		}
 		
 		if(isFlowTracking){
 			var flow = tracking.get_data();
+			option.fps = flow.fps;
             let offset = flow.move;
             x_filter.set(offset.x);
             y_filter.set(offset.y);
@@ -265,9 +305,18 @@ var Ocean = (function(){
             camera.position.x = cameraPos.x;
             camera.position.y = cameraPos.y;
             camera.position.z = cameraPos.z;
+		}else {
+			if(deltaTime){
+				option.fps = 1.0/deltaTime;
+			}
 		}
 		if(this.animateCallback){
-			this.animateCallback(camera);
+			if(controlFighterId){
+				this.animateCallback(Instance.fighterInstances[controlFighterId].mesh, option);
+				console.log()
+			}else {
+				this.animateCallback(camera, option);
+			}
 		}
 
 		render();
@@ -275,6 +324,8 @@ var Ocean = (function(){
 
 	function render(){
 		var time = performance.now() * 0.001;
+		deltaTime = (time - lastTime) || 0.0;
+		lastTime = time;
 
 		sphere.position.y = Math.sin( time ) * 500 + 250;
 		sphere.rotation.x = time * 0.5;
@@ -308,11 +359,12 @@ var Ocean = (function(){
 
 		if(meshModels[modelName]){
 			let mesh = meshModels[modelName].clone();
-			setMesh(mesh, fighterData);
+			let targetMesh = setMesh(mesh, fighterData);
 			this.fighterInstances[instanceId] = {
 				modelName: modelName,
-				mesh : mesh,
-				isParentMesh: false			// 複製されたmesh
+				mesh : targetMesh,
+				isParentMesh: false,			// 複製されたmesh
+				vel: new THREE.Vector3(0,0,10)
 			};
 			if(meshCallback){
 				meshCallback(instanceId);
@@ -321,11 +373,12 @@ var Ocean = (function(){
 			var json_loader = new THREE.ObjectLoader();　　
 			json_loader.load(model.path, mesh => {　
 				Ocean.Models[modelName] = mesh;
-				setMesh(mesh, fighterData);
+			 
 				this.fighterInstances[instanceId] = {
 					modelName: modelName,
-					mesh : mesh,
-					isParentMesh: true			
+					mesh : setMesh(mesh, fighterData),
+					isParentMesh: true,
+					vel: new THREE.Vector3(0,0,1000)	
 				};
 				meshModels[modelName] = mesh;
 				if(meshCallback){
@@ -339,35 +392,209 @@ var Ocean = (function(){
 		if(fighterData.scale){
 			mesh.scale.set(fighterData.scale[0], fighterData.scale[1], fighterData.scale[2]);
 		}
+		
+		if(fighterData.rot){
+			//mesh.rotation.set(fighterData.rot[0], fighterData.rot[1], fighterData.rot[2]);
+			//mesh.rotation.set(0, Math.PI, 0);
+		}
+		
+		
+		var targetObj;
+		// 中心が指定されている場合は入れ子にして中心位置を調整
+		if(fighterData.center){
+			mesh.position.set(fighterData.center[0], -fighterData.center[1], fighterData.center[2]);
+			var parentObj = new THREE.Group();
+			parentObj.add(mesh);
+			targetObj = parentObj;
+		}else {
+			targetObj = mesh;
+		}
+		
+		if(fighterData.fixCam){
+			camera.rotation.set(0,Math.PI, 0);
+			if(fighterData.center){
+				targetObj.add(camera);
+			}else{
+				var parentObj = new THREE.Group();
+				parentObj.add(camera);
+				parentObj.add(targetObj);
+				targetObj = parentObj;
+			}
+		}
+
+		if(fighterData.rot){
+			//targetObj.rotation.set(fighterData.rot[0], fighterData.rot[1], fighterData.rot[2]);
+		}
+
+		if(fighterData.pos){
+			targetObj.position.set(fighterData.pos[0], fighterData.pos[1], fighterData.pos[2]);
+		}
+		scene.add(targetObj);
+		if(fighterData.fixCam){
+			console.log(targetObj);
+		}
+
+		return targetObj;
+	}
+
+	function updateMesh (mesh, fighterData){
+		if(fighterData.scale){
+			mesh.scale.set(fighterData.scale[0], fighterData.scale[1], fighterData.scale[2]);
+		}
 		if(fighterData.rot){
 			mesh.rotation.set(fighterData.rot[0], fighterData.rot[1], fighterData.rot[2]);
 		}
 		if(fighterData.pos){
 			mesh.position.set(fighterData.pos[0], fighterData.pos[1], fighterData.pos[2]);
 		}
-		scene.add(mesh);
 	}
+
+	// bulletのmeshを作成
+	function initBulletMesh(){
+		let mesh = new THREE.Mesh(                                     
+ 			new THREE.CylinderGeometry(20,20,40,50),                         
+ 			new THREE.MeshPhongMaterial({                                      
+           		color: 0x020202
+			}));
+		mesh.rotation.x = Math.PI/2;
+		bulletData = {
+			originMesh: mesh,
+			createMesh: function(){
+				return this.originMesh.clone();
+			},
+			bulletList: []
+		};
+	}
+
+	// 弾丸
+	function updateBullets(){
+		for(let bulletObj of bulletObjList){
+        	if(bulletObj.life == 0){
+        		continue;
+        	}
+        	bulletObj.mesh.position.x += bulletObj.vel.x;
+        	bulletObj.mesh.position.y += bulletObj.vel.y;
+        	bulletObj.mesh.position.z += bulletObj.vel.z;
+        	bulletObj.life--;
+        	// bulletはpool しておき、sceneからは消さない
+        	if(bulletObj.life <= 0){
+        		bulletObj.mesh.visible = false;
+        	}
+        }
+    }
 
 	Ocean.prototype.updateFighter = function(fighterData, instanceId){
-		setMesh(this.fighterInstances[instanceId].mesh, fighterData);
+		updateMesh(this.fighterInstances[instanceId].mesh, fighterData);
 	}
 
-	Ocean.prototype.createFighter = function(fighterData){
+	// meshを作成し、chanelに情報を流す
+	Ocean.prototype.createFighter = function(fighterData, callback){
 		let instanceId = uuid();
 		let meshCallback;
 		if(this.isUseChanel){
 			meshCallback = id => {
 				Instance.chanelControl.updateObj(Instance.getObjHash(Instance.fighterInstances[id], id), id);
+				if(callback){
+					callback(this.fighterInstances[id]);
+				}
 			}
 		}
 		this.addFighter(fighterData, instanceId, meshCallback);
-		
 		return instanceId;
 	};
 
 	Ocean.prototype.getFighterInstanceById = function(instanceId){
 		return this.fighterInstances[instanceId];
 	};
+
+	Ocean.prototype.setVelocity = function(instanceId, vel){
+		this.fighterInstances[instanceId].vel = vel;
+	}
+
+	Ocean.prototype.addVelocity = function(instanceId, velDelta){
+		this.fighterInstances[instanceId].vel.add(velDelta);
+	}
+
+	/* fighter の入力    加速は？
+		control {
+			horizontal:  // sin(gamma)
+			vertical: 	// sin(alpha)
+			accelearation
+		}
+		** 1flameごとに呼び出すこと！！
+	*/
+	Ocean.prototype.controlFighter = function(instanceId, control){
+		if(!this.fighterInstances[instanceId]){
+			return;
+		}
+		// TODO ランダムなふらつき
+		controlFighterId = instanceId;
+		const horizontalCoefficient = 0.05; //左右方向 0.02
+		const verticalCoefficient = 0.02; // 上下方向 0.1
+		
+		this.fighterInstances[instanceId].mesh.rotation.order = "YXZ"; // 全て変えちゃう?
+
+		/*
+			以下のvel回転ではダメ 速度ベクトルのy方向の回転によって特性がかわってきてしまう
+			cameraはもともとz軸の負の方向
+		*/
+		/*
+		let eul = new THREE.Euler( - control.vertical * verticalCoefficient, - control.horizontal* horizontalCoefficient, 0, 'YXZ' );
+		// 速度更新
+		this.fighterInstances[instanceId].vel.applyEuler(eul);
+		*/
+		let vel =  this.fighterInstances[instanceId].vel;
+		let verticalVel = vel.y;
+		let horizontalVel = Math.sqrt(vel.x * vel.x + vel.z * vel.z);
+		let zeroVec2 = new THREE.Vector2(0,0);
+
+		let rotatedVertical = (new THREE.Vector2(horizontalVel, verticalVel)).rotateAround(zeroVec2,  control.vertical * verticalCoefficient);
+		let rotatedHorizontal = (new THREE.Vector2( vel.z, vel.x)).rotateAround(zeroVec2, - control.horizontal* horizontalCoefficient); 
+		this.fighterInstances[instanceId].vel.y = rotatedVertical.y;
+		this.fighterInstances[instanceId].vel.x = rotatedHorizontal.y * rotatedVertical.x / horizontalVel;
+		this.fighterInstances[instanceId].vel.z = rotatedHorizontal.x * rotatedVertical.x / horizontalVel;
+
+		this.fighterInstances[instanceId].vel.multiplyScalar(control.acceleration || 1.0);
+
+		//console.log(this.fighterInstances[instanceId].vel);
+
+		// 姿勢
+		let alpha = Math.asin(-this.fighterInstances[instanceId].vel.clone().normalize().y); // 上下 高さ方向
+		if(isNaN(alpha)){
+			console.warn("alpha is nan");
+		}
+		
+		let beta = Math.atan2(this.fighterInstances[instanceId].vel.x,  this.fighterInstances[instanceId].vel.z); // 方角
+		let gamma = control.horizontal; // 奥行方向回転
+		this.fighterInstances[instanceId].mesh.rotation.set(alpha, beta, gamma);
+		// 位置
+		let deletaPos = this.fighterInstances[instanceId].vel.clone().multiplyScalar(deltaTime);
+		this.fighterInstances[instanceId].mesh.position.add(deletaPos);
+
+		/*
+		let rightDirection = (new Three.Vector3(0,1,0)).cross(this.fighterInstances[instanceId].vel).normalize();
+		// 加速度
+		let acc = rightDirection.clone().addScalar(control.horizontal * horizontalCoefficient);
+		// 速度更新
+		this.fighterInstances[instanceId].vel.add(acc);
+		*/
+	}
+
+	/* animation ごとに呼び出される制御用callback
+		function(){
+			return {
+				instanceId: 
+				control {
+					horizontal: 
+					vertical:
+					acceleration
+				}
+			}
+		}
+	*/ 
+ 	Ocean.prototype.setControlCallback = function(callback){
+ 		controlCallback = callback;
+ 	}
 
 	/*
 		oceanで使用するデータ(fighterInstances) と　chanelで持っているデータは別形式。
@@ -392,6 +619,25 @@ var Ocean = (function(){
 		if(isFlowTracking){
 			tracking.reset();
 		}
+	}
+
+ 	Ocean.prototype.oneShoot = function(fighterInstanceId){
+ 		if(!bulletData){
+ 			initBulletMesh();
+ 		}
+		let clonebullet = bulletData.originMesh.clone();
+		let fighter = this.fighterInstances[fighterInstanceId];
+		clonebullet.position.x = fighter.mesh.position.x; 
+		clonebullet.position.y = fighter.mesh.position.y - 100; 
+		clonebullet.position.z = fighter.mesh.position.z;
+
+		scene.add(clonebullet);
+		let bulletObj = {
+			mesh: clonebullet,
+			vel: new THREE.Vector3(0,0, 1000),
+			life: 100,
+		};
+		bulletData.bulletList.push(bulletObj);
 	}
 
 	return Ocean;

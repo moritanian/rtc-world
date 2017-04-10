@@ -162,3 +162,15 @@ input[type="checkbox"].info-on-off-button:focus {
     opacity: 0.9;
 }
 
+
+/* side screen lock */
+@media screen and (orientation: landscape) {
+   /* 横向きの場合のスタイル */
+}
+@media screen and (orientation: portrait) {
+   /* 縦向きの場合のスタイル */
+   .side-screen {
+        transform: rotateZ(90deg);
+    }
+
+}

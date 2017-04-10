@@ -25,11 +25,23 @@
         <script type="text/javascript" src="./../jsfeat/jsfeat-min.js"></script>
         <script type="text/javascript" src="./../jsfeat//compatibility.js"></script>
         <script type="text/javascript" src="./../jsfeat/profile.js"></script>
-        <script type="text/javascript" src="./../device_cam.js"></script>
+        <script type="text/javascript" src="./../webrtc/device_cam.js"></script>
         <script type="text/javascript" src="./../jsfeat/screen_flow.js"></script>
+
+        <!-- data chanel -->
+        <script src="https://rtc-world-s.herokuapp.com/socket.io/socket.io.js"></script> 
+        <script type="text/javascript" src="./../webrtc/chanel.js"></script>
+        <script type="text/javascript" src="./../webrtc/chanel_control.js"></script>
+
+        <script type="text/javascript" src="./ocean.js"></script>
+
 
         <div class="info">
         	<ul class="info-items">
+        		<li class="info-li">
+        			<span class="item-title">fps</span>
+        			<span class="item-value fps"><input type="text"></span>
+        		</li>
         		<li class="info-li">
         			<span class="item-title">x_pos</span>
         			<span class="item-value x_pos"><input type="text"></span>
@@ -83,18 +95,32 @@
 			whistle_audio.load();
 			let shoot_audio = new Audio("./sound/shoot.mp3");
 			shoot_audio.load();
+			let bomb_audio = new Audio("./sound/bomb1.mp3");
+			bomb_audio.load();
 
-			var bulletObjList = [];
-			var bulletModel = createBullet();
+			// Compass
+			let hasCompass = false; // 
+			let compassdir;
+			let compass_as_zero_limit = 1e-10;
+
+			let controlFighterId;
+			let keyInputs = {
+				vertical: 0,
+				horizontal: 0,
+				horizontalIntegrated: 0,
+				space: false
+			};
+			const keyIputCoefficient = 0.1;
 
 			// 情報表示
-			let info_contorls = {
+			let infoControls = {
 				$x_pos: $(".x_pos input"),
 				$y_pos: $(".y_pos input"),
 				$z_pos: $(".z_pos input"),
 				$x_rot: $(".x_rot input"),
 				$y_rot: $(".y_rot input"),
-				$z_rot: $(".z_rot input")
+				$z_rot: $(".z_rot input"),
+				$fps : $(".fps input")
 			};
 			$(".info-toggle-button").bind("click", function(){
 				if($(this).hasClass("close-button")){
@@ -111,6 +137,7 @@
 			});
 
 			$("#be-shot").bind("click", function(){
+				bomb_audio.play();
 				beShot();
 			});
 
@@ -141,7 +168,7 @@
 			// 照準
 			$(".sighting").bind("click", function(){
 				shoot_audio.play();
-				oneShoot(bulletModel, models.zero_fighter.instances[0]);
+				oceanControl.oneShoot(controlFighterId);
 			});
 
 			if ( ! Detector.webgl ) {
@@ -151,305 +178,194 @@
 
 			}
 
-			var container, stats;
-			var camera, scene, renderer;
-			var sphere, water;
-
-			var parameters = {
-				width: 2000,
-				height: 2000,
-				widthSegments: 250,
-				heightSegments: 250,
-				depth: 1500,
-				param: 4,
-				filterparam: 1
-			};
-
-			var waterNormals;
-
 		
-	        const camera_init_pos = [2000, 130, 2000];
-	        const camera_init_target_pos = [2000, 700, 0];
+	        const camera_init_pos = [0,0,0];
 
-	        let nationalityList = {
-				Japan:{
-					en: "Japan",
-					jp: "日本"
-				},
-				Russia:{
-					en: "Russia",
-					jp: "ロシア"
-				},
-				Soviet:{
-					en: "Soviet Union",
-					jp: "ソ連"
-				},
-				Ameriaca:{
-					en: "America",
-					jp: "アメリカ"
+	         let fighterList = [
+	        	{
+	        		modelName: "battle_ship",
+	        		scale: [10, 10, 10],
+					pos: [1800, 50, 500],
+					rot: [0, Math.PI/2, 0]
+	        	},
+	        	{
+	        		modelName: "battle_ship",
+	        		scale: [10, 10, 10],
+					pos: [1800, 200, 0],
+					rot: [-Math.PI/5.0, -Math.PI/3, Math.PI/100]
+	        	},
+	        	{
+	        		modelName: "zero_fighter",
+	        		scale: [10, 10, 10],
+					center: [0, 14, -34],
+					pos: [1800, 300, -500],
+					rot: [0, Math.PI,0],
+					fixCam: true,
+					control: true
+	        	},
+	        	{
+	        		modelName: "p51_mustang",
+	        		scale: [0.2, 0.2, 0.2],
+					pos: [1200, 1000, -2500],
+					rot: [ Math.PI/4 ,Math.PI/4,0]
+	        	},
+	        	{
+	        		modelName: "p51_mustang",
+					scale: [0.2, 0.2, 0.2],
+					pos: [1200, 1000, -1000],
+					rot: [ Math.PI/4 , -Math.PI/6,0]
 				}
-			};
+	        ];
 
-	        let models = {
-				battle_ship: {
-					path: "./objs/battle_ship/ship.json",
-					nationality: nationalityList.Russia,
-					explain: "ステレグシュチイ級フリゲート",
-					instances:[
-						{
-							scale: [10, 10, 10],
-							pos: [1800, 50, 500],
-							rot: [0, Math.PI/2, 0],
-							mesh: {}
-						},
-						{
-							scale: [10, 10, 10],
-							pos: [1800, 200, 0],
-							rot: [-Math.PI/5.0, -Math.PI/3, Math.PI/100]
-						}
-					]
-				},
-				zero_fighter: {
-					path: "./objs/zero_fighter/scene.json",
-					nationality: nationalityList.Japan,
-					explain: "零戦",
-					instances: [
-						{
-							scale: [10, 10, 10],
-							//pos: [camera_init_pos[0], camera_init_pos[1] + 167, camera_init_pos[2] + 38],
-							center: [0, 14, -34],
-							pos: [camera_init_pos[0], camera_init_pos[1]  , camera_init_pos[2]],
-							rot: [0, Math.PI,0]
-						}
-					]
-				},
-				p51_mustang: {
-					path: "./objs/p51_mustang/scene.json",
-					nationality: nationalityList.Ameriaca,
-					explain: "P51 マスタング",
-					instances: [
-						{
-							scale: [0.2, 0.2, 0.2],
-							pos: [1200, 1000, -2500],
-							rot: [ Math.PI/4 ,Math.PI/4,0]
-						},
-						{
-							scale: [0.2, 0.2, 0.2],
-							pos: [1200, 1000, -1000],
-							rot: [ Math.PI/4 , -Math.PI/6,0]
-						}
-					]
-				}
-			};
-	       
-			init();
-			animate();
-
-			function init() {
-
-				container = document.createElement( 'div' );
-				document.body.appendChild( container );
-
-				renderer = new THREE.WebGLRenderer();
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				container.appendChild( renderer.domElement );
-
-				scene = new THREE.Scene();
-
-				camera = new THREE.PerspectiveCamera( 55, window.innerWidth / window.innerHeight, 0.5, 3000000 );
-				camera.position.set( camera_init_pos[0], camera_init_pos[1], camera_init_pos[2] );
-
-				if(isOrbitControl){
-					controls = new THREE.OrbitControls( camera, renderer.domElement );
-					controls.enablePan = false;
-					controls.minDistance = 1000.0;
-					controls.maxDistance = 5000.0;
-					controls.maxPolarAngle = Math.PI * 0.495;
-					controls.target.set( camera_init_target_pos[0], camera_init_target_pos[1], camera_init_target_pos[2] );
-				}
-
-				scene.add( new THREE.AmbientLight( 0x444444 ) );
-
-				var light = new THREE.DirectionalLight( 0xffffbb, 1 );
-				light.position.set( - 1, 1, - 1 );
-				scene.add( light );
-
-				// import battle ship mpdel
-				
-				//let json_loader = new THREE.JSONLoader();
-				var loadingModelNum = 0;　　
-				var loadFinFunc = function(){
-					console.log("loadFin");
-					setModelIntanceWithControl(info_contorls, models.zero_fighter.instances[0]);
-
-				};
-
-				for(var key in models){
-					loadingModelNum ++;
-					let model = models[key];
-					var json_loader = new THREE.ObjectLoader();　　
-					json_loader.load(model.path, function(obj) {　
-						let count = 0;
-						for(let index in model.instances){
-							let instance = model.instances[index];
-							let targetObj = obj;
-							if(count >0){
-								targetObj = obj.clone();
-							}
-							targetObj.scale.set(instance.scale[0], instance.scale[1], instance.scale[2]);
-							targetObj.rotation.set(instance.rot[0], instance.rot[1], instance.rot[2]);
-
-							// 中心が指定されている場合は入れ子にして中心位置を調整
-							if(instance.center){
-								targetObj.position.set(-instance.center[0], -instance.center[1], -instance.center[2]);
-								var parentObj = new THREE.Group();
-								parentObj.add(targetObj);
-								targetObj = parentObj
-							}
-							targetObj.position.set(instance.pos[0], instance.pos[1], instance.pos[2]);
-							model.instances[index].mesh = targetObj;
-							scene.add(targetObj);
-							count++;	
-						}
-						loadingModelNum --;
-						if(loadingModelNum == 0){
-							loadFinFunc();
-						}
-			    	});　　
-				}
-			   
-				waterNormals = new THREE.TextureLoader().load( 'textures/waternormals.jpg' );
-				waterNormals.wrapS = waterNormals.wrapT = THREE.RepeatWrapping;
-
-				water = new THREE.Water( 
-					renderer, 
-					camera, 
-					scene, 
-					{
-						textureWidth: 512,
-						textureHeight: 512,
-						waterNormals: waterNormals,
-						alpha: 	1.0,
-						sunDirection: light.position.clone().normalize(),
-						sunColor: 0xffffff,
-						waterColor: 0x001e0f,
-						distortionScale: 50.0
-					} 
-				);
-
-
-				let mirrorMesh = new THREE.Mesh(
-					new THREE.PlaneBufferGeometry( parameters.width * 500, parameters.height * 500 ),
-					water.material
-				);
-
-				mirrorMesh.add( water );
-				mirrorMesh.rotation.x = - Math.PI * 0.5;
-				scene.add( mirrorMesh );
-
-
-				// load skybox
-
-				var cubeMap = new THREE.CubeTexture( [] );
-				cubeMap.format = THREE.RGBFormat;
-
-				var loader = new THREE.ImageLoader();
-				loader.load( 'textures/skyboxsun25degtest.png', function ( image ) {
-
-					var getSide = function ( x, y ) {
-
-						var size = 1024;
-
-						var canvas = document.createElement( 'canvas' );
-						canvas.width = size;
-						canvas.height = size;
-
-						var context = canvas.getContext( '2d' );
-						context.drawImage( image, - x * size, - y * size );
-
-						return canvas;
-
-					};
-
-					cubeMap.images[ 0 ] = getSide( 2, 1 ); // px
-					cubeMap.images[ 1 ] = getSide( 0, 1 ); // nx
-					cubeMap.images[ 2 ] = getSide( 1, 0 ); // py
-					cubeMap.images[ 3 ] = getSide( 1, 2 ); // ny
-					cubeMap.images[ 4 ] = getSide( 1, 1 ); // pz
-					cubeMap.images[ 5 ] = getSide( 3, 1 ); // nz
-					cubeMap.needsUpdate = true;
-
-				} );
-
-				var cubeShader = THREE.ShaderLib[ 'cube' ];
-				cubeShader.uniforms[ 'tCube' ].value = cubeMap;
-
-				var skyBoxMaterial = new THREE.ShaderMaterial( {
-					fragmentShader: cubeShader.fragmentShader,
-					vertexShader: cubeShader.vertexShader,
-					uniforms: cubeShader.uniforms,
-					depthWrite: false,
-					side: THREE.BackSide
-				} );
-
-				var skyBox = new THREE.Mesh(
-					new THREE.BoxGeometry( 1000000, 1000000, 1000000 ),
-					skyBoxMaterial
-				);
-
-				scene.add( skyBox );
-
-
-				var geometry = new THREE.IcosahedronGeometry( 400, 4 );
-
-				for ( var i = 0, j = geometry.faces.length; i < j; i ++ ) {
-
-					geometry.faces[ i ].color.setHex( Math.random() * 0xffffff );
-
-				}
-
-				var material = new THREE.MeshPhongMaterial( {
-					vertexColors: THREE.FaceColors,
-					shininess: 100,
-					envMap: cubeMap
-				} );
-
-				sphere = new THREE.Mesh( geometry, material );
-				scene.add( sphere );
+	        var animateCallback = function(camera, option){
+	        	infoControls.$x_pos.val(Math.floor(camera.position.x));
+				infoControls.$y_pos.val(Math.floor(camera.position.y));
+				infoControls.$z_pos.val(Math.floor(camera.position.z));
+				infoControls.$x_rot.val(camera.rotation.x);
+				infoControls.$y_rot.val(camera.rotation.y);
+				infoControls.$z_rot.val(camera.rotation.z);
+	            infoControls.$fps.val(Math.floor(option.fps));
 
 			}
 
-			//
-			var count = 0;
+	        // 3dビュー作成
+	        let oceanControl = new Ocean({
+				animateCallback: animateCallback,
+				isUseChanel: true,
+				isFlowTracking : false,
+				isOrbitControl: false,
+				camera: {
+					pos: camera_init_pos
+				},
+				//isLockSideScreen: true
+			});
 
-			function animate() {
+	        // モデル追加
+			for(let index in fighterList){
+				if(index == 0){
+					let callback = instance => {
+						setModelIntanceWithControl(infoControls, instance);
+					};
+					oceanControl.createFighter(fighterList[index], callback);
+				}else {
+					let id = oceanControl.createFighter(fighterList[index]);
+					if(index == 2){
+						controlFighterId = id;
+					}
+				}
+			}
 
-				requestAnimationFrame( animate );
+		
+			// デバイスの傾き
+			$( window ).on( "deviceorientation", function(e){
+				var evenet = e.originalEvent;
+
+				hasCompass = evenet.absolute;
+				if(hasCompass){
+					if(event.webkitCompassHeading) {
+						// Apple works only with this, alpha doesn't work
+						compassdir = event.webkitCompassHeading;  
+					}
+					else
+					{ 
+						var k = 3.1415 * 2/360.0;
+						compassdir.x = event.gamma * k;//event.alpha * k + 1.5
+						compassdir.y = event.beta * k;
+						compassdir.z = 0.0;//event.gamma * k;
+						// 値が小さい時は水平とする
+						var compass_as_zero_limit = 0.1;
+						if(Math.abs(compassdir.x) < compass_as_zero_limit){
+							compassdir.x = 0.0;
+						}
+						if(Math.abs(compassdir.y) < compass_as_zero_limit){
+							compassdir.y = 0.0;
+						}
+					}
+				}
+			});
+
+			// key inputs # TODO pcのみにしたい
+			$( document ).on( "keydown", function( event ) {
+			  	switch( event.keyCode ) {
+			  	// left
+			    case 37:
+			    case 65:
+			      keyInputs.horizontal = - keyIputCoefficient;
+			      break;
+			     // right
+			    case 39:
+			    case 68:
+			      keyInputs.horizontal = keyIputCoefficient;
+			      break;
+			    // up
+			    case 38:
+			    case 87:
+			      keyInputs.vertical = keyIputCoefficient;
+			      break;
+			    // down
+			    case 40:
+			    case 83:
+			      keyInputs.vertical = -keyIputCoefficient;
+			      break;
+			    // space
+			    case 32:
+			    	keyInputs.space = true;
+			    	shoot_audio.play();
+					oceanControl.oneShoot(controlFighterId);
+			  		break;
+			  }
+			});
+
+			$( document ).on( "keyup", function( event ) {
+			  	switch( event.keyCode ) {
+			  	// left
+			    case 37:
+			    case 65:
+			     // right
+			    case 39:
+			    case 68:
+			      keyInputs.horizontal = 0;
+			      break;
+			    // up
+			    case 38:
+			    case 87:
+			    // down
+			    case 40:
+			    case 83:
+			      keyInputs.vertical = 0;
+			      break;
+			    // space
+			    case 32:
+			    	keyInputs.space = false;
+			  	break;
+			  }
+			});
+
+			oceanControl.setControlCallback(function(){
+				if(hasCompass){
+					return {
+						instanceId : controlFighterId,
+						control: {
+							horizontal: compassdir.x,
+							vertical: compassdir.y,
+							acceleration: 1.0
+						}
+					}
+				} else {
+					keyInputs.horizontalIntegrated += keyInputs.horizontal/100.0;
+					return {
+						instanceId : controlFighterId,
+						control: {
+							horizontal: keyInputs.horizontalIntegrated ,
+							vertical: keyInputs.vertical,
+							acceleration: 1.0
+						}
+					}
+				} 
+			});
+
+
 /*
-				var flow = tracking.get_data();
-	            offset = flow.move;
-	            x_filter.set(offset.x);
-	            y_filter.set(offset.y);
-	            z_filter.set(offset.z);
-	            let move_ratio = 10;
-	            count -= 0;
-	            let camera_pos = {
-	            	x: camera_init_pos[0] - x_filter.get() * move_ratio,	
-	            	y: camera_init_pos[1] + y_filter.get() * move_ratio,	
-	            	z: camera_init_pos[2] - z_filter.get() * move_ratio + count	
-	            };
-	            if(camera_pos.y <= 0){
-	            	camera_pos.y = 1;
-	            }
-	            camera.position.x = camera_pos.x;
-	            camera.position.y = camera_pos.y;
-	            camera.position.z = camera_pos.z;
-	            info_contorls.$x_pos.val(Math.floor(camera_pos.x));
-	            info_contorls.$y_pos.val(Math.floor(camera_pos.y));
-	            info_contorls.$z_pos.val(Math.floor(camera_pos.z));
-*/
-	            
 	            if(isShipMove){
 	            	//models.zero_fighter.instances[0].mesh.rotation.y += 0.01;
 	            	let s = 0.00020;
@@ -462,54 +378,11 @@
 
 	            	models.zero_fighter.instances[0].mesh.position.z -= 50;
 	            	camera.position.z -= 50;
-
 	            }
-
-	            // 弾丸
-	            for(let bulletObj of bulletObjList){
-	            	if(bulletObj.life == 0){
-	            		continue;
-	            	}
-	            	bulletObj.mesh.position.x += bulletObj.vel[0];
-	            	bulletObj.mesh.position.y += bulletObj.vel[1];
-	            	bulletObj.mesh.position.z += bulletObj.vel[2];
-	            	bulletObj.life--;
-	            	// bulletはpool しておき、sceneからは消さない
-	            	if(bulletObj.life <= 0){
-	            		bulletObj.mesh.visible = false;
-	            	}
-	            }
-	            
-
-				render();
-
-			}
-
-			function render() {
-
-				var time = performance.now() * 0.001;
-
-				sphere.position.y = Math.sin( time ) * 500 + 250;
-				sphere.rotation.x = time * 0.5;
-				sphere.rotation.z = time * 0.51;
-
-				water.material.uniforms.time.value += 1.0 / 60.0;
-				if(isOrbitControl){
-					controls.update();
-				}
-				water.render();
-				renderer.render( scene, camera );
-
-			}
+*/
 
 			function setModelIntanceWithControl(infoControls, modelInstance){
 				let mInstance = modelInstance;
-				infoControls.$x_pos.val(modelInstance.mesh.position.x);
-				infoControls.$y_pos.val(modelInstance.mesh.position.y);
-				infoControls.$z_pos.val(modelInstance.mesh.position.z);
-				infoControls.$x_rot.val(modelInstance.mesh.rotation.x);
-				infoControls.$y_rot.val(modelInstance.mesh.rotation.y);
-				infoControls.$z_rot.val(modelInstance.mesh.rotation.z);
 
 				infoControls.$x_pos.change(function(){
 					modelInstance.mesh.position.x =	$(this).val();
@@ -533,33 +406,11 @@
 
 			// 被弾した
 			function beShot(){
-				$(".blood-splash").show();
+				//$(".blood-splash").show();
+				$(".blood-splash").toggle();
 			}
 
-			function createBullet(){
-				let mesh = new THREE.Mesh(                                     
-	     			new THREE.CylinderGeometry(20,20,40,50),                         
-	     			new THREE.MeshPhongMaterial({                                      
-	               		color: 0x020202
-      			}));
-      			mesh.rotation.x = Math.PI/2;
-      			return mesh;
-      		}
-
-      		// 1発うつ
-      		function oneShoot(bulletModel, myInstance){
-      			let clonebullet = bulletModel.clone();
-      			clonebullet.position.x = myInstance.mesh.position.x; 
-      			clonebullet.position.y = myInstance.mesh.position.y - 100; 
-      			clonebullet.position.z = myInstance.mesh.position.z;
-      			scene.add(clonebullet);
-      			let bulletObj = {
-      				mesh: clonebullet,
-      				vel: [0,0,-1000],
-      				lefe: 100,
-      			};
-      			bulletObjList.push(bulletObj);
-      		}
+			
 		</script>
 	</body>
 </html>

@@ -3,7 +3,7 @@
 	<head>
 		<title>Ocean</title>
 		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0, status=no">
 		<link rel=stylesheet href="./common.css">	
 	</head>
 	<body>
@@ -39,6 +39,10 @@
 
         <div class="info">
         	<ul class="info-items">
+        		<li class="info-li">
+        			<span class="item-title">fps</span>
+        			<span class="item-value fps"><input type="text"></span>
+        		</li>
         		<li class="info-li">
         			<span class="item-title">x_pos</span>
         			<span class="item-value x_pos"><input type="text"></span>
@@ -76,6 +80,7 @@
 			whistle_audio.load();
 			// 情報表示
 			let info_contorls = {
+				$fps: $(".fps input"),
 				$x_pos: $(".x_pos input"),
 				$y_pos: $(".y_pos input"),
 				$z_pos: $(".z_pos input")
@@ -170,8 +175,8 @@
 
 
 
-	        var animateCallback = function(camera){
-				
+	        var animateCallback = function(camera, option){
+	            info_contorls.$fps.val(Math.floor(option.fps));
 	            info_contorls.$x_pos.val(Math.floor(camera.position.x));
 	            info_contorls.$y_pos.val(Math.floor(camera.position.y));
 	            info_contorls.$z_pos.val(Math.floor(camera.position.z));
@@ -188,7 +193,8 @@
 				isOrbitControl: false,
 				camera: {
 					pos: camera_init_pos
-				}
+				},
+				//isLockSideScreen: true
 			});
 
 			for(let index in fighterList){
