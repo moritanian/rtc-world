@@ -20,6 +20,7 @@ var Chanel = (function(){
   //let socket = io.connect('http://localhost:' + port + '/');
   //let socket = io.connect(url + ':' + port + '/');
   let socket; 
+  let myId;
   let connected_callback;
   let get_msg_callback;
   let closed_callback;
@@ -30,6 +31,7 @@ var Chanel = (function(){
     closed_callback = _closed_callback;
     
     socket = io.connect(url +'/');
+    
 
     // ---- for multi party -----
    
@@ -43,6 +45,9 @@ var Chanel = (function(){
     
     //let room = getRoomName();
     socket.on('connect', function(evt) {
+       console.log(socket.io.engine.id);
+       myId = socket.io.engine.id;
+
       console.log('socket.io connected. enter room=' + room );
       socket.emit('enter', room);
     });
@@ -153,7 +158,7 @@ var Chanel = (function(){
         let peer = getConnection(id);
         peer.close();
         deleteConnection(id);
-        closed_callback(getConnectionCount());
+        closed_callback(getConnectionCount(), id);
       }
     }
     function stopAllConnection() {
@@ -368,6 +373,8 @@ var Chanel = (function(){
       emitRoom({type: 'call me'});
     }
 
+
+    /* data channel 関数群 */
     function createDataChanel(id){
       if(id){
         if(peerConnections[id])
@@ -381,7 +388,7 @@ var Chanel = (function(){
 
     function _createDataChanel(id){
       let peerConnection = peerConnections[id];
-      var dataChannel = peerConnection.createDataChannel("myLabel");
+      var dataChannel = peerConnection.createDataChannel(id); // "mylabel"
       console.log("create data chanel " + id);
       setDataChanel(id, dataChannel);
     }
@@ -390,17 +397,35 @@ var Chanel = (function(){
       dataChannels[id] = dataChannel;
       dataChannel.onmessage = function (event) {
         //console.log("データチャネルメッセージ取得:", event.data);
-        get_msg_callback(event.data);
+        get_msg_callback(event.data, id);
       };
 
       dataChannel.onopen = function () {
-        connected_callback(getConnectionCount() );
+        connected_callback(getConnectionCount(), id);
       };
 
-      dataChannel.onclose = function () {
+      dataChannel.onclose = function (event) {
         console.log("データチャネルのクローズ");
-        //closed_callback(getConnectionCount());
+        let id = event.target.label;
+        console.log(id);
+        if(isConnectedWithChannel(id))
+          deleteDataChannel(id);
       };
+    }
+
+    function deleteDataChannel(id) {
+      _assert('deleteChannel() channel must exist', dataChannels[id]);
+      delete dataChannels[id];
+      console.log("delete data channel!!");
+    }
+
+     function isConnectedWithChannel(id) {
+      if (dataChannels[id])  {
+        return true;
+      }
+      else {
+        return false;
+      }
     }
 
     Chanel.prototype.sendAlongDataChanel = function(msg, id){
@@ -416,5 +441,36 @@ var Chanel = (function(){
         }
       }
     }
+
+    /* <summary> 
+      接続しているクライアント一覧を取得
+      ただしdataChanelベース
+      </summary>
+      <return> [id, id .. , id] </return>
+    */
+    Chanel.prototype.getMemberIds = function(){
+      return Object.keys(dataChannels);
+    }
+
+     /* <summary> 
+      クライアント数(自分を含む)
+      ただしdataChanelベース
+      </summary>
+      <return> [id, id .. , id] </return>
+    */
+    Chanel.prototype.getMemberCount = function(){
+      return Object.keys(dataChannels).length;
+    }
+
+    /* <summary> 
+      自分のid
+      </summary>
+      <return> id </return>
+    */
+    Chanel.prototype.getMyId = function(){
+      return myId;
+    }
+
+
     return Chanel;
 })();

@@ -33,7 +33,7 @@
         <script type="text/javascript" src="./../webrtc/chanel.js"></script>
         <script type="text/javascript" src="./../webrtc/chanel_control.js"></script>
 
-        <script type="text/javascript" src="./ocean.js"></script>
+        <script type="text/javascript" src="./ocean2.js"></script>
 
 
         <div class="info">
@@ -41,6 +41,10 @@
         		<li class="info-li">
         			<span class="item-title">fps</span>
         			<span class="item-value fps"><input type="text"></span>
+        		</li>
+        		<li class="info-li">
+        			<span class="item-title">member</span>
+        			<span class="item-value member"><input type="text"></span>
         		</li>
         		<li class="info-li">
         			<span class="item-title">x_pos</span>
@@ -100,7 +104,7 @@
 
 			// Compass
 			let hasCompass = false; // 
-			let compassdir;
+			let compassdir = {};
 			let compass_as_zero_limit = 1e-10;
 
 			let controlFighterId;
@@ -120,7 +124,8 @@
 				$x_rot: $(".x_rot input"),
 				$y_rot: $(".y_rot input"),
 				$z_rot: $(".z_rot input"),
-				$fps : $(".fps input")
+				$fps : $(".fps input"),
+				$member : $(".member input")
 			};
 			$(".info-toggle-button").bind("click", function(){
 				if($(this).hasClass("close-button")){
@@ -199,7 +204,7 @@
 	        		scale: [10, 10, 10],
 					center: [0, 14, -34],
 					pos: [1800, 300, -500],
-					rot: [0, Math.PI,0],
+					rot: [0, 0,0],
 					fixCam: true,
 					control: true
 	        	},
@@ -218,6 +223,7 @@
 	        ];
 
 	        var animateCallback = function(camera, option){
+	        	//console.log(option);
 	        	infoControls.$x_pos.val(Math.floor(camera.position.x));
 				infoControls.$y_pos.val(Math.floor(camera.position.y));
 				infoControls.$z_pos.val(Math.floor(camera.position.z));
@@ -225,6 +231,7 @@
 				infoControls.$y_rot.val(camera.rotation.y);
 				infoControls.$z_rot.val(camera.rotation.z);
 	            infoControls.$fps.val(Math.floor(option.fps));
+	            infoControls.$member.val(`${option.userId} / ${option.memberNum}`);
 
 			}
 
@@ -237,7 +244,7 @@
 				camera: {
 					pos: camera_init_pos
 				},
-				//isLockSideScreen: true
+				isLockSideScreen: true
 			});
 
 	        // モデル追加
@@ -273,7 +280,6 @@
 						compassdir.y = event.beta * k;
 						compassdir.z = 0.0;//event.gamma * k;
 						// 値が小さい時は水平とする
-						var compass_as_zero_limit = 0.1;
 						if(Math.abs(compassdir.x) < compass_as_zero_limit){
 							compassdir.x = 0.0;
 						}
@@ -346,8 +352,8 @@
 					return {
 						instanceId : controlFighterId,
 						control: {
-							horizontal: compassdir.x,
-							vertical: compassdir.y,
+							horizontal: compassdir.y,
+							vertical: - compassdir.x - Math.PI/6.0,
 							acceleration: 1.0
 						}
 					}

@@ -81,7 +81,6 @@ var ListBox = React.createClass({
     render: function() {
       var linkNodes = this.state.data.map(function (row) {
             hash_row = {title: row[0], url: row[1]};
-            console.log(hash_row);
             return (
                 <Link data= {hash_row} />
             );

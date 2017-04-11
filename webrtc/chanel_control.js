@@ -36,6 +36,25 @@ var UniqueIdObjs = (function(){
 
 	return UniqueIdObjs;
 })();
+
+// 一度だけ出したいログ
+var OnceLog = (function(){
+	var OnceLog = function(){
+		this.logHash = {};
+	};
+
+	OnceLog.prototype.log = function(key, str, count = 1){
+		if(this.logHash[key] == null || this.logHash[key] > 0){
+			if(this.logHash[key] != null){
+				count = this.logHash[key];
+			}
+			this.logHash[key] = count -1;
+			console.log(key);
+			console.log(str);
+		}
+	}
+	return OnceLog;
+})();
 /*
 	 webRTCのユーザ管理と流すobjデータの管理
 	 ユーザ管理
@@ -63,7 +82,11 @@ var ChanelControl = (function(){
 	let requireGetWorldAnsNum;
 	let startTime, elapsedTime;
 
+	let onceLog = new OnceLog();
+
 	let objInfoCallback;
+
+	let Instance;
 
 	const msgTypes = {
 		objsInfo : "objs_info",
@@ -75,9 +98,27 @@ var ChanelControl = (function(){
 	// constructor
 	var ChanelControl = function(chanelName, obj_info_callback, option){
 
+		Instance = this;
 		// read option data
 		limitUserNum = option.limitUserNum || limitUserNum;
-		connection_changed_func = option.connection_changed_func;
+
+		if(option.connection_changed_func){
+			connectionChangedFunc = function(memberNum, _userId){
+				if(option.connection_changed_func){
+					option.connection_changed_func(memberNum, _userId);
+				}
+				/*
+				if(!isGotWorldInfo && !sendMyEnterFlag){ // 初めての dataChanelのコネクション完了時
+					this.require_get_world_ans_num = member_num -1;
+					this.send_my_enter_flag = true;
+					this.send_my_enter_info();	 // 1回だけで帰ってこなければ誰もいないということで
+				}*/
+			};
+		} else {
+			connectionChangedFunc = function(memberNum, _userId){
+			};
+		}
+
 		objInfoCallback = obj_info_callback;
 
 		startTime = getTime();
@@ -87,22 +128,22 @@ var ChanelControl = (function(){
 		*/
 
 		// 接続開始
-		var connected_callback = function(connectionCount){
+		var connected_callback = function(connectionCount, _userId){
 			memberNum = connectionCount + 1;
 			if(!isGotWorldInfo && !sendMyEnterFlag){ // 初めての dataChanelのコネクション完了時
-				requirGetWorldAnsNum = memberNum -1;
+				requireGetWorldAnsNum = memberNum -1;
 				this.sendMyEnterFlag = true;
 				sendMyEnterInfo();	 // 1回だけで帰ってこなければ誰もいないということで
 			}
-            if(connectionChangedFunc){
-            	connectionChangedFunc(memberNum);
-            }
+            
+            connectionChangedFunc(memberNum, _userId);
         };
 
         // めーっせーじ受信
-        var msg_get_callback = function(msg){
+        var msg_get_callback = function(msg, _userId){
             var msgObj = JSON.parse(msg);
-            console.log(msgObj);
+//console.log(msgObj);
+onceLog.log("msg_get_callback", msg);
 			if(msgObj.type === msgTypes.objsInfo || msgObj.type === msgTypes.objsAllInfo ){ //追加するobj情報// 参加者への初期情報もこれで伝える
 				for(var objId in msgObj.objs){
 					if(objs.isExistingId(objId)){ // 存在する場合は更新
@@ -116,20 +157,20 @@ var ChanelControl = (function(){
 				if(msgObj.type === msgTypes.objsAllInfo && isGotWorldInfo == false){
 					requireGetWorldAnsNum --;
 					console.log("require " + requireGetWorldAnsNum );
-					console.log("id " + msgObj.user_id);
-					members[msgObj.user_id] = "connected";
+					console.log("id " + msgObj.userId);
+					members[msgObj.userId] = "connected";
 					if(requireGetWorldAnsNum == 0){
 						isGotWorldInfo = true;
 						// TDOD ここ制限できていない ただ、上限以降は同じid振られる
 						for(var user_id = 1; user_id < limitUserNum; user_id++){
-							console.log(user_id);
 							console.log(members[user_id]);
+							console.log(msgObj);
 							if(!(members[user_id] === "connected")){
-								this.setUserId(user_id);
+								setUserId(user_id);
 								break;
 							}
 						}
-						console.log("set user id" + this.user_id);
+						console.log("set user id" + userId);
 						console.log(members);
 					}
 				}
@@ -153,9 +194,7 @@ var ChanelControl = (function(){
         var closed_callback = function(connectionCount){
             console.log("connection closed callback" + connectionCount);
             memberNum = connectionCount + 1;
-            if(connectionChangedFunc){
-            	connectionChangedFunc(memberNum);
-            }
+            connectionChangedFunc(memberNum);
         }
 		chanel = new Chanel(connected_callback, msg_get_callback, closed_callback, chanelName);
 	};
@@ -169,13 +208,17 @@ var ChanelControl = (function(){
 
 	// こちらで更新してpublishする
 	ChanelControl.prototype.updateObj = function(objInfo, id){
-		console.log(objInfo);
+		onceLog.log("update Obj chanel ", objInfo);
 		objs.updateObj(id, objInfo);
 		sendObjInfo(id);
 	}
 
 	ChanelControl.prototype.getUserId = function(){
 		return userId;
+	};
+
+	ChanelControl.prototype.getMemberNum = function(){
+		return memberNum;
 	};
 
 	// setter はprivate
@@ -202,7 +245,7 @@ var ChanelControl = (function(){
 		}else{
 			msgObj.type = msgTypes.objsAllInfo;
 			msgObj.objs = objs.objs;
-			msgObj.user_id = this.user_id;
+			msgObj.userId = userId;
 		}
 		var jsonObj = JSON.stringify(msgObj);
 		chanel.sendAlongDataChanel(jsonObj);

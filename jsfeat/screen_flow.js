@@ -41,7 +41,6 @@ var screen_flow = (function() {
             var findVideoSize = function() {
                 if(video.videoWidth > 0 && video.videoHeight > 0) {
                     video.removeEventListener('loadeddata', readyListener);
-                    console.log(video);
                     onDimensionsReady(video.videoWidth, video.videoHeight);
                 } else {
                     if(attempts < 10) {
