@@ -1,3 +1,41 @@
+/*
+channel for 3dmesh案
+1. Model設定
+	
+	rtc.setModels({
+		battle_ship: {
+			path: "./objs/battle_ship/ship.json",
+		},
+		...
+	});
+	*setModel した時点でロードさせる
+
+2. chanel
+	
+	rtc.startChannel(channelName, option);
+	rtc.getMambers();
+	rtc.MemberCount();
+	rtc.getMyId();
+	rtc.InstantiateLocalObject(obj);
+	rtc.InstantiateSceneObject(obj);
+	rtc.InstantiateClientObject(obj);
+
+	obj = {
+		pos: Vector3,
+		rot: Vector3,
+		scale: Vector3
+		vel: Vector3
+		model: string,
+		isCamera: false,
+	};
+
+	rtc.setControlObject(instanceId);
+	rtc.publishFunc();
+	rtc.publishObject();
+	rtc.publishInfo(); // 汎用
+
+
+*/
 var UniqueIdObjs = (function(){
 	var UniqueIdObjs = function(){
 		this.objs = {}; // hash にする　キーがユニーキー、　値は　true, false 

@@ -459,7 +459,7 @@ var Chanel = (function(){
       <return> [id, id .. , id] </return>
     */
     Chanel.prototype.getMemberCount = function(){
-      return Object.keys(dataChannels).length;
+      return Object.keys(dataChannels).length + 1;
     }
 
     /* <summary> 

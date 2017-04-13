@@ -31,8 +31,9 @@
         <!-- data chanel -->
         <script src="https://rtc-world-s.herokuapp.com/socket.io/socket.io.js"></script> 
         <script type="text/javascript" src="./../webrtc/chanel.js"></script>
-        <script type="text/javascript" src="./../webrtc/chanel_control.js"></script>
+        <!--<script type="text/javascript" src="./../webrtc/chanel_control.js"></script> -->
 
+        <script type="text/javascript" src="./../webrtc/util.js"></script>
         <script type="text/javascript" src="./ocean2.js"></script>
 
 
@@ -185,11 +186,11 @@
 
 		
 	        const camera_init_pos = [0,0,0];
-
+let s = 100;
 	         let fighterList = [
 	        	{
 	        		modelName: "battle_ship",
-	        		scale: [10, 10, 10],
+	        		scale: [s, s, s],  // 10
 					pos: [1800, 50, 500],
 					rot: [0, Math.PI/2, 0]
 	        	},
@@ -203,7 +204,7 @@
 	        		modelName: "zero_fighter",
 	        		scale: [10, 10, 10],
 					center: [0, 14, -34],
-					pos: [1800, 300, -500],
+					pos: [1800, 300, -10000],
 					rot: [0, 0,0],
 					fixCam: true,
 					control: true
@@ -231,7 +232,7 @@
 				infoControls.$y_rot.val(camera.rotation.y);
 				infoControls.$z_rot.val(camera.rotation.z);
 	            infoControls.$fps.val(Math.floor(option.fps));
-	            infoControls.$member.val(`${option.userId} / ${option.memberNum}`);
+	            infoControls.$member.val(`${option.memberNum} ${option.userId} `);
 
 			}
 
@@ -258,6 +259,7 @@
 					let id = oceanControl.createFighter(fighterList[index]);
 					if(index == 2){
 						controlFighterId = id;
+						oceanControl.setControlFighter(controlFighterId);
 					}
 				}
 			}
@@ -350,7 +352,6 @@
 			oceanControl.setControlCallback(function(){
 				if(hasCompass){
 					return {
-						instanceId : controlFighterId,
 						control: {
 							horizontal: compassdir.y,
 							vertical: - compassdir.x - Math.PI/6.0,
@@ -360,7 +361,6 @@
 				} else {
 					keyInputs.horizontalIntegrated += keyInputs.horizontal/100.0;
 					return {
-						instanceId : controlFighterId,
 						control: {
 							horizontal: keyInputs.horizontalIntegrated ,
 							vertical: keyInputs.vertical,
