@@ -24,11 +24,13 @@ var Chanel = (function(){
   let connected_callback;
   let get_msg_callback;
   let closed_callback;
+  let socket_connected_callback;
   // connected_callback: 接続した際のコールバック関数, get_msg_callback, _closed_callback : データチャネル切断時のｃａｌｌｂａｃｋ
-  var Chanel = function(_connected_callback, _get_msg_callback, _closed_callback, room = "_testroom"){
+  var Chanel = function(_connected_callback, _get_msg_callback, _closed_callback, room = "_testroom", _socket_connected_callback){
     connected_callback = _connected_callback;
     get_msg_callback = _get_msg_callback;
     closed_callback = _closed_callback;
+    socket_connected_callback = _socket_connected_callback;
     
     socket = io.connect(url +'/');
     
@@ -50,6 +52,7 @@ var Chanel = (function(){
 
       console.log('socket.io connected. enter room=' + room );
       socket.emit('enter', room);
+      socket_connected_callback(myId);
     });
     socket.on('message', function(message) {
   //    console.log('message:', message);

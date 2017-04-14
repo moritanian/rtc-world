@@ -19,26 +19,37 @@ var OnceLog = (function(){
 
 // 一度だけ出したいログ
 var MeshPool = (function(){
-	var MeshPool = function(originalMesh){
+	var MeshPool = function(originalMesh, parentObj){
 		this.originalMesh = originalMesh;
 		this.poolList = [];
+		this.parentObj = parentObj;
 	};
 
 	// meshを返す
 	// poolされているものはpoolListから外す
-	MeshPool.prototype.instantiate = function(){
-		if(this.poolList.length>0){
-			let mesh =  this.poolList.shift();	
-			mesh.visible = true;
-			return mesh;
-		}
+	MeshPool.prototype.instantiate = function(instanceId, addScene = true){
 		if(!this.originalMesh)
 			return null;
-		return this.originalMesh.clone();
+		let mesh;
+		if(this.poolList.length>0){
+			mesh =  this.poolList.shift();	
+			mesh.visible = true;
+		} else {
+			mesh = this.originalMesh.clone();
+		}
+
+		mesh.instanceId = instanceId;
+		
+		if(addScene && this.parentObj){
+			this.parentObj.add(mesh);
+		}
+		return mesh;
 	}
 
 	MeshPool.prototype.release = function(mesh){
 		mesh.visible = false;
+		if(this.parentObj)
+			this.parentObj.remove(mesh);
 		this.poolList.push(mesh);
 	}
 

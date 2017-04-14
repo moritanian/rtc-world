@@ -701,9 +701,9 @@
 			"uuid": "c6681ab4-7fe8-45bd-93bc-4f9661841943",
 			"offset": [0, 0],
 			"repeat": [1, 1],
-			"magFilter": "LinearFilter",
-			"minFilter": "LinearMipMapLinearFilter",
-			"wrap": ["RepeatWrapping","RepeatWrapping"],
+			"_magFilter": "LinearFilter",
+			"_minFilter": "LinearMipMapLinearFilter",
+			"_wrap": ["RepeatWrapping","RepeatWrapping"],
 			"image": "2ed21c64-979a-4c1b-bebb-845fc0b2796a",
 			"name": "Steregushchiy_Steregushchiy.png",
 			"anisotropy": 16

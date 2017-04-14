@@ -564,9 +564,9 @@
 			"uuid": "9593a872-3258-4389-9bb3-571335ea0b9b",
 			"offset": [0, 0],
 			"repeat": [1, 1],
-			"magFilter": "LinearFilter",
-			"minFilter": "LinearMipMapLinearFilter",
-			"wrap": ["ClampToEdgeWrapping","ClampToEdgeWrapping"],
+			"_magFilter": "LinearFilter",
+			"_minFilter": "LinearMipMapLinearFilter",
+			"_wrap": ["ClampToEdgeWrapping","ClampToEdgeWrapping"],
 			"image": "be120bab-0723-4cb9-93af-94be4240ec12",
 			"name": "BodyTexture_BodyTexture.png",
 			"anisotropy": 16

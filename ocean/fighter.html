@@ -10,7 +10,10 @@
 			<!--<audio src="sound/wave.mp3" preload="auto" autoplay loop></audio>
 			<audio src="sound/whistle.mp3" preload="auto" autoplay></audio> -->
 
-		<script src="https://threejs.org/build/three.js"></script>
+		 <!--<script src="https://threejs.org/build/three.js"></script> -->
+		 <script src="./../three/three.min.js"></script>
+		
+
 
 		<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
 		<script src="https://threejs.org/examples/js/Mirror.js"></script>
@@ -184,87 +187,6 @@
 
 			}
 
-		
-	        const camera_init_pos = [0,0,0];
-let s = 100;
-	         let fighterList = [
-	        	{
-	        		modelName: "battle_ship",
-	        		scale: [s, s, s],  // 10
-					pos: [1800, 50, 500],
-					rot: [0, Math.PI/2, 0]
-	        	},
-	        	{
-	        		modelName: "battle_ship",
-	        		scale: [10, 10, 10],
-					pos: [1800, 200, 0],
-					rot: [-Math.PI/5.0, -Math.PI/3, Math.PI/100]
-	        	},
-	        	{
-	        		modelName: "zero_fighter",
-	        		scale: [10, 10, 10],
-					center: [0, 14, -34],
-					pos: [1800, 300, -10000],
-					rot: [0, 0,0],
-					fixCam: true,
-					control: true
-	        	},
-	        	{
-	        		modelName: "p51_mustang",
-	        		scale: [0.2, 0.2, 0.2],
-					pos: [1200, 1000, -2500],
-					rot: [ Math.PI/4 ,Math.PI/4,0]
-	        	},
-	        	{
-	        		modelName: "p51_mustang",
-					scale: [0.2, 0.2, 0.2],
-					pos: [1200, 1000, -1000],
-					rot: [ Math.PI/4 , -Math.PI/6,0]
-				}
-	        ];
-
-	        var animateCallback = function(camera, option){
-	        	//console.log(option);
-	        	infoControls.$x_pos.val(Math.floor(camera.position.x));
-				infoControls.$y_pos.val(Math.floor(camera.position.y));
-				infoControls.$z_pos.val(Math.floor(camera.position.z));
-				infoControls.$x_rot.val(camera.rotation.x);
-				infoControls.$y_rot.val(camera.rotation.y);
-				infoControls.$z_rot.val(camera.rotation.z);
-	            infoControls.$fps.val(Math.floor(option.fps));
-	            infoControls.$member.val(`${option.memberNum} ${option.userId} `);
-
-			}
-
-	        // 3dビュー作成
-	        let oceanControl = new Ocean({
-				animateCallback: animateCallback,
-				isUseChanel: true,
-				isFlowTracking : false,
-				isOrbitControl: false,
-				camera: {
-					pos: camera_init_pos
-				},
-				isLockSideScreen: true
-			});
-
-	        // モデル追加
-			for(let index in fighterList){
-				if(index == 0){
-					let callback = instance => {
-						setModelIntanceWithControl(infoControls, instance);
-					};
-					oceanControl.createFighter(fighterList[index], callback);
-				}else {
-					let id = oceanControl.createFighter(fighterList[index]);
-					if(index == 2){
-						controlFighterId = id;
-						oceanControl.setControlFighter(controlFighterId);
-					}
-				}
-			}
-
-		
 			// デバイスの傾き
 			$( window ).on( "deviceorientation", function(e){
 				var evenet = e.originalEvent;
@@ -349,6 +271,86 @@ let s = 100;
 			  }
 			});
 
+
+		
+	        const camera_init_pos = [0,0,0];
+let s = 40;
+	         let fighterList = [
+	        	{
+	        		modelName: "battle_ship",
+	        		scale: [s, s, s],  // 10
+					pos: [1800, 50, 500],
+					rot: [0, Math.PI/2, 0]
+	        	},
+	        	{
+	        		modelName: "battle_ship",
+	        		scale: [10, 10, 10],
+					pos: [1800, 200, 0],
+					rot: [-Math.PI/5.0, -Math.PI/3, Math.PI/100]
+	        	},
+	        	{
+	        		modelName: "zero_fighter",
+	        		scale: [10, 10, 10],
+					center: [0, 14, -34],
+					pos: [1800, 300, -50000],
+					rot: [0, 0,0],
+					fixCam: true,
+					control: true
+	        	},
+	        	{
+	        		modelName: "p51_mustang",
+	        		scale: [0.2, 0.2, 0.2],
+					pos: [1200, 5000, -2500],
+					rot: [ Math.PI/4 ,Math.PI/4,0]
+	        	},
+	        	{
+	        		modelName: "p51_mustang",
+					scale: [0.2, 0.2, 0.2],
+					pos: [1200, 1000, -1000],
+					rot: [ Math.PI/4 , -Math.PI/6,0]
+				}
+	        ];
+
+	        var animateCallback = function(camera, option){
+	        	//console.log(option);
+	        	infoControls.$x_pos.val(Math.floor(camera.position.x));
+				infoControls.$y_pos.val(Math.floor(camera.position.y));
+				infoControls.$z_pos.val(Math.floor(camera.position.z));
+				infoControls.$x_rot.val(camera.rotation.x);
+				infoControls.$y_rot.val(camera.rotation.y);
+				infoControls.$z_rot.val(camera.rotation.z);
+	            infoControls.$fps.val(Math.floor(option.fps));
+	            infoControls.$member.val(`${option.memberNum} ${option.userId} `);
+
+			}
+
+	        // 3dビュー作成
+	        let oceanControl = new Ocean({
+				animateCallback: animateCallback,
+				isUseChanel: true,
+				isFlowTracking : false,
+				isOrbitControl: false,
+				camera: {
+					pos: camera_init_pos
+				},
+				isLockSideScreen: true,
+				succsessFunc: self => {
+					 // モデル追加
+					for(let index in fighterList){
+						let id = self.createFighter(fighterList[index]);
+						if(index == 0){
+							setModelIntanceWithControl(infoControls, self.getFighterInstanceById(id));
+						}else {
+							if(index == 2){
+								controlFighterId = id;
+								self.setControlFighter(controlFighterId);
+							}
+						}
+					}
+				}
+			});
+		
+			
 			oceanControl.setControlCallback(function(){
 				if(hasCompass){
 					return {

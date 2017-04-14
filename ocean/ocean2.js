@@ -1,4 +1,23 @@
 /*
+	Modelloader 導入
+	
+	改善点
+	- loadの複雑な分岐解消
+	- meshのuuidをinstanceIdに使用できる　
+
+	懸念点
+	- sceneに追加部分
+		camera とのグループにしている場合、
+		グループごとsceneにaddするべきかmodelのmeshだけでいいのか
+	- loader完了とmyId取得の両方を待ちたい
+	- instanceId をmeshのを使うとして、衝突時に子要素で検出された場合の対応
+
+	#残件
+	- channel開通後にloadedfunc実行
+
+	
+*/
+/*
 	ここでoceanの3dモデル構築を行う
 	外部ではthree.js の関数を直接よぶことはないようにする
 */
@@ -6,7 +25,7 @@ var Ocean = (function(){
 //Ocean: {	
 
 	// 
-	var scene, camera, water, renderer, controls, tracking, meshModels = {};
+	var scene, camera, water, renderer, controls, tracking;
 	var x_filter, y_filter, z_filter;
 	var count = 0, isFlowTracking, camInitPos, lastTime, deltaTime;
 	var Instance;
@@ -35,7 +54,50 @@ var Ocean = (function(){
 	let myId;
 	let startTime;
 
-	let collisionMeshes;
+	let fighterGroup;
+	let bulletGroup;
+	let modelLoader;
+
+	let ModelLoader = (function(){
+		let modelLength;
+		let loadedNum ;
+		let loadedFuncs;
+		var ModelLoader = function(models, parentObj){
+			modelLength = Object.keys(models).length;
+			loadedNum = 0;
+			loadedFuncs = [];
+			for(let modelName in models){
+				var json_loader = new THREE.ObjectLoader();　
+				let model = models[modelName];
+				json_loader.load(model.path, mesh => {　
+					//let result = computeFaceNormalsRecursively(mesh);
+					//console.log(result);
+					model.meshPool = new MeshPool(mesh, parentObj);
+					loadedNum++;
+					if(loadedNum == modelLength){
+						for(let index in loadedFuncs){
+							loadedFuncs[index]();
+						}
+					}
+				});
+			}
+		}
+
+		// すでに完了していれば即実行、まだなら
+		ModelLoader.prototype.funcBuffered = function(func){
+			if(modelLength == loadedNum){
+				func();
+			}else {
+				loadedFuncs.push(func);
+			}
+		}
+
+		ModelLoader.prototype.hasFinished = function(){
+			return loadedNum == modelLength;
+		}
+
+		return ModelLoader; 
+	})();
 
 	// constructor
 	/*
@@ -63,6 +125,8 @@ var Ocean = (function(){
 		isUseChanel = option.isUseChanel || false;
 		isLockSideScreen = option.isLockSideScreen || false;
 
+		let succsessFunc = option.succsessFunc || function(){};
+
 		 THREE.LinearMipMapLinearFilter = 1008;
 
 		if(isLockSideScreen){
@@ -78,56 +142,83 @@ var Ocean = (function(){
 		}
 
 		if(isUseChanel){
-			let defaultChanelName = "ocean";
-			let chanelName = option.chanelName || defaultChanelName;
-
-			// 接続開始
-			var connected_callback = function(connectionCount, _userId){
-				members[_userId] = {};
-				sendMyInfo();
-				sendWorldInfo(_userId);
-
-	        };
-
-	         // めーっせーじ受信
-	        var msg_get_callback = function(msg, _userId){
-	            var msgObj = JSON.parse(msg);
-	onceLog.log("msg_get_callback", msg);
-				if(msgObj.type === ChannelMsgTypes.Objs ){ //追加するobj情報// 参加者への初期情報もこれで伝える
-					onceLog.log("msg get objs", msg, 40);
-					for(var objId in msgObj.objs){
-						if(Instance.getFighterInstanceById(objId)){ // 存在する場合は更新
-							Instance.updateFighter(msgObj.objs[objId], objId);
-						}else{ // ない場合は追加
-							Instance.addFighter(msgObj.objs[objId], objId);				
-						}
-					}
-				}else if(msgObj.type === ChannelMsgTypes.MyInfo){ // 新規加入者がはいってきた
-					console.log("get msg enter");
-					//console.log("time stamp me: " + this.start_time + "other" + msg_obj.start_time);
-					members[_userId].startTime = msgObj.startTime;
-					members[_userId].nickName = msgObj.nickName;
-					if(isRoomMaster()){
-						sendWorldInfo(_userId);
-					}
-				}else if(msgObj.type === ChannelMsgTypes.func){
-					console.log("obj func received");
-					channelFuncs[msgObj.funcName].apply(this, _userId, msgObj.args); // これでいけてる？
-				}
-	        };
-
-		         // 接続終了
-	        var closed_callback = function(connectionCount, _userId){
-	            console.log("connection closed callback" + connectionCount);
-	            deleteMember(_userId);
-	        }
-			chanelControl = new Chanel(connected_callback, msg_get_callback, closed_callback, chanelName)
-			startTime = getTime();
-			myId  = chanelControl.getMyId();
-			console.log(myId);
-			members[myId]
+			let defaultChannelName = "ocean";
+			let channelName = option.chanelName || defaultChannelName;
+			initChannel(channelName, succsessFunc);
+		} else {
+			modelLoader.funcBuffered(function(){
+				succsessFunc(Instance);
+			});
 		}
 
+		initScene();		
+		modelLoader = new ModelLoader(Ocean.Models, fighterGroup);
+		
+	};
+
+	function initChannel(channelName, succsessFunc){
+		
+
+		// 接続開始
+		var connected_callback = function(connectionCount, _userId){
+			members[_userId] = {};
+			sendMyInfo();
+			sendWorldInfo(_userId);
+
+        };
+
+         // めーっせーじ受信
+        var msg_get_callback = function(msg, _userId){
+            var msgObj = JSON.parse(msg);
+onceLog.log("msg_get_callback", msg);
+			if(msgObj.type === ChannelMsgTypes.Objs ){ //追加するobj情報// 参加者への初期情報もこれで伝える
+				onceLog.log("msg get objs", msg, 40);
+				for(var objId in msgObj.objs){
+					if(Instance.getFighterInstanceById(objId)){ // 存在する場合は更新
+						Instance.updateFighter(msgObj.objs[objId], objId);
+					}else{ // ない場合は追加
+						Instance.addFighter(msgObj.objs[objId], objId);				
+					}
+				}
+			}else if(msgObj.type === ChannelMsgTypes.MyInfo){ // 新規加入者がはいってきた
+				console.log("get msg enter");
+				//console.log("time stamp me: " + this.start_time + "other" + msg_obj.start_time);
+				members[_userId].startTime = msgObj.startTime;
+				members[_userId].nickName = msgObj.nickName;
+				if(isRoomMaster()){
+					sendWorldInfo(_userId);
+				}
+			}else if(msgObj.type === ChannelMsgTypes.func){
+				console.log("obj func received");
+				channelFuncs[msgObj.funcName].apply(this, _userId, msgObj.args); // これでいけてる？
+			}
+        };
+
+	         // 接続終了
+        var closed_callback = function(connectionCount, _userId){
+            console.log("connection closed callback" + connectionCount);
+            deleteMember(_userId);
+        }
+
+        var socket_connected_callback = function(id){
+        	myId = id;
+			console.log(myId);
+			members[myId] = {
+				startTime: startTime
+			};
+
+			// すでにmodelよみこまれていれば後続の処理開始
+			// まだならbufferに追加
+			modelLoader.funcBuffered(function(){
+				succsessFunc(Instance);
+			});
+        }
+
+		chanelControl = new Chanel(connected_callback, msg_get_callback, closed_callback, channelName, socket_connected_callback)
+		startTime = getTime();
+	}
+
+	function initScene(){
 		var parameters = {
 				width: 2000,
 				height: 2000,
@@ -211,6 +302,8 @@ var Ocean = (function(){
 			water.material
 		);
 
+		//water.instanceId = "water";
+		//mirrorMesh.instanceId = "mirroeMesh";
 		mirrorMesh.add( water );
 		mirrorMesh.rotation.x = - Math.PI * 0.5;
 		scene.add( mirrorMesh );
@@ -267,6 +360,7 @@ var Ocean = (function(){
 			new THREE.BoxGeometry( 1000000, 1000000, 1000000 ),
 			skyBoxMaterial
 		);
+		//skyBox.instanceId = "skyBox";
 
 		scene.add( skyBox );
 
@@ -288,10 +382,15 @@ var Ocean = (function(){
 		sphere = new THREE.Mesh( geometry, material );
 		scene.add( sphere );
 
-		collisionMeshes = [];
+		bulletGroup = new THREE.Group();
+		scene.add(bulletGroup);
 
+		fighterGroup = new THREE.Group();
+		scene.add(fighterGroup);
+
+		//modelLoader.funcBuffered(animate);
 		animate();
-	};
+	}
 
 // static member
 	Ocean.nationalityList = {
@@ -450,7 +549,7 @@ var Ocean = (function(){
 			modelName: ""
 		}
 	*/
-	Ocean.prototype.addFighter = function(fighterData, instanceId, _meshCallback){
+	Ocean.prototype.addFighter = function(fighterData, instanceId){
 		let modelName = fighterData.modelName;
 		let model = Ocean.Models[modelName];
 		if(!model){
@@ -459,44 +558,17 @@ var Ocean = (function(){
 
 		console.log(modelName);
 
-		let meshCallback = function(){
-			
-			// collision set
-			if(!fighterInstances[instanceId].nonCollision){
-				addCollisionMesh(instanceId);
-			}
-
-			if(_meshCallback){
-				_meshCallback(instanceId);
-			}
-		}
+		let mesh = model.meshPool.instantiate(instanceId, false);
+		let targetMesh = setMesh(mesh, fighterData);
+		model.meshPool.parentObj.add(targetMesh);
 
 		fighterInstances[instanceId] = {
 			modelName: modelName,
+			mesh: targetMesh,
 			vel: new THREE.Vector3(0,0,1000),
 			userId: fighterData.userId,
 			nonCollision: fighterData.nonCollision ? true : false
-		};
-
-		if(meshModels[modelName]){
-			let mesh = meshModels[modelName].clone();
-			let targetMesh = setMesh(mesh, fighterData);
-			fighterInstances[instanceId].mesh = targetMesh;
-			fighterInstances[instanceId].isParentMesh = false;
-			meshCallback();
-		}else{
-			var json_loader = new THREE.ObjectLoader();　
-			// ロード中に存在しないと認識されないようにmeshぬきで作成しておく
-			fighterInstances[instanceId].isParentMesh = true;
-				　
-			json_loader.load(model.path, mesh => {　
-				Ocean.Models[modelName] = mesh;
-				fighterInstances[instanceId].mesh = setMesh(mesh, fighterData);
-
-				meshModels[modelName] = mesh;
-				meshCallback();
-			});
-		}
+		};	
 	};
 
 	function setMesh(mesh, fighterData){
@@ -540,10 +612,10 @@ var Ocean = (function(){
 		if(fighterData.pos){
 			targetObj.position.set(fighterData.pos[0], fighterData.pos[1], fighterData.pos[2]);
 		}
-		scene.add(targetObj);
-		if(fighterData.fixCam){
-			console.log(targetObj);
-		}
+
+		targetObj.updateMatrix();
+		//targetObj.geometry.applyMatrix(mesh.matrix);
+		targetObj.matrix.identity();
 
 		return targetObj;
 	}
@@ -568,7 +640,7 @@ var Ocean = (function(){
            		color: 0x020202
 			}));
 		mesh.rotation.x = Math.PI/2;
-		let pool = new MeshPool(mesh);
+		let pool = new MeshPool(mesh, bulletGroup);
 		bulletData = {
 			meshPool: pool,	
 			bulletList: []
@@ -614,34 +686,20 @@ var Ocean = (function(){
 	}
 
 	// meshを作成し、chanelに情報を流す
-	Ocean.prototype.createFighter = function(fighterData, callback){
+	Ocean.prototype.createFighter = function(fighterData){
 		let instanceId = uuid();
-		let meshCallback;
+		this.addFighter(fighterData, instanceId);
 		if(isUseChanel){
-			meshCallback = id => {
-				// #TODO ここ直す すぐだとタイミング的に自分のidが取得できない。
-				// 自分であることのふらぐたてて使用する際にジッサイのidを読むとか
-				setTimeout(i => {
-					console.log(id);
-					fighterInstances[id].userId = chanelControl.getMyId();
-					console.log(chanelControl.getMyId());
-					publishObj(id);
-					if(callback){
-						callback(fighterInstances[id]);
-					}
-				}, 1000);
-			}
+			fighterInstances[instanceId].userId = chanelControl.getMyId();
+			console.log(chanelControl.getMyId());
+			publishObj(instanceId);
 		}
-		this.addFighter(fighterData, instanceId, meshCallback);
+		
 		return instanceId;
 	};
 
 	Ocean.prototype.deleteFighter = function(instanceId){
-		scene.remove(fighterInstances[instanceId].mesh);
-		// collisionリストから削除
-		if(!fighterInstances[instanceId].nonCollision){
-			deleteCollisionMesh(instanceId);
-		}
+		fighterGroup.remove(fighterInstances[instanceId].mesh);
 
 		delete fighterInstances[instanceId].mesh;
 		delete fighterInstances[instanceId];
@@ -735,6 +793,11 @@ var Ocean = (function(){
 		deletaPos.add(randomVibration);
 		fighter.mesh.position.add(deletaPos);
 
+		let limit = 10;
+		if(fighter.mesh.position.y < limit){
+			fighter.mesh.position.y = limit
+		}
+
 		publishObj(controlFighterId);
 
 
@@ -796,23 +859,23 @@ var Ocean = (function(){
 		let clonebullet = bulletData.meshPool.instantiate();
 		let fighter = fighterInstances[fighterInstanceId];
 		clonebullet.position.x = fighter.mesh.position.x; 
-		clonebullet.position.y = fighter.mesh.position.y - 100; 
+		clonebullet.position.y = fighter.mesh.position.y - 140; 
 		clonebullet.position.z = fighter.mesh.position.z;
 
-		scene.add(clonebullet);
+		//scene.add(clonebullet);
 
 		let life = 2; // default time(s)
-		let ray = new THREE.Raycaster(clonebullet.position, fighter.vel.clone().normalize);
+		let directon = fighter.vel.clone().normalize();
+		let ray = new THREE.Raycaster(clonebullet.position, directon);
 		let beShotObjId;
-		updateCollisionMeshes();
-        let objs = ray.intersectObjects( collisionMeshes );
+        let objs = ray.intersectObjects( fighterGroup.children, true);
     	if(objs.length > 0){
     		let obj = objs[0];
     		let dist = obj.distance;
     		console.log(dist);
     		life = dist/bulletSpeed;
     		console.log(life);
-    		beShotObjId = obj.object.instanceId;
+    		beShotObjId = getInstanceIdFromMeshRecursively(obj.object);
     	}
 
 		let bulletObj = {
@@ -822,6 +885,41 @@ var Ocean = (function(){
 			beShotObjId : beShotObjId // 被弾するオブジェクト
 		};
 		bulletData.bulletList.push(bulletObj);
+	}
+
+	function getInstanceIdFromMeshRecursively(mesh, depth = 0){
+		if(!mesh.instanceId)
+		{
+			if(depth > 20){
+				console.warning("getInstanceIdFromMeshRecursively too deep");
+			}
+			if(!mesh.parent )
+				return 0; 
+			return getInstanceIdFromMeshRecursively(mesh.parent, depth + 1);
+		}
+		console.log(mesh.instanceId);
+		return mesh.instanceId;
+
+	}
+
+	function computeFaceNormalsRecursively(mesh, depth = 0){
+		let result = false;
+		if(depth > 20){
+			return false;
+		}
+		if(!mesh.geometry){
+			if(mesh.children){
+				for(var child of mesh.children){
+					if(computeFaceNormalsRecursively(child, depth + 1))
+						result = true;
+				}
+				return result;
+			}else {
+				return false;
+			}
+		}
+		mesh.geometry.computeFaceNormals();
+		return true;
 	}
 
 	function sendMyInfo(){
@@ -895,38 +993,6 @@ var Ocean = (function(){
 
 		Instance.deleteFighter(instanceId);
 		//fighter.userId 
-	}
-
-	function updateCollisionMeshes(){
-		collisionMeshes = [];
-		for(let instanceId in fighterInstances){
-			addCollisionMesh(instanceId);
-		}
-	}
-
-	function addCollisionMesh(instanceId){
-		let fighter = fighterInstances[instanceId];
-		if(!fighter || !fighter.mesh)
-			return;
-		for( var i = 0; i < fighter.mesh.children.length; i++ )
-		{
-			// 読み込んだ obj モデルから Object3D を取り出す
-			var obj3d = fighterInstances[instanceId].mesh.children[ i ];
-			for( var j = 0; j < obj3d.children.length; j++ )
-			{
-				// Object3D から Mesh を取得し配列に入れる
-				obj3d.children[ j ].instanceId = instanceId;
-				collisionMeshes.push(obj3d.children[ j ]);
-			}
-		}
-	}
-
-	function deleteCollisionMesh(instanceId){
-		for(let index in collisionMeshes){
-			if(collisionMeshes[index].instanceId == instanceId){
-				delete collisionMeshes[index];
-			}
-		}
 	}
 
 	return Ocean;
