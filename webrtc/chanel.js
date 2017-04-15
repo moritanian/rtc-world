@@ -52,7 +52,8 @@ var Chanel = (function(){
 
       console.log('socket.io connected. enter room=' + room );
       socket.emit('enter', room);
-      socket_connected_callback(myId);
+      if(socket_connected_callback)
+        socket_connected_callback(myId);
     });
     socket.on('message', function(message) {
   //    console.log('message:', message);

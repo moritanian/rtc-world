@@ -163,6 +163,125 @@ input[type="checkbox"].info-on-off-button:focus {
     background-position-y: 30%;
 }
 
+.start-button {
+    position: absolute;
+    top: 20%;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    text-align: center;
+    line-height: 80px;
+    font-size: 50px;
+    text-shadow: 0px 0px 16px #040404;
+    color: white;
+    cursor: pointer;
+    opacity: 0.8;
+    user-select: none;
+}
+
+.start-button:hover {
+    background: -webkit-gradient(linear, left top, left bottom, from(#abCCE6), color-stop(0.05,#80CCE6), color-stop(0.05,#09C), color-stop(0.95,#069), color-stop(0.95,#00293D), to(#00293D));
+  
+}
+
+.start-button:active {
+  background-color: #94C7CC;
+}
+
+.start-button.disabled {
+    opacity: 0.7;
+}
+
+.hexagon {
+  /* position: relative; */
+    width: 40%;
+    height: 80px;
+    background-color: #64C7CC;
+    background: -moz-linear-gradient(top,#80CCE6,#80CCE6 5%,#09C 5%,#069 95%,#069 95%,#00293D);
+    background: -webkit-gradient(linear, left top, left bottom, from(#80CCE6), color-stop(0.05,#80CCE6), color-stop(0.05,#09C), color-stop(0.95,#069), color-stop(0.95,#00293D), to(#00293D));
+}
+
+.hexagon:before,
+.hexagon:after {
+    position: absolute;
+    content: "";
+    border: 40px solid transparent;
+    background-color: rgba(0, 0, 0, 0);
+    top: 0%;
+}
+
+.hexagon:before {
+    border-right: 40px solid #0088bb;   
+    left: -80px;
+}
+
+.hexagon:after {
+    border-left: 40px solid #0088bb;
+    left: 100%;
+}
+
+.hexagon2 {
+    box-shadow: 0px 0px 4px 2px rgba(140, 150, 138, 0.98);
+    position: absolute;
+    top: 20%;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    width: 43%;
+    height: 90px;
+    background-color: #484848;
+    background: -moz-linear-gradient(top,#80CCE6,#80CCE6 5%,#09C 5%,#069 95%,#069 95%,#00293D);
+    /* background: -webkit-gradient(linear, left top, left bottom, from(#66696a), color-stop(0.05,#808181), color-stop(0.05,#646565), color-stop(0.95,#636565), color-stop(0.95,#00293D), to(#00293D)); */
+}
+
+.hexagon2:before,
+.hexagon2:after {
+   position: absolute;
+    content: "";
+    border: 45px solid transparent;
+    background-color: rgba(0, 0, 0, 0);
+    top: 0%;
+}
+
+.hexagon2:before {
+      border-right: 40px solid #545454;
+    left: -85px;
+}
+
+.hexagon2:after {
+   border-left: 40px solid #666667;
+    left: 100%;
+}
+
+.meter-group {
+   position: absolute;
+    top: 65%;
+    left: 0%;
+    right: 0;
+    bottom: 0;
+    margin: 0 auto;
+    width: 50%;
+    height: 100%;
+}
+.meter {
+    position: absolute;
+    width: 40%;
+}
+
+#compass-meter {
+    left: 50%;
+}
+
+.arrow {
+    background-image: url("./images/arrow.png");
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 100%;
+}
+
 
 /* side screen lock */
 @media screen and (orientation: landscape) {

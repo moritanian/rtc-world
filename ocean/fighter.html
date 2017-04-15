@@ -78,6 +78,7 @@
         		<li class="info-li">
         			<div class="info-button" id="be-shot"> Be shot </div>
         		</li>
+        		<!--
         		<li class="info-li">
         			<span class="on-off-title"> ship move </span> 
         			<input type="checkbox" id="ship-move-toggle" class="info-on-off-button"><label for="toggleButton"></label>
@@ -86,26 +87,26 @@
         			<span class="on-off-title"> sound </span> 
         			<input type="checkbox" id="sound-toggle" class="info-on-off-button"><label for="toggleButton"></label>
         		</li>
+        		-->
         	</ul>
         	<div class="close-button info-toggle-button">Close Controls</div>
         </div>
-        <div class="sighting"></div>
+        <div class="sighting" style="display: none;"></div>
+        <div class="meter-group" style="display:none">
+        	<div class="meter" id="feet-meter"></div>
+        	<div class="meter" id="compass-meter"></div>
+        </div>
         <div class="blood-splash hide"></div>
+
+        <div class="hexagon2"></div>
+        <div class="start-button hexagon disable"> 
+        Start </div>
 		<script>
 			'use strict';
 			const isOrbitControl = false;
 			var controls;
 			let isShipMove = false;
-			let wave_audio = new Audio("./sound/fighter.mp3");
-			wave_audio.loop = "true";
-			wave_audio.load();
-			let whistle_audio = new Audio("./sound/whistle.mp3");
-			whistle_audio.load();
-			let shoot_audio = new Audio("./sound/shoot.mp3");
-			shoot_audio.load();
-			let bomb_audio = new Audio("./sound/bomb1.mp3");
-			bomb_audio.load();
-
+			
 			// Compass
 			let hasCompass = false; // 
 			let compassdir = {};
@@ -146,7 +147,8 @@
 			});
 
 			$("#be-shot").bind("click", function(){
-				bomb_audio.play();
+				//bomb_audio.play();
+				//explosion_audio.play();
 				beShot();
 			});
 
@@ -158,6 +160,7 @@
 				}	
 			});
 
+			/*
 			$("#sound-toggle").bind("change", function(){
 				if($(this).is(":checked")){
 					wave_audio.play();
@@ -168,6 +171,7 @@
 
 				}	
 			});
+			*/
 
 			$(".info-on-off-button").parent().bind("click", function(){
 				var $input = $(this).find("input");
@@ -176,7 +180,7 @@
 
 			// 照準
 			$(".sighting").bind("click", function(){
-				shoot_audio.play();
+				//shoot_audio.play();
 				oceanControl.oneShoot(controlFighterId);
 			});
 
@@ -240,7 +244,7 @@
 			    // space
 			    case 32:
 			    	keyInputs.space = true;
-			    	shoot_audio.play();
+			    	//shoot_audio.play();
 					oceanControl.oneShoot(controlFighterId);
 			  		break;
 			  }
@@ -270,12 +274,10 @@
 			  	break;
 			  }
 			});
-
-
 		
-	        const camera_init_pos = [0,0,0];
+	        const camera_init_pos = [0,100,0];
 let s = 40;
-	         let fighterList = [
+	        let fighterList = [
 	        	{
 	        		modelName: "battle_ship",
 	        		scale: [s, s, s],  // 10
@@ -324,6 +326,8 @@ let s = 40;
 
 			}
 
+	        let $startButton = $(".start-button");
+
 	        // 3dビュー作成
 	        let oceanControl = new Ocean({
 				animateCallback: animateCallback,
@@ -334,17 +338,34 @@ let s = 40;
 					pos: camera_init_pos
 				},
 				isLockSideScreen: true,
+				meters : {
+					"feet" : $("#feet-meter"),
+					"compass" : $("#compass-meter")
+				},
 				succsessFunc: self => {
-					 // モデル追加
-					for(let index in fighterList){
-						let id = self.createFighter(fighterList[index]);
-						if(index == 0){
-							setModelIntanceWithControl(infoControls, self.getFighterInstanceById(id));
-						}else {
-							if(index == 2){
-								controlFighterId = id;
-								self.setControlFighter(controlFighterId);
-							}
+					$startButton.removeClass("disable");
+					console.log("succsessFunc");
+				}
+			});
+
+			$startButton.click(function(){
+				if($(this).hasClass("disable"))
+					return;
+				oceanControl.OnClickStart("fighter_audio");
+				$(this).hide();
+				$(".hexagon2").hide();
+				$(".sighting").show();
+				$(".meter-group").show();
+
+				 // モデル追加
+				for(let index in fighterList){
+					let id = oceanControl.createFighter(fighterList[index]);
+					if(index == 0){
+						setModelIntanceWithControl(infoControls, oceanControl.getFighterInstanceById(id));
+					}else {
+						if(index == 2){
+							controlFighterId = id;
+							oceanControl.setControlFighter(controlFighterId);
 						}
 					}
 				}

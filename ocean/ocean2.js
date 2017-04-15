@@ -35,6 +35,9 @@ var Ocean = (function(){
 	let controlFighterId;
 	let animateCallback;
 	let isOrbitControl, isUseChanel;
+
+	let audioSources;
+
 	var screenDirection = function(){
 		return window.innerWidth / window.innerHeight < 1.0 ? true : false;
 	}
@@ -57,6 +60,7 @@ var Ocean = (function(){
 	let fighterGroup;
 	let bulletGroup;
 	let modelLoader;
+	let meterControllers;
 
 	let ModelLoader = (function(){
 		let modelLength;
@@ -99,11 +103,66 @@ var Ocean = (function(){
 		return ModelLoader; 
 	})();
 
+	let audioController = (function(){
+		let audioSources;
+
+		let AudioController = function(){
+			audioSources = {
+				fighter_audio : new Audio("./sound/fighter.mp3"),
+				wave_audio : new Audio("./sound/wave.mp3"),
+				whistle_audio : new Audio("./sound/whistle.mp3"),
+				shoot_audio : new Audio("./sound/shoot.mp3"),
+				bomb_audio : new Audio("./sound/bomb1.mp3"),
+				explosion_audio : new Audio("./sound/explosion.mp3")	
+			};
+			for(let i in audioSources){
+				audioSources[i].load();
+			}
+		};
+
+		AudioController.prototype.play = function(sourceName, loop = false){
+			if(audioSources[sourceName]){
+				if(loop)
+					audioSources[sourceName].loop = loop ? true : false;
+				audioSources[sourceName].pause();
+				audioSources[sourceName].currentTime = 0;
+				audioSources[sourceName].play();
+			}
+		}
+
+		AudioController.prototype.stop = function(sourceName){
+			if(audioSources[sourceName]){
+				audioSources[sourceName].pause();
+				audioSources[sourceName].currentTime = 0;
+			}
+		}
+
+		AudioController.prototype.onClickInitialize = function(bgmSource = ""){
+			for(let name in audioSources){
+				let audio = audioSources[name];
+				if(name === bgmSource){
+					audio.loop = true;
+					audio.play();
+				} else {
+					audio.volume = 0;
+					audio.play();
+					audio.pause();
+					audio.volume = 1.0;			
+				}
+
+			}
+		}
+
+		return new AudioController();
+	})();
+
+
+
 	// constructor
 	/*
 		option {
 			animateCallback: function(){},
-			isUseChanel,
+			isUseChanel,bgm
 			isFlowTracking: 
 			isOrbitControl:
 			camera: {
@@ -127,7 +186,7 @@ var Ocean = (function(){
 
 		let succsessFunc = option.succsessFunc || function(){};
 
-		 THREE.LinearMipMapLinearFilter = 1008;
+		THREE.LinearMipMapLinearFilter = 1008;
 
 		if(isLockSideScreen){
 			$("body").addClass("side-screen");
@@ -153,6 +212,13 @@ var Ocean = (function(){
 
 		initScene();		
 		modelLoader = new ModelLoader(Ocean.Models, fighterGroup);
+
+		if(option.meters){
+			meterControllers = {
+				feet: new MeterController("FEET", option.meters.feet),
+				compass: new MeterController("COMPASS", option.meters.compass)
+			};
+		}
 		
 	};
 
@@ -364,7 +430,7 @@ onceLog.log("msg_get_callback", msg);
 
 		scene.add( skyBox );
 
-
+		/*
 		var geometry = new THREE.IcosahedronGeometry( 400, 4 );
 
 		for ( var i = 0, j = geometry.faces.length; i < j; i ++ ) {
@@ -381,6 +447,7 @@ onceLog.log("msg_get_callback", msg);
 
 		sphere = new THREE.Mesh( geometry, material );
 		scene.add( sphere );
+		*/
 
 		bulletGroup = new THREE.Group();
 		scene.add(bulletGroup);
@@ -526,9 +593,11 @@ onceLog.log("msg_get_callback", msg);
 		deltaTime = (time - lastTime) || 0.0;
 		lastTime = time;
 
+		/*
 		sphere.position.y = Math.sin( time ) * 500 + 250;
 		sphere.rotation.x = time * 0.5;
 		sphere.rotation.z = time * 0.51;
+	*/
 
 		water.material.uniforms.time.value += 1.0 / 60.0;
 		if(isOrbitControl){
@@ -537,6 +606,13 @@ onceLog.log("msg_get_callback", msg);
 		water.render();
 		renderer.render( scene, camera );
 	}
+
+	// start ボタンを押す
+	// このタイミングでスマホ用にaudioを流す
+	// TODO 
+	Ocean.prototype.OnClickStart = function(bgm){
+		audioController.onClickInitialize(bgm);
+	};
 
 
 	// hash でうけとった戦闘機データを追加する
@@ -595,6 +671,7 @@ onceLog.log("msg_get_callback", msg);
 		
 		if(fighterData.fixCam){
 			camera.rotation.set(0,Math.PI, 0);
+			camera.position.set(0,0, 0);
 			if(fighterData.center){
 				targetObj.add(camera);
 			}else{
@@ -797,6 +874,9 @@ onceLog.log("msg_get_callback", msg);
 		if(fighter.mesh.position.y < limit){
 			fighter.mesh.position.y = limit
 		}
+		meterControllers.compass.rotatePoint(beta/Math.PI*180);
+
+		meterControllers.feet.rotatePoint(fighter.mesh.position.y /100);
 
 		publishObj(controlFighterId);
 
@@ -852,6 +932,8 @@ onceLog.log("msg_get_callback", msg);
 	}
 
  	Ocean.prototype.oneShoot = function(fighterInstanceId){
+		audioController.play("shoot_audio");
+
  		let bulletSpeed = 100000; // 100000
  		if(!bulletData){
  			initBulletMesh();
@@ -991,9 +1073,127 @@ onceLog.log("msg_get_callback", msg);
 		if(!fighter)
 			return;
 
+		audioController.play("explosion_audio");
 		Instance.deleteFighter(instanceId);
 		//fighter.userId 
 	}
+
+	let MeterController = (function(){
+		let MeterController = function(name, $parent){
+			this.name = name;
+			this.canvas = initMeter.call(this, name, $parent);
+		}
+
+		MeterController.prototype.rotatePoint = function(deg){
+			this.$arrow.css("transform", `rotateZ(${deg}deg)`);
+		}
+
+		function initMeter(name, $parent){
+			//let $canvas = $("canvas");
+			 var canvas = document.createElement("canvas");
+			$canvas = $(canvas);
+			$canvas.attr("width", 120);
+			$canvas.attr("height", 120);
+			$canvas.width("100%");
+			$parent.append($canvas);
+
+			this.$arrow = $("<div>");
+			this.$arrow.addClass("arrow");
+			$parent.append(this.$arrow);
+
+			//let ctx = $canvas.get(0).getContext('2d');
+			//let canvas = $canvas.get(0);
+			var ctx = canvas.getContext('2d');
+			  //ctx.globalAlpha = 0.5;
+			(function(target) {
+				if (!target || !target.prototype)
+					return;
+				target.prototype.arrow = function(startX, startY, endX, endY, controlPoints) {
+			    	var dx = endX - startX;
+			    	var dy = endY - startY;
+			    	var len = Math.sqrt(dx * dx + dy * dy);
+			    	var sin = dy / len;
+			    	var cos = dx / len;
+			    	var a = [];
+			    	a.push(0, 0);
+				    for (var i = 0; i < controlPoints.length; i += 2) {
+				    	var x = controlPoints[i];
+				    	var y = controlPoints[i + 1];
+				    	a.push(x < 0 ? len + x : x, y);
+				    }
+				    a.push(len, 0);
+				    for (var i = controlPoints.length; i > 0; i -= 2) {
+				    	var x = controlPoints[i - 2];
+				    	var y = controlPoints[i - 1];
+				    	a.push(x < 0 ? len + x : x, -y);
+				    }
+				    a.push(0, 0);
+				    for (var i = 0; i < a.length; i += 2) {
+				    	var x = a[i] * cos - a[i + 1] * sin + startX;
+				    	var y = a[i] * sin + a[i + 1] * cos + startY;
+				    	if (i === 0) this.moveTo(x, y);
+				    	else this.lineTo(x, y);
+				    }
+			  	};
+			})(CanvasRenderingContext2D);
+				
+			/* 円弧を描く */
+			function drawCircle(center, rad) {
+				 
+				ctx.beginPath();
+				//ctx.arc(70, 70, 60, 10 * Math.PI / 180, 80 * Math.PI / 180, true);
+				ctx.arc(center[0], center[1], rad, 0, Math.PI*2 ,false);
+				ctx.stroke();
+			}
+
+			function drawLine(s, g){
+				ctx.beginPath();
+				ctx.moveTo(s[0], s[1]);
+				ctx.lineTo(g[0], g[1]);
+				ctx.stroke();
+			}
+
+			ctx.strokeStyle = "green";
+			ctx.fillStyle = "green";
+				
+			let center = [60,60];
+			drawCircle(center, 60);
+			let div = 36;
+			let shortRad = 40;
+			let longRad = 50;
+			for(let i=0; i<div; i++){
+				let rad = Math.PI*2*i/div;
+				let s = [center[0] + Math.cos(rad)*shortRad, center[1] + Math.sin(rad) * shortRad];
+				let g = [center[0] + Math.cos(rad)*longRad, center[1] + Math.sin(rad) * longRad];
+				drawLine(s,g);
+			}
+
+			let radius = 40;
+			let correction = [
+				[-3,-5],
+				[0,0],
+				[-15, 5],
+				[-30, 8],
+				[-30, 0]
+			];
+			for(let i=0; i<5; i++){
+				let rad = Math.PI*2*(i-1)/4;
+				ctx.strokeText(`${(i)*9000}`, center[0] + Math.cos(rad)*radius + correction[i][0], center[1] + Math.sin(rad)*radius + correction[i][1], 80);
+			}
+			ctx.strokeText(name, center[0] - 15, center[1] + 20, 80);
+
+			function drawArrow(center, rad, radius){
+				
+				ctx.beginPath();
+				ctx.arrow(center[0], center[1], center[0] + Math.cos(rad) * radius, center[1] + Math.sin(rad) * radius, [0, 2, -20, 2, -20, 4]);
+				ctx.fill();
+			}
+			//drawArrow(center, 50, 50);
+		}
+
+		return MeterController;
+
+	})();
 
 	return Ocean;
 //}	
