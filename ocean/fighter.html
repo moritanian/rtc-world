@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>three.js webgl - geometry - terrain</title>
+		<title>ocean fighter</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<link rel=stylesheet href="./common.css">	
@@ -38,6 +38,11 @@
 
         <script type="text/javascript" src="./../webrtc/util.js"></script>
         <script type="text/javascript" src="./ocean2.js"></script>
+
+        <!-- fire -->
+		<script src="./fire/VolumetricFire.js"></script>
+
+
 
 
         <div class="info">
@@ -78,6 +83,12 @@
         		<li class="info-li">
         			<div class="info-button" id="be-shot"> Be shot </div>
         		</li>
+
+        		<li class="info-li">
+        			<div class="info-button" id="pause"> pause </div>
+        		</li>
+
+
         		<!--
         		<li class="info-li">
         			<span class="on-off-title"> ship move </span> 
@@ -100,7 +111,7 @@
 
         <div class="hexagon2"></div>
         <div class="start-button hexagon disable"> 
-        Start </div>
+        Loading..</div>
 		<script>
 			'use strict';
 			const isOrbitControl = false;
@@ -282,19 +293,21 @@ let s = 40;
 	        		modelName: "battle_ship",
 	        		scale: [s, s, s],  // 10
 					pos: [1800, 50, 500],
-					rot: [0, Math.PI/2, 0]
+					rot: [0, Math.PI/2, 0],
+					life: 1
 	        	},
 	        	{
 	        		modelName: "battle_ship",
 	        		scale: [10, 10, 10],
 					pos: [1800, 200, 0],
-					rot: [-Math.PI/5.0, -Math.PI/3, Math.PI/100]
+					rot: [-Math.PI/5.0, -Math.PI/3, Math.PI/100],
+					life: 1
 	        	},
 	        	{
 	        		modelName: "zero_fighter",
 	        		scale: [10, 10, 10],
 					center: [0, 14, -34],
-					pos: [1800, 300, -50000],
+					pos: [1800, 300, -5000],
 					rot: [0, 0,0],
 					fixCam: true,
 					control: true
@@ -343,7 +356,9 @@ let s = 40;
 					"compass" : $("#compass-meter")
 				},
 				succsessFunc: self => {
+					$startButton.text("Start");
 					$startButton.removeClass("disable");
+
 					console.log("succsessFunc");
 				}
 			});
@@ -361,7 +376,7 @@ let s = 40;
 				for(let index in fighterList){
 					let id = oceanControl.createFighter(fighterList[index]);
 					if(index == 0){
-						setModelIntanceWithControl(infoControls, oceanControl.getFighterInstanceById(id));
+						//setModelIntanceWithControl(infoControls, oceanControl.getFighterInstanceById(id));
 					}else {
 						if(index == 2){
 							controlFighterId = id;
@@ -369,6 +384,11 @@ let s = 40;
 						}
 					}
 				}
+			});
+
+			let debugPause = false;
+			$("#pause").click(function(){
+				debugPause = !debugPause;
 			});
 		
 			
@@ -378,7 +398,8 @@ let s = 40;
 						control: {
 							horizontal: compassdir.y,
 							vertical: - compassdir.x - Math.PI/6.0,
-							acceleration: 1.0
+							acceleration: 1.0,
+							debugPause: debugPause
 						}
 					}
 				} else {
@@ -387,7 +408,8 @@ let s = 40;
 						control: {
 							horizontal: keyInputs.horizontalIntegrated ,
 							vertical: keyInputs.vertical,
-							acceleration: 1.0
+							acceleration: 1.0,
+							debugPause: debugPause
 						}
 					}
 				} 

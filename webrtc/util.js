@@ -56,6 +56,21 @@ var MeshPool = (function(){
 	return MeshPool;
 })();
 
+var LpFilter = (function(){
+    var LpFilter = function(ratio = 0.1){
+        this.data = 0;
+        this.ratio = ratio;
+    }
+    LpFilter.prototype.set = function(new_data){
+        this.data = this.data*(1 - this.ratio) + new_data * this.ratio; 
+    }
+    LpFilter.prototype.get = function(){
+        return this.data;
+    }
+    return LpFilter
+})();
+    
+
 function getTime(){
 	var dateObj = new Date();
 	return dateObj.getTime();

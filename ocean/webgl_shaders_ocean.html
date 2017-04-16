@@ -36,7 +36,8 @@
         <!-- <script type="text/javascript" src="./../webrtc/chanel_control.js"></script> -->
         <script type="text/javascript" src="./../webrtc/util.js"></script>
 
-
+         <!-- fire -->
+		<script src="./fire/VolumetricFire.js"></script>
 
         <script type="text/javascript" src="./ocean2.js"></script>
 
@@ -138,46 +139,6 @@
 
 			}
 
-			
-	      
-
-	        let fighterList = [
-	        /*
-	        	{
-	        		modelName: "battle_ship",
-	        		scale: [10, 10, 10],
-					pos: [1500, 50, 500],
-					rot: [0, Math.PI/2, 0]
-	        	},
-	        	{
-	        		modelName: "battle_ship",
-	        		scale: [10, 10, 10],
-					pos: [1800, 200, 0],
-					rot: [-Math.PI/5.0, -Math.PI/3, Math.PI/100]
-	        	},
-	        	{
-	        		modelName: "zero_fighter",
-	        		scale: [10, 10, 10],
-					pos: [1800, 300, -500],
-					rot: [0,Math.PI/4, Math.PI/8]
-	        	},
-	        	{
-	        		modelName: "p51_mustang",
-	        		scale: [0.2, 0.2, 0.2],
-					pos: [1200, 1000, -2500],
-					rot: [ Math.PI/4 ,Math.PI/4,0]
-	        	},
-	        	{
-	        		modelName: "p51_mustang",
-					scale: [0.2, 0.2, 0.2],
-					pos: [1200, 1000, -1000],
-					rot: [ Math.PI/4 , -Math.PI/6,0]
-				}
-				*/
-	        ];
-
-
-
 	        var animateCallback = function(camera, option){
 	            info_contorls.$fps.val(Math.floor(option.fps));
 	            info_contorls.$x_pos.val(Math.floor(camera.position.x));
@@ -199,6 +160,10 @@
 				},
 				//isLockSideScreen: true
 			});
+
+	        let fighterList = [
+	    
+	        ];
 
 			for(let index in fighterList){
 				oceanControl.createFighter(fighterList[index]);

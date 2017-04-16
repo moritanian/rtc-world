@@ -59,6 +59,8 @@ var Ocean = (function(){
 
 	let fighterGroup;
 	let bulletGroup;
+	let fireGroup;
+	let fireInsances;
 	let modelLoader;
 	let meterControllers;
 
@@ -137,10 +139,24 @@ var Ocean = (function(){
 			}
 		}
 
+		AudioController.prototype.pauseBgm = function(){
+			if(audioSources[this.bgmSource]){
+				audioSources[this.bgmSource].pause();
+			}
+		}
+
+		AudioController.prototype.restartBgm = function(){
+			if(audioSources[this.bgmSource]){
+				audioSources[this.bgmSource].play();
+			}
+		}
+
+		// スマホブラウザのクリックイベントでしか再生できない問題への対応
 		AudioController.prototype.onClickInitialize = function(bgmSource = ""){
 			for(let name in audioSources){
 				let audio = audioSources[name];
 				if(name === bgmSource){
+					this.bgmSource = bgmSource;
 					audio.loop = true;
 					audio.play();
 				} else {
@@ -183,6 +199,7 @@ var Ocean = (function(){
 		camInitPos = option.camera.pos || [0,0,0];
 		isUseChanel = option.isUseChanel || false;
 		isLockSideScreen = option.isLockSideScreen || false;
+		this.fpsManager = new LpFilter(0.06);
 
 		let succsessFunc = option.succsessFunc || function(){};
 
@@ -210,6 +227,10 @@ var Ocean = (function(){
 			});
 		}
 
+		// fire setup
+		VolumetricFire.texturePath = './fire/textures/';
+		fireInsances = [];
+
 		initScene();		
 		modelLoader = new ModelLoader(Ocean.Models, fighterGroup);
 
@@ -219,6 +240,8 @@ var Ocean = (function(){
 				compass: new MeterController("COMPASS", option.meters.compass)
 			};
 		}
+
+		
 		
 	};
 
@@ -313,6 +336,7 @@ onceLog.log("msg_get_callback", msg);
 			scene = new THREE.Scene();
 			camera = new THREE.PerspectiveCamera( 55, window.innerWidth / screen.availHeight, 0.5, 3000000 );
 		}
+		/*
 		console.log("innerheight", window.innerHeight);
 		console.log("height", $(document).height());
 		console.log("height", screen.availHeight);
@@ -320,12 +344,14 @@ onceLog.log("msg_get_callback", msg);
 		console.log("innerWidth", window.innerWidth);
 		console.log("width", $(document).width());
 		
+
 		// 検索バー非標示
 		 setTimeout(function(){
 		 //	console.log("scroll");
     		window.scrollTo(0,1);
   		}, 5000);
-		
+		*/
+
 		camera.position.set( camInitPos[0], camInitPos[1], camInitPos[2]);
 
 		if(isOrbitControl){
@@ -455,6 +481,9 @@ onceLog.log("msg_get_callback", msg);
 		fighterGroup = new THREE.Group();
 		scene.add(fighterGroup);
 
+		fireGroup = new THREE.Group();
+		scene.add(fireGroup);
+
 		//modelLoader.funcBuffered(animate);
 		animate();
 	}
@@ -565,7 +594,8 @@ onceLog.log("msg_get_callback", msg);
             camera.position.z = cameraPos.z;
 		}else {
 			if(deltaTime){
-				option.fps = 1.0/deltaTime;
+				Instance.fpsManager.set( 1.0/deltaTime);
+				option.fps = Instance.fpsManager.get();
 			}
 		}
 
@@ -598,6 +628,10 @@ onceLog.log("msg_get_callback", msg);
 		sphere.rotation.x = time * 0.5;
 		sphere.rotation.z = time * 0.51;
 	*/
+		for(let fire of fireInsances)
+		{
+	 		fire.update( time );
+		}
 
 		water.material.uniforms.time.value += 1.0 / 60.0;
 		if(isOrbitControl){
@@ -643,7 +677,8 @@ onceLog.log("msg_get_callback", msg);
 			mesh: targetMesh,
 			vel: new THREE.Vector3(0,0,1000),
 			userId: fighterData.userId,
-			nonCollision: fighterData.nonCollision ? true : false
+			nonCollision: fighterData.nonCollision ? true : false,
+			life: fighterData.life
 		};	
 	};
 
@@ -699,13 +734,16 @@ onceLog.log("msg_get_callback", msg);
 
 	function updateMesh (mesh, fighterData){
 		if(fighterData.scale){
-			mesh.scale.set(fighterData.scale[0], fighterData.scale[1], fighterData.scale[2]);
+			//mesh.scale.set(fighterData.scale[0], fighterData.scale[1], fighterData.scale[2]);
+			mesh.scale.set(100, 100, 100);
+			console.log(mesh.scale);
 		}
 		if(fighterData.rot){
 			mesh.rotation.set(fighterData.rot[0], fighterData.rot[1], fighterData.rot[2]);
 		}
 		if(fighterData.pos){
 			mesh.position.set(fighterData.pos[0], fighterData.pos[1], fighterData.pos[2]);
+			console.log(mesh.position);
 		}
 	}
 
@@ -739,17 +777,43 @@ onceLog.log("msg_get_callback", msg);
 
         	// bulletはpool しておき、sceneからは消さない
         	if(bulletObj.life <= 0){
-        		bulletData.meshPool.release(bulletObj.mesh);
 
         		// 当たった場合は対象の被弾処理する
         		// TODO 自分が発射した弾のみpublishする　
         		if(bulletObj.beShotObjId){
+
         			console.log("beshot!!");
         			console.log(bulletObj.beShotObjId);
 					Instance.publishFunc("beShot", bulletObj.beShotObjId);
-					//beShotFighter();
+
+					if(Instance.fpsManager.get() > 30){
+	        			var fireWidth  = 10;
+						var fireHeight = 20;
+						var fireDepth  = 10;
+						var sliceSpacing = 0.5;
+
+						var fire = new VolumetricFire(
+						  fireWidth,
+						  fireHeight,
+						  fireDepth,
+						  sliceSpacing,
+						  camera
+						);
+
+						fire.mesh.position.set(
+							bulletObj.point.x, 
+							bulletObj.point.y, 
+							bulletObj.point.z);
+						fire.mesh.scale.set(10,10,10);
+						//fire.mesh.position.y += 200;
+						fireGroup.add( fire.mesh );
+						fireInsances.push(fire);
+					}
+
         			beShotFighter(bulletObj.beShotObjId);
         		}
+        		bulletData.meshPool.release(bulletObj.mesh);
+
         	}
         }
     }
@@ -765,6 +829,7 @@ onceLog.log("msg_get_callback", msg);
 	// meshを作成し、chanelに情報を流す
 	Ocean.prototype.createFighter = function(fighterData){
 		let instanceId = uuid();
+		fighterData.life = fighterData.life || 10;
 		this.addFighter(fighterData, instanceId);
 		if(isUseChanel){
 			fighterInstances[instanceId].userId = chanelControl.getMyId();
@@ -820,6 +885,11 @@ onceLog.log("msg_get_callback", msg);
 
 	Ocean.prototype.controlFighter = function(control){
 		if(!fighterInstances[controlFighterId] || !fighterInstances[controlFighterId].mesh){
+			return;
+		}
+
+		if(control.debugPause){
+			audioController.pauseBgm();
 			return;
 		}
 		// TODO ランダムなふらつき
@@ -947,6 +1017,8 @@ onceLog.log("msg_get_callback", msg);
 		//scene.add(clonebullet);
 
 		let life = 2; // default time(s)
+		let point = {
+		};
 		let directon = fighter.vel.clone().normalize();
 		let ray = new THREE.Raycaster(clonebullet.position, directon);
 		let beShotObjId;
@@ -956,6 +1028,7 @@ onceLog.log("msg_get_callback", msg);
     		let dist = obj.distance;
     		console.log(dist);
     		life = dist/bulletSpeed;
+    		point = obj.point;
     		console.log(life);
     		beShotObjId = getInstanceIdFromMeshRecursively(obj.object);
     	}
@@ -964,6 +1037,7 @@ onceLog.log("msg_get_callback", msg);
 			mesh: clonebullet,
 			vel: fighter.vel.clone().normalize().multiplyScalar(bulletSpeed),
 			life: life,
+			point: point,
 			beShotObjId : beShotObjId // 被弾するオブジェクト
 		};
 		bulletData.bulletList.push(bulletObj);
@@ -1074,7 +1148,10 @@ onceLog.log("msg_get_callback", msg);
 			return;
 
 		audioController.play("explosion_audio");
-		Instance.deleteFighter(instanceId);
+		fighter.life -= 1;
+		if(fighter.life <= 0){
+			Instance.deleteFighter(instanceId);
+		}
 		//fighter.userId 
 	}
 
