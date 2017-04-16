@@ -34,8 +34,8 @@ var Ocean = (function(){
 	let controlCallback; // control用callback
 	let controlFighterId;
 	let animateCallback;
+	let beShotCallback;
 	let isOrbitControl, isUseChanel;
-
 	let audioSources;
 
 	var screenDirection = function(){
@@ -80,7 +80,7 @@ var Ocean = (function(){
 					//console.log(result);
 					model.meshPool = new MeshPool(mesh, parentObj);
 					loadedNum++;
-					if(loadedNum == modelLength){
+					if(loadedNum == modelLength){ // 準備完了
 						for(let index in loadedFuncs){
 							loadedFuncs[index]();
 						}
@@ -190,6 +190,7 @@ var Ocean = (function(){
 
 	*/
 	var Ocean = function(option){
+		this.gameStatus = Ocean.GameStatus.Loading;
 		Instance = this;
 		option = option || {}; // undefine error 対策
 		fighterInstances = {};
@@ -224,6 +225,7 @@ var Ocean = (function(){
 		} else {
 			modelLoader.funcBuffered(function(){
 				succsessFunc(Instance);
+				Instance.gameStatus = Ocean.GameStatus.Ready;
 			});
 		}
 
@@ -241,7 +243,7 @@ var Ocean = (function(){
 			};
 		}
 
-		
+		beShotCallback = option.beShotCallback || function(){};
 		
 	};
 
@@ -259,7 +261,6 @@ var Ocean = (function(){
          // めーっせーじ受信
         var msg_get_callback = function(msg, _userId){
             var msgObj = JSON.parse(msg);
-onceLog.log("msg_get_callback", msg);
 			if(msgObj.type === ChannelMsgTypes.Objs ){ //追加するobj情報// 参加者への初期情報もこれで伝える
 				onceLog.log("msg get objs", msg, 40);
 				for(var objId in msgObj.objs){
@@ -277,9 +278,12 @@ onceLog.log("msg_get_callback", msg);
 				if(isRoomMaster()){
 					sendWorldInfo(_userId);
 				}
-			}else if(msgObj.type === ChannelMsgTypes.func){
+			}else if(msgObj.type === ChannelMsgTypes.Func){
 				console.log("obj func received");
-				channelFuncs[msgObj.funcName].apply(this, _userId, msgObj.args); // これでいけてる？
+				msgObj.args.unshift(_userId);
+				channelFuncs[msgObj.funcName].apply(Instance, msgObj.args); // これでいけてる？
+			} else {
+				console.warn(`Invalid type message '${msgObj.type}' has been received;`);
 			}
         };
 
@@ -540,6 +544,16 @@ onceLog.log("msg_get_callback", msg);
 		}
 	};
 
+	// プレーヤの状態
+	Ocean.GameStatus = {
+		Loading: 1,
+		Ready: 2,
+		PLaying : 3,
+		Pause : 4,
+		Win : 5,
+		GameOver: 6
+	}
+
 	/*
 		funcObjでよびだされる関数郡
 		第一引数には senderId が入る
@@ -558,6 +572,7 @@ onceLog.log("msg_get_callback", msg);
 		"beShot": function(senderId, instanceId){
 			let fighter = fighterInstances[instanceId];
 			if(fighter && fighter.mesh){
+				console.log("func beshot!!");
 				beShotFighter(instanceId);
 			}
 		}
@@ -567,7 +582,7 @@ onceLog.log("msg_get_callback", msg);
 
 	// type = func でpublish
 	Ocean.prototype.publishFunc = function(funcName, _userId){
-		let sliced =Array.prototype.slice.call(arguments, 1);
+		let sliced = Array.prototype.slice.call(arguments, 2);
 		console.log(sliced);
 		let msgObj = {
 			type: ChannelMsgTypes.Func,
@@ -575,6 +590,9 @@ onceLog.log("msg_get_callback", msg);
 			args: sliced // 2番目以降取得
 		}
     	sendDataChannel(msgObj, _userId);
+    	console.log("publish func");
+    	console.log(_userId);
+    	console.log(msgObj);
 	}
 
 	function animate(){
@@ -750,14 +768,14 @@ onceLog.log("msg_get_callback", msg);
 		if(fighterData.scale){
 			//mesh.scale.set(fighterData.scale[0], fighterData.scale[1], fighterData.scale[2]);
 			mesh.scale.set(100, 100, 100);
-			console.log(mesh.scale);
+			//console.log(mesh.scale);
 		}
 		if(fighterData.rot){
 			mesh.rotation.set(fighterData.rot[0], fighterData.rot[1], fighterData.rot[2]);
 		}
 		if(fighterData.pos){
 			mesh.position.set(fighterData.pos[0], fighterData.pos[1], fighterData.pos[2]);
-			console.log(mesh.position);
+			//console.log(mesh.position);
 		}
 	}
 
@@ -798,7 +816,7 @@ onceLog.log("msg_get_callback", msg);
 
         			console.log("beshot!!");
         			console.log(bulletObj.beShotObjId);
-					Instance.publishFunc("beShot", bulletObj.beShotObjId);
+					Instance.publishFunc("beShot", 0, bulletObj.beShotObjId);
 
 					if(Instance.fpsManager.get() > 30){
 	        			var fireWidth  = 10;
@@ -836,6 +854,9 @@ onceLog.log("msg_get_callback", msg);
 	Ocean.prototype.updateFighter = function(fighterData, instanceId){
 		if(fighterInstances[instanceId] && fighterInstances[instanceId].mesh){
 			updateMesh(fighterInstances[instanceId].mesh, fighterData);
+		}
+		if(fighterData.life){
+			fighterInstances[instanceId].life = fighterData.life;
 		}
 		onceLog.log("updateFigher", fighterData, 30);
 	}
@@ -902,11 +923,16 @@ onceLog.log("msg_get_callback", msg);
 			return;
 		}
 
+		if(this.gameStatus == Ocean.GameStatus.GameOver)
+			return;
+
 		if(control.debugPause){
 			audioController.pauseBgm();
+			this.gameStatus = Ocean.GameStatus.Pause;
 			return;
 		}
-		// TODO ランダムなふらつき
+		this.gameStatus = Ocean.GameStatus.play;
+
 		const horizontalCoefficient = 0.05; //左右方向 0.02
 		const verticalCoefficient = 0.02; // 上下方向 0.1
 		const randomVibrationCoefficient = 10; // 機体の揺れ
@@ -947,14 +973,18 @@ onceLog.log("msg_get_callback", msg);
 		let beta = Math.atan2(fighter.vel.x,  fighter.vel.z); // 方角
 		let gamma = control.horizontal; // 奥行方向回転
 		fighter.mesh.rotation.set(alpha, beta, gamma);
+		
 		// 位置
 		let deletaPos = fighter.vel.clone().multiplyScalar(deltaTime);
-		let randomVibration = new THREE.Vector3(Math.random()*2 -1, Math.random()*2 -1, Math.random()*2 -1); 
-		randomVibration.multiplyScalar(randomVibrationCoefficient);
-		deletaPos.add(randomVibration);
+		// randomなふらつき
+		if(this.fpsManager.get() > 40){
+			let randomVibration = new THREE.Vector3(Math.random()*2 -1, Math.random()*2 -1, Math.random()*2 -1); 
+			randomVibration.multiplyScalar(randomVibrationCoefficient);
+			deletaPos.add(randomVibration);
+		}
 		fighter.mesh.position.add(deletaPos);
 
-		let limit = 10;
+		let limit = 20;
 		if(fighter.mesh.position.y < limit){
 			fighter.mesh.position.y = limit
 		}
@@ -1006,6 +1036,7 @@ onceLog.log("msg_get_callback", msg);
 			scale: [instance.mesh.scale.x, instance.mesh.scale.y, instance.mesh.scale.z],
 			rot: [instance.mesh.rotation.x, instance.mesh.rotation.y, instance.mesh.rotation.z],
 			pos: [instance.mesh.position.x, instance.mesh.position.y, instance.mesh.position.z],
+			life: instance.life
 		};
 	};
 
@@ -1162,10 +1193,19 @@ onceLog.log("msg_get_callback", msg);
 			return;
 
 		audioController.play("explosion_audio");
+		let isMe = instanceId == controlFighterId;
+
 		fighter.life -= 1;
-		if(fighter.life <= 0){
-			Instance.deleteFighter(instanceId);
+		if(fighter.life <= 0)
+		{
+			if(isMe)
+				Instance.gameStatus = Ocean.GameStatus.GameOver;
+			else
+				Instance.deleteFighter(instanceId);
+
 		}
+
+		beShotCallback(isMe, instanceId, fighter.life);
 		//fighter.userId 
 	}
 

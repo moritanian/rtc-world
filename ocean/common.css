@@ -260,6 +260,23 @@ input[type="checkbox"].info-on-off-button:focus {
     left: 100%;
 }
 
+.game-over {
+    position: absolute;
+    top: 30%;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    text-align: center;
+    line-height: 80px;
+    font-size: 100px;
+    text-shadow: 3px 3px 7px #000000;
+    color: #c10606;
+    cursor: pointer;
+    user-select: none;
+    font-weight: bold;
+}
+
 .meter-group {
    position: absolute;
     top: 65%;

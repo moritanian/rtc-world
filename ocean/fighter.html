@@ -112,6 +112,7 @@
         <div class="hexagon2"></div>
         <div class="start-button hexagon disable"> 
         Loading..</div>
+        <div class="game-over" style="display: none;">Game Over</div>
 		<script>
 			'use strict';
 			const isOrbitControl = false;
@@ -310,19 +311,22 @@ let s = 40;
 					pos: [1800, 300, -5000],
 					rot: [0, 0,0],
 					fixCam: true,
-					control: true
+					control: true,
+					life: 3
 	        	},
 	        	{
 	        		modelName: "p51_mustang",
 	        		scale: [0.2, 0.2, 0.2],
 					pos: [1200, 5000, -2500],
-					rot: [ Math.PI/4 ,Math.PI/4,0]
+					rot: [ Math.PI/4 ,Math.PI/4,0],
+					life: 1
 	        	},
 	        	{
 	        		modelName: "p51_mustang",
 					scale: [0.2, 0.2, 0.2],
 					pos: [1200, 1000, -1000],
-					rot: [ Math.PI/4 , -Math.PI/6,0]
+					rot: [ Math.PI/4 , -Math.PI/6,0],
+					life: 1
 				}
 	        ];
 
@@ -360,6 +364,14 @@ let s = 40;
 					$startButton.removeClass("disable");
 
 					console.log("succsessFunc");
+				},
+				beShotCallback: (isMe, id, life) => {
+					if(isMe){
+						beShot();
+						if(life == 0){
+							$(".game-over").show();
+						}
+					}
 				}
 			});
 
