@@ -1,0 +1,27 @@
+body {
+    margin: 30px 20px;
+    color: #555;
+    font-family: 'inconsolata';
+    font-size: 15px;
+    line-height: 18px;
+    tab-size: 4;
+    overflow: auto;
+}
+
+h1 {
+    color: #333;
+    font-size: 25px;
+    font-weight: normal;
+    margin-top: 10px;
+}
+
+h2 {
+    color: #4B0;
+    font-size: 18px;
+    font-weight: normal;
+    margin-top: 40px;
+}
+
+a {
+    color: #1184CE;
+}
