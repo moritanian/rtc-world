@@ -47,7 +47,6 @@ var Chanel = (function(){
     
     //let room = getRoomName();
     socket.on('connect', function(evt) {
-       console.log(socket.io.engine.id);
        myId = socket.io.engine.id;
 
       console.log('socket.io connected. enter room=' + room );

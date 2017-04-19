@@ -9,12 +9,6 @@
 	- sceneに追加部分
 		camera とのグループにしている場合、
 		グループごとsceneにaddするべきかmodelのmeshだけでいいのか
-	- loader完了とmyId取得の両方を待ちたい
-	- instanceId をmeshのを使うとして、衝突時に子要素で検出された場合の対応
-
-	#残件
-	- channel開通後にloadedfunc実行
-
 	
 */
 /*
@@ -36,7 +30,6 @@ var Ocean = (function(){
 	let animateCallback;
 	let beShotCallback;
 	let isOrbitControl, isUseChanel;
-	let audioSources;
 
 	var screenDirection = function(){
 		return window.innerWidth / window.innerHeight < 1.0 ? true : false;
@@ -60,7 +53,7 @@ var Ocean = (function(){
 	let fighterGroup;
 	let bulletGroup;
 	let fireGroup;
-	let fireInsances;
+	let firePool;
 	let modelLoader;
 	let meterControllers;
 
@@ -115,7 +108,8 @@ var Ocean = (function(){
 				whistle_audio : new Audio("./sound/whistle.mp3"),
 				shoot_audio : new Audio("./sound/shoot.mp3"),
 				bomb_audio : new Audio("./sound/bomb1.mp3"),
-				explosion_audio : new Audio("./sound/explosion.mp3")	
+				explosion_audio : new Audio("./sound/explosion.mp3"),	
+				explosion_long_audio : new Audio("./sound/explosion_long.mp3")	
 			};
 			for(let i in audioSources){
 				audioSources[i].load();
@@ -204,8 +198,6 @@ var Ocean = (function(){
 
 		let succsessFunc = option.succsessFunc || function(){};
 
-		THREE.LinearMipMapLinearFilter = 1008;
-
 		if(isLockSideScreen){
 			$("body").addClass("side-screen");
 
@@ -229,9 +221,7 @@ var Ocean = (function(){
 			});
 		}
 
-		// fire setup
-		VolumetricFire.texturePath = './fire/textures/';
-		fireInsances = [];
+		this.uiWidgets = $(".ui-widgets");
 
 		initScene();		
 		modelLoader = new ModelLoader(Ocean.Models, fighterGroup);
@@ -295,7 +285,6 @@ var Ocean = (function(){
 
         var socket_connected_callback = function(id){
         	myId = id;
-			console.log(myId);
 			members[myId] = {
 				startTime: startTime
 			};
@@ -322,39 +311,49 @@ var Ocean = (function(){
 				filterparam: 1
 			};
 
+		THREE.LinearMipMapLinearFilter = 1008;	
+
 		let container = document.createElement( 'div' );
-		document.body.appendChild( container );
+		document.body.prepend( container );
 
 		renderer = new THREE.WebGLRenderer({antialias: false});
+		
+		renderer.domElement.style.position = "relative";
+		renderer.domElement.style.left = "-4px";
+
 		if(isLockSideScreen && screenDirection()){ // 横に倒す
+			let sc_height = $(document).width() + 4;// screen.availHeight/window.devicePixelRatio; //$(document).width() + 4;
+			let sc_width = screen.availHeight;
+
+			console.log("side!! ");
 			renderer.setPixelRatio( window.devicePixelRatio );
-			renderer.setSize(screen.availHeight,  $(document).width() /*window.innerWidth*/);
+			renderer.setSize(sc_width,  sc_height /*window.innerWidth*/);
 			container.appendChild( renderer.domElement );
 			scene = new THREE.Scene();
-			camera = new THREE.PerspectiveCamera( 55,  screen.availHeight/ window.innerWidth, 0.5, 3000000 );
-			
+			camera = new THREE.PerspectiveCamera( 55,  sc_width/ sc_height, 0.5, 3000000 );
+			// TODO ここに書きたくない
+			$(".ui-widgets").width(sc_width);
+			$(".ui-widgets").height(sc_height);
 		} else {
+			console.log("not side!! ");
+
 			renderer.setPixelRatio( window.devicePixelRatio );
 			renderer.setSize($(document).width() /* window.innerWidth */, screen.availHeight );
 			container.appendChild( renderer.domElement );
 			scene = new THREE.Scene();
 			camera = new THREE.PerspectiveCamera( 55, window.innerWidth / screen.availHeight, 0.5, 3000000 );
 		}
-		/*
-		console.log("innerheight", window.innerHeight);
-		console.log("height", $(document).height());
-		console.log("height", screen.availHeight);
-
-		console.log("innerWidth", window.innerWidth);
-		console.log("width", $(document).width());
 		
-
+		$(window).on("resize", setScreenSize);
+	
+		
+/*
 		// 検索バー非標示
 		 setTimeout(function(){
-		 //	console.log("scroll");
-    		window.scrollTo(0,1);
+		 	console.log("scroll");
+    		window.scrollTo(-200,-200);
   		}, 5000);
-		*/
+*/	
 
 		camera.position.set( camInitPos[0], camInitPos[1], camInitPos[2]);
 
@@ -428,8 +427,7 @@ var Ocean = (function(){
 					var size = 1024;
 
 					var canvas = document.createElement( 'canvas' );
-					//let canvas = $("canvas");
-					//canvas = canvas.get(0);
+
 					canvas.width = size;
 					canvas.height = size;
 					//canvas.classList.add("side-screen");
@@ -499,11 +497,144 @@ var Ocean = (function(){
 		fighterGroup = new THREE.Group();
 		scene.add(fighterGroup);
 
+		// fire setup
+		VolumetricFire.texturePath = './fire/textures/';
 		fireGroup = new THREE.Group();
 		scene.add(fireGroup);
+		firePool = new FirePool(fireGroup);
 
 		//modelLoader.funcBuffered(animate);
 		animate();
+	}
+
+	function setScreenSize(){
+		console.log("setScreenSize");
+		console.log("innerheight", window.innerHeight);
+		console.log("outerheight", window.outerHeight);
+		console.log("height", $(document).height());
+		console.log("availheight", screen.availHeight);
+
+		console.log("innerWidth", window.innerWidth);
+		console.log("outerWidth", window.outerWidth);
+		console.log("width", $(document).width());
+		console.log("avail width", screen.availWidth);
+		
+		if(isLockSideScreen && screenDirection()){ // 横に倒す
+			let sc_height = $(document).width() + 4;// screen.availHeight/window.devicePixelRatio; //$(document).width() + 4;
+			let sc_width = screen.availHeight;
+			renderer.setPixelRatio( sc_width/ sc_height );
+			renderer.setSize(sc_width, sc_height);
+			$(".ui-widgets").width(sc_width);
+			$(".ui-widgets").height(sc_height);
+
+
+		} else {
+			let sc_height = window.innerHeight; //screen.availHeight;// screen.availHeight/window.devicePixelRatio; //$(document).width() + 4;
+			let sc_width = $(document).width();
+			renderer.setPixelRatio( window.devicePixelRatio );
+			renderer.setSize($(document).width() /* window.innerWidth */, screen.availHeight );
+			$(".ui-widgets").width(sc_width);
+			$(".ui-widgets").height(sc_height);
+		}
+	}
+
+	function animate(){
+		requestAnimationFrame( animate );
+		let option = {}; // option for animateCallback
+		
+		if(isFlowTracking){
+			var flow = tracking.get_data();
+			option.fps = flow.fps;
+            let offset = flow.move;
+            x_filter.set(offset.x);
+            y_filter.set(offset.y);
+            z_filter.set(offset.z);
+            let move_ratio = 10;
+            count -= 0;
+            let cameraPos = {
+            	x: camInitPos[0] - x_filter.get() * move_ratio,	
+            	y: camInitPos[1] + y_filter.get() * move_ratio,	
+            	z: camInitPos[2] - z_filter.get() * move_ratio + count	
+            };
+            if(cameraPos.y <= 0){
+            	cameraPos.y = 1;
+            }
+            camera.position.x = cameraPos.x;
+            camera.position.y = cameraPos.y;
+            camera.position.z = cameraPos.z;
+		}else {
+			if(deltaTime){
+				Instance.fpsManager.set( 1.0/deltaTime);
+				option.fps = Instance.fpsManager.get();
+			}
+		}
+
+		if(chanelControl){
+			option.memberNum = chanelControl.getMemberCount();
+			option.userId = chanelControl.getMyId();
+		}
+
+		updateBullets();
+
+		if(animateCallback){
+			if(controlFighterId && fighterInstances[controlFighterId].mesh){
+				animateCallback(fighterInstances[controlFighterId].mesh, option);
+			}else {
+				if(camera)
+					animateCallback(camera, option);
+			}
+		}
+
+		render();
+	};
+
+	function render(){
+		var time = performance.now() * 0.001;
+		deltaTime = (time - lastTime) || 0.0;
+		lastTime = time;
+
+		/*
+		sphere.position.y = Math.sin( time ) * 500 + 250;
+		sphere.rotation.x = time * 0.5;
+		sphere.rotation.z = time * 0.51;
+	*/
+		if(controlCallback){
+			let result = controlCallback();
+			Instance.controlFighter(result.control);
+		}
+
+		for (let id in fighterInstances)
+		{
+			let fighter = fighterInstances[id];
+			if(!fighter)
+				continue;
+
+			for(let fire of fighter.fires)
+			{	
+	 			fire.update( time );
+	 			fire.mesh.position.set(
+	 				fighter.mesh.position.x + fire.offsetFromFighter.x,
+	 				fighter.mesh.position.y + fire.offsetFromFighter.y,
+	 				fighter.mesh.position.z + fire.offsetFromFighter.z
+	 				);
+			}
+
+			if(fighter.userId == myId && id != controlFighterId && fighter.vel){
+				fighter.mesh.position.add(fighter.vel.clone().multiplyScalar(deltaTime));
+				if(fighter.life <= 0 && fighter.mesh.position.y < -1000){
+					Instance.deleteFighter(id); // ここで消す
+				}
+			}
+
+		}
+		
+
+		water.material.uniforms.time.value += 1.0 / 60.0;
+		if(isOrbitControl){
+			controls.update();
+		}
+		water.render();
+		renderer.render( scene, camera );
 	}
 
 // static member
@@ -569,11 +700,11 @@ var Ocean = (function(){
 			Instance.oneShoot(fighterId)
 		},
 
-		"beShot": function(senderId, instanceId){
+		"beShot": function(senderId, instanceId, point){
 			let fighter = fighterInstances[instanceId];
 			if(fighter && fighter.mesh){
 				console.log("func beshot!!");
-				beShotFighter(instanceId);
+				beShotFighter(instanceId, point);
 			}
 		}
 
@@ -591,86 +722,7 @@ var Ocean = (function(){
 		}
     	sendDataChannel(msgObj, _userId);
     	console.log("publish func");
-    	console.log(_userId);
     	console.log(msgObj);
-	}
-
-	function animate(){
-		requestAnimationFrame( animate );
-		let option = {}; // option for animateCallback
-
-		if(controlCallback){
-			let result = controlCallback();
-			Instance.controlFighter(result.control);
-		}
-		
-		if(isFlowTracking){
-			var flow = tracking.get_data();
-			option.fps = flow.fps;
-            let offset = flow.move;
-            x_filter.set(offset.x);
-            y_filter.set(offset.y);
-            z_filter.set(offset.z);
-            let move_ratio = 10;
-            count -= 0;
-            let cameraPos = {
-            	x: camInitPos[0] - x_filter.get() * move_ratio,	
-            	y: camInitPos[1] + y_filter.get() * move_ratio,	
-            	z: camInitPos[2] - z_filter.get() * move_ratio + count	
-            };
-            if(cameraPos.y <= 0){
-            	cameraPos.y = 1;
-            }
-            camera.position.x = cameraPos.x;
-            camera.position.y = cameraPos.y;
-            camera.position.z = cameraPos.z;
-		}else {
-			if(deltaTime){
-				Instance.fpsManager.set( 1.0/deltaTime);
-				option.fps = Instance.fpsManager.get();
-			}
-		}
-
-		if(chanelControl){
-			option.memberNum = chanelControl.getMemberCount();
-			option.userId = chanelControl.getMyId();
-		}
-
-		updateBullets();
-
-		if(animateCallback){
-			if(controlFighterId && fighterInstances[controlFighterId].mesh){
-				animateCallback(fighterInstances[controlFighterId].mesh, option);
-			}else {
-				if(camera)
-					animateCallback(camera, option);
-			}
-		}
-
-		render();
-	};
-
-	function render(){
-		var time = performance.now() * 0.001;
-		deltaTime = (time - lastTime) || 0.0;
-		lastTime = time;
-
-		/*
-		sphere.position.y = Math.sin( time ) * 500 + 250;
-		sphere.rotation.x = time * 0.5;
-		sphere.rotation.z = time * 0.51;
-	*/
-		for(let fire of fireInsances)
-		{
-	 		fire.update( time );
-		}
-
-		water.material.uniforms.time.value += 1.0 / 60.0;
-		if(isOrbitControl){
-			controls.update();
-		}
-		water.render();
-		renderer.render( scene, camera );
 	}
 
 	// start ボタンを押す
@@ -678,6 +730,9 @@ var Ocean = (function(){
 	// TODO 
 	Ocean.prototype.OnClickStart = function(bgm){
 		audioController.onClickInitialize(bgm);
+		//window.scrollTo(200,200);
+		setFullScreen(setScreenSize, setScreenSize, function(){console.log("cannnot use full screen");});
+		//window.scrollTo(0,1);
 	};
 
 
@@ -707,10 +762,11 @@ var Ocean = (function(){
 		fighterInstances[instanceId] = {
 			modelName: modelName,
 			mesh: targetMesh,
-			vel: new THREE.Vector3(0,0,1000),
+			vel: fighterData.vel ? new THREE.Vector3(fighterData.vel.x, fighterData.vel.y, fighterData.vel.z) : null,
 			userId: fighterData.userId,
 			nonCollision: fighterData.nonCollision ? true : false,
-			life: fighterData.life
+			life: fighterData.life,
+			fires: [] // fireGroup
 		};	
 	};
 
@@ -813,36 +869,14 @@ var Ocean = (function(){
         		// 当たった場合は対象の被弾処理する
         		// TODO 自分が発射した弾のみpublishする　
         		if(bulletObj.beShotObjId){
-
+        			if(fighterInstances[bulletObj.beShotObjId].life > 0)
+						audioController.play("explosion_audio");
+					else
+						audioController.play("explosion_long_audio");
         			console.log("beshot!!");
         			console.log(bulletObj.beShotObjId);
-					Instance.publishFunc("beShot", 0, bulletObj.beShotObjId);
-
-					if(Instance.fpsManager.get() > 30){
-	        			var fireWidth  = 10;
-						var fireHeight = 20;
-						var fireDepth  = 10;
-						var sliceSpacing = 0.5;
-
-						var fire = new VolumetricFire(
-						  fireWidth,
-						  fireHeight,
-						  fireDepth,
-						  sliceSpacing,
-						  camera
-						);
-
-						fire.mesh.position.set(
-							bulletObj.point.x, 
-							bulletObj.point.y, 
-							bulletObj.point.z);
-						fire.mesh.scale.set(10,10,10);
-						//fire.mesh.position.y += 200;
-						fireGroup.add( fire.mesh );
-						fireInsances.push(fire);
-					}
-
-        			beShotFighter(bulletObj.beShotObjId);
+					Instance.publishFunc("beShot", 0, bulletObj.beShotObjId, bulletObj.point);
+        			beShotFighter(bulletObj.beShotObjId, bulletObj.point);
         		}
         		bulletData.meshPool.release(bulletObj.mesh);
 
@@ -850,7 +884,7 @@ var Ocean = (function(){
         }
     }
 
-    // mash 更新
+    // mesh 更新
 	Ocean.prototype.updateFighter = function(fighterData, instanceId){
 		if(fighterInstances[instanceId] && fighterInstances[instanceId].mesh){
 			updateMesh(fighterInstances[instanceId].mesh, fighterData);
@@ -876,6 +910,12 @@ var Ocean = (function(){
 	};
 
 	Ocean.prototype.deleteFighter = function(instanceId){
+		// fire 削除
+		for(let fire of fighterInstances[instanceId].fires)
+		{
+			firePool.release(fire);
+		}
+
 		fighterGroup.remove(fighterInstances[instanceId].mesh);
 
 		delete fighterInstances[instanceId].mesh;
@@ -1187,12 +1227,12 @@ var Ocean = (function(){
 	}
 
 	// 被弾処理
-	function beShotFighter(instanceId){
+	function beShotFighter(instanceId, point){
 		let fighter = fighterInstances[instanceId];
 		if(!fighter)
 			return;
 
-		audioController.play("explosion_audio");
+		//audioController.play("explosion_audio");
 		let isMe = instanceId == controlFighterId;
 
 		fighter.life -= 1;
@@ -1201,12 +1241,40 @@ var Ocean = (function(){
 			if(isMe)
 				Instance.gameStatus = Ocean.GameStatus.GameOver;
 			else
-				Instance.deleteFighter(instanceId);
+			{
+				if(fighter.vel)
+					fighter.vel.y = - 100;
+				else 
+					fighter.vel = new THREE.Vector3(0, -100, 0);
+			}
+			//	Instance.deleteFighter(instanceId);
+		} 
+		else  
+		{
+			if(!isMe && Instance.fpsManager.get() > 30){
+				createFire(instanceId, point );
+			}
 
 		}
 
 		beShotCallback(isMe, instanceId, fighter.life);
 		//fighter.userId 
+	}
+
+	function createFire(fighterId, point){
+		let fighter = fighterInstances[fighterId];
+		if(!fighter)
+			return;
+
+		let fire = firePool.instantiate(point);
+
+		fire.offsetFromFighter = new THREE.Vector3(
+			point.x - fighter.mesh.position.x,
+			point.y - fighter.mesh.position.y,
+			point.z - fighter.mesh.position.z
+		);
+
+		fighter.fires.push(fire);
 	}
 
 	let MeterController = (function(){
@@ -1221,7 +1289,7 @@ var Ocean = (function(){
 
 		function initMeter(name, $parent){
 			//let $canvas = $("canvas");
-			 var canvas = document.createElement("canvas");
+			var canvas = document.createElement("canvas");
 			$canvas = $(canvas);
 			$canvas.attr("width", 120);
 			$canvas.attr("height", 120);
@@ -1326,6 +1394,60 @@ var Ocean = (function(){
 
 	})();
 
+	//  fire pool
+	let FirePool = (function(){
+
+		function FirePool(parentObj){
+			this.parentObj =  parentObj;
+			this.poolList = [];
+		}
+		
+		FirePool.prototype.instantiate = function(point){
+			point = point || new THREE.Vector3(0,0,0);
+			let fire;
+			if(this.poolList.length > 0){
+				fire = this.poolList.shift();
+				fire.mesh.visible = true;
+			} 
+			else 
+			{
+				let fireWidth  = 10;
+				let fireHeight = 20;
+				let fireDepth  = 10;
+				let sliceSpacing = 0.5;
+
+				fire = new VolumetricFire(
+					fireWidth,
+					fireHeight,
+					fireDepth,
+					sliceSpacing,
+					camera
+				);
+				console.log("fire!!");
+				console.log(point);
+				console.log(this.parentObj);
+			}
+			fire.mesh.position.set(point.x, point.y, point.z);
+			fire.mesh.scale.set(10,10,10);
+
+			if(this.parentObj)
+				this.parentObj.add(fire.mesh);
+
+			return fire;
+		};
+
+
+		FirePool.prototype.release = function(fire){
+			if(this.parentObj)
+				this.parentObj.remove(fire);
+			fire.mesh.visible = false;
+			this.poolList.push(fire);
+		}
+
+		return FirePool;
+	})();
+
 	return Ocean;
 //}	
 })();
+

@@ -42,77 +42,96 @@
         <!-- fire -->
 		<script src="./fire/VolumetricFire.js"></script>
 
+	
+
+        <!-- UI parts -->
+        <div class="ui-widgets">
+
+        		<!-- controls -->
+	        <div class="info">
+	        	<ul class="info-items">
+	        		<li class="info-li">
+	        			<span class="item-title">fps</span>
+	        			<span class="item-value fps"><input type="text"></span>
+	        		</li>
+	        		<li class="info-li">
+	        			<span class="item-title">member</span>
+	        			<span class="item-value member"><input type="text"></span>
+	        		</li>
+	        		<li class="info-li">
+	        			<span class="item-title">x_pos</span>
+	        			<span class="item-value x_pos"><input type="text"></span>
+	        		</li>
+	        		<li class="info-li">
+	        			<span class="item-title">y_pos</span>
+	        			<span class="item-value y_pos"><input type="text"></span>
+	        		</li>
+	        		<li class="info-li">
+	        			<span class="item-title">z_pos</span>
+	        			<span class="item-value z_pos"><input type="text"></span>
+	        		</li>
+	        		<li class="info-li">
+	        			<span class="item-title">x_rot</span>
+	        			<span class="item-value x_rot"><input type="text"></span>
+	        		</li>
+	        		<li class="info-li">
+	        			<span class="item-title">y_rot</span>
+	        			<span class="item-value y_rot"><input type="text"></span>
+	        		</li>
+	        		<li class="info-li">
+	        			<span class="item-title">z_rot</span>
+	        			<span class="item-value z_rot"><input type="text"></span>
+	        		</li>
+
+	        		<li class="info-li">
+	        			<div class="info-button" id="be-shot"> Be shot </div>
+	        		</li>
+
+	        		<li class="info-li">
+	        			<div class="info-button" id="pause"> pause </div>
+	        		</li>
 
 
-
-        <div class="info">
-        	<ul class="info-items">
-        		<li class="info-li">
-        			<span class="item-title">fps</span>
-        			<span class="item-value fps"><input type="text"></span>
-        		</li>
-        		<li class="info-li">
-        			<span class="item-title">member</span>
-        			<span class="item-value member"><input type="text"></span>
-        		</li>
-        		<li class="info-li">
-        			<span class="item-title">x_pos</span>
-        			<span class="item-value x_pos"><input type="text"></span>
-        		</li>
-        		<li class="info-li">
-        			<span class="item-title">y_pos</span>
-        			<span class="item-value y_pos"><input type="text"></span>
-        		</li>
-        		<li class="info-li">
-        			<span class="item-title">z_pos</span>
-        			<span class="item-value z_pos"><input type="text"></span>
-        		</li>
-        		<li class="info-li">
-        			<span class="item-title">x_rot</span>
-        			<span class="item-value x_rot"><input type="text"></span>
-        		</li>
-        		<li class="info-li">
-        			<span class="item-title">y_rot</span>
-        			<span class="item-value y_rot"><input type="text"></span>
-        		</li>
-        		<li class="info-li">
-        			<span class="item-title">z_rot</span>
-        			<span class="item-value z_rot"><input type="text"></span>
-        		</li>
-
-        		<li class="info-li">
-        			<div class="info-button" id="be-shot"> Be shot </div>
-        		</li>
-
-        		<li class="info-li">
-        			<div class="info-button" id="pause"> pause </div>
-        		</li>
+	        		<!--
+	        		<li class="info-li">
+	        			<span class="on-off-title"> ship move </span> 
+	        			<input type="checkbox" id="ship-move-toggle" class="info-on-off-button"><label for="toggleButton"></label>
+	        		</li>
+	        		<li class="info-li">
+	        			<span class="on-off-title"> sound </span> 
+	        			<input type="checkbox" id="sound-toggle" class="info-on-off-button"><label for="toggleButton"></label>
+	        		</li>
+	        		-->
+	        	</ul>
+	        	<div class="close-button info-toggle-button">Close Controls</div>
+	        </div>
 
 
-        		<!--
-        		<li class="info-li">
-        			<span class="on-off-title"> ship move </span> 
-        			<input type="checkbox" id="ship-move-toggle" class="info-on-off-button"><label for="toggleButton"></label>
-        		</li>
-        		<li class="info-li">
-        			<span class="on-off-title"> sound </span> 
-        			<input type="checkbox" id="sound-toggle" class="info-on-off-button"><label for="toggleButton"></label>
-        		</li>
-        		-->
-        	</ul>
-        	<div class="close-button info-toggle-button">Close Controls</div>
-        </div>
-        <div class="sighting" style="display: none;"></div>
-        <div class="meter-group" style="display:none">
-        	<div class="meter" id="feet-meter"></div>
-        	<div class="meter" id="compass-meter"></div>
-        </div>
-        <div class="blood-splash hide"></div>
+	        <div class="sighting" style="display: none;"></div>
+	        <div class="meter-group" style="display:none">
+	        	<div class="meter" id="feet-meter"></div>
+	        	<div class="meter" id="compass-meter"></div>
+	        </div>
+	        <div class="blood-splash hide"></div>
 
-        <div class="hexagon2"></div>
-        <div class="start-button hexagon disable"> 
-        Loading..</div>
-        <div class="game-over" style="display: none;">Game Over</div>
+	        <div class="ui-button start-button">
+	        	<div class="hexagon2"></div>
+	        	<div class="hexagon disable"> Loading..</div>
+	        </div>
+	        
+	        <div class="game-over" style="display: none;">
+	        	<p>Game Over</p>
+	        	<div class="ui-button restart-button">
+	        		<div class="hexagon2"></div>
+	        		<div class="restart-button hexagon"> Restart </div>
+	        	</div>
+	        	<div class="ui-button back-button">
+	        		<div class="hexagon2"></div>
+	        		<div class="back-button hexagon"> Back </div>
+	        	</div>
+	        </div>
+	    </div>
+		
 		<script>
 			'use strict';
 			const isOrbitControl = false;
@@ -295,14 +314,15 @@ let s = 40;
 	        		scale: [s, s, s],  // 10
 					pos: [1800, 50, 500],
 					rot: [0, Math.PI/2, 0],
-					life: 1
+					life: 20,
+					vel : new THREE.Vector3(100,0,0)
 	        	},
 	        	{
 	        		modelName: "battle_ship",
 	        		scale: [10, 10, 10],
 					pos: [1800, 200, 0],
 					rot: [-Math.PI/5.0, -Math.PI/3, Math.PI/100],
-					life: 1
+					life: 2
 	        	},
 	        	{
 	        		modelName: "zero_fighter",
@@ -312,21 +332,22 @@ let s = 40;
 					rot: [0, 0,0],
 					fixCam: true,
 					control: true,
-					life: 3
+					life: 3,
+					vel: new THREE.Vector3(0,0,1000)
 	        	},
 	        	{
 	        		modelName: "p51_mustang",
 	        		scale: [0.2, 0.2, 0.2],
 					pos: [1200, 5000, -2500],
 					rot: [ Math.PI/4 ,Math.PI/4,0],
-					life: 1
+					life: 2
 	        	},
 	        	{
 	        		modelName: "p51_mustang",
 					scale: [0.2, 0.2, 0.2],
 					pos: [1200, 1000, -1000],
 					rot: [ Math.PI/4 , -Math.PI/6,0],
-					life: 1
+					life: 2
 				}
 	        ];
 
@@ -360,7 +381,7 @@ let s = 40;
 					"compass" : $("#compass-meter")
 				},
 				succsessFunc: self => {
-					$startButton.text("Start");
+					$startButton.find(".hexagon").text("Start");
 					$startButton.removeClass("disable");
 
 					console.log("succsessFunc");
@@ -380,7 +401,7 @@ let s = 40;
 					return;
 				oceanControl.OnClickStart("fighter_audio");
 				$(this).hide();
-				$(".hexagon2").hide();
+				$(".start-back").hide();
 				$(".sighting").show();
 				$(".meter-group").show();
 
@@ -425,6 +446,14 @@ let s = 40;
 						}
 					}
 				} 
+			});
+
+			$(".restart-button").click(function(){
+				location.reload();
+			});
+
+			$(".back-button").click(function(){
+				location.href = "./..";
 			});
 
 

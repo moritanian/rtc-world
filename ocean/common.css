@@ -124,10 +124,15 @@ input[type="checkbox"].info-on-off-button:focus {
     color: white;
 }
 
-
-
 .open-button{
     width: 200px;
+}
+
+.ui-widgets {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
 }
 
 
@@ -163,11 +168,38 @@ input[type="checkbox"].info-on-off-button:focus {
     background-position-y: 30%;
 }
 
+.ui-button{
+    position: relative;
+}
+
 .start-button {
-    position: absolute;
+    margin-top: 25%;
+}
+
+.start-back {
     top: 20%;
+    bottom: 0%;
+}
+
+.restart-button  {
+   margin: 5px;
+}
+
+.start-button .disable {
+    opacity: 0.5;
+    font-size: 40px;
+}
+
+.hexagon {
+    width: 40%;
+    height: 80px;
+    background-color: #64C7CC;
+    background: -moz-linear-gradient(top,#80CCE6,#80CCE6 5%,#09C 5%,#069 95%,#069 95%,#00293D);
+    background: -webkit-gradient(linear, left top, left bottom, from(rgba(75, 103, 112, 0)), color-stop(0.05,#80CCE6), color-stop(0.05,#09C), color-stop(0.95,#069), color-stop(0.95,rgba(128, 130, 131, 0.98)), to(rgba(0, 41, 61, 0.01)));
+    position: absolute;
     left: 0;
     right: 0;
+    top: 0;
     bottom: 0;
     margin: auto;
     text-align: center;
@@ -178,33 +210,6 @@ input[type="checkbox"].info-on-off-button:focus {
     cursor: pointer;
     opacity: 0.8;
     user-select: none;
-}
-
-.start-button.disable {
-    opacity: 0.5;
-    font-size: 40px;
-}
-
-.start-button:hover {
-    background: -webkit-gradient(linear, left top, left bottom, from(rgba(75, 103, 112, 0)), color-stop(0.05,#94a9b0), color-stop(0.05,#4fc1d0), color-stop(0.95,#047dbb), color-stop(0.95,rgba(128, 130, 131, 0.98)), to(rgba(0, 41, 61, 0.01)));
-  
-}
-
-.start-button:active {
-    background: -webkit-gradient(linear, left top, left bottom, from(rgba(75, 103, 112, 0)), color-stop(0.05,#80CCE6), color-stop(0.05,#aed4e0), color-stop(0.95,#087ab3), color-stop(0.95,rgba(128, 130, 131, 0.98)), to(rgba(0, 41, 61, 0.01)));
-}
-
-.start-button.disabled {
-    opacity: 0.7;
-}
-
-.hexagon {
-  /* position: relative; */
-    width: 40%;
-    height: 80px;
-    background-color: #64C7CC;
-    background: -moz-linear-gradient(top,#80CCE6,#80CCE6 5%,#09C 5%,#069 95%,#069 95%,#00293D);
-    background: -webkit-gradient(linear, left top, left bottom, from(rgba(75, 103, 112, 0)), color-stop(0.05,#80CCE6), color-stop(0.05,#09C), color-stop(0.95,#069), color-stop(0.95,rgba(128, 130, 131, 0.98)), to(rgba(0, 41, 61, 0.01)));
 }
 
 .hexagon:before,
@@ -221,18 +226,40 @@ input[type="checkbox"].info-on-off-button:focus {
     left: -80px;
 }
 
+.hexagon:hover {
+    background: -webkit-gradient(linear, left top, left bottom, from(rgba(75, 103, 112, 0)), color-stop(0.05,#94a9b0), color-stop(0.05,#4fc1d0), color-stop(0.95,#047dbb), color-stop(0.95,rgba(128, 130, 131, 0.98)), to(rgba(0, 41, 61, 0.01)));
+}
+
+.hexagon:active {
+    background: -webkit-gradient(linear, left top, left bottom, from(rgba(75, 103, 112, 0)), color-stop(0.05,#80CCE6), color-stop(0.05,#aed4e0), color-stop(0.95,#087ab3), color-stop(0.95,rgba(128, 130, 131, 0.98)), to(rgba(0, 41, 61, 0.01)));
+}
+
+.hexagon:hover:before {
+    border-right: 40px solid #32a4cf;
+}
+
+.hexagon:active:before {
+    border-right: 40px solid #74bcd7;
+}
+
 .hexagon:after {
     border-left: 40px solid #0088bb;
     left: 100%;
 }
 
+.hexagon:hover:after {
+    border-left: 40px solid #32a4cf;
+}
+
+.hexagon:active:after {
+    border-left: 40px solid #74bcd7;
+}
+
 .hexagon2 {
     box-shadow: 0px 0px 9px 1px rgba(193, 193, 193, 0.91);
-    position: absolute;
-    top: 20%;
+    position: relative;
     left: 0;
     right: 0;
-    bottom: 0;
     margin: auto;
     width: 43%;
     height: 90px;
@@ -262,23 +289,30 @@ input[type="checkbox"].info-on-off-button:focus {
 
 .game-over {
     position: absolute;
-    top: 30%;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    margin: auto;
     text-align: center;
-    line-height: 80px;
-    font-size: 100px;
-    text-shadow: 3px 3px 7px #000000;
-    color: #c10606;
     cursor: pointer;
     user-select: none;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.32);
+}
+
+.game-over p {
+    position: relative;
+    top: 0;
+    text-align: center;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    margin-top: 10px;
+    font-size: 86px;
+    text-shadow: 3px 3px 7px #000000;
+    color: #c10606;    
     font-weight: bold;
 }
 
 .meter-group {
-   position: absolute;
+    position: absolute;
     top: 65%;
     left: 0%;
     right: 0;
@@ -287,8 +321,8 @@ input[type="checkbox"].info-on-off-button:focus {
     width: 50%;
     height: 100%;
     pointer-events: none;
-
 }
+
 .meter {
     position: absolute;
     width: 40%;

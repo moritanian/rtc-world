@@ -69,7 +69,7 @@ var LpFilter = (function(){
     }
     return LpFilter
 })();
-    
+
 
 function getTime(){
 	var dateObj = new Date();
@@ -88,4 +88,77 @@ function uuid() {
   }
   return uuid;
 }
+
+
+function setFullScreen(startFunc, endFunc, failedFunc, lockMode = "landscape"){
+	document.body.requestFullscreen  = document.body.requestFullscreen 
+		|| document.body.mozRequestFullScreen
+		|| document.body.webkitRequestFullScreen 
+		|| document.body.webkitRequestFullscreen 
+		|| document.body.msRequestFullscreen;
+
+	let fullScreenChangeList = [
+								"fullscreenchange",
+								"mozfullscreenchange",
+								"webkitfullscreenchange",
+								"MSFullscreenchange"
+								];
+
+	document.fullscreenEnabled =   document.fullscreenEnabled
+		|| document.mozFullScreenEnabled
+		|| document.webkitFullscreenEnabled
+		|| document.msFullscreenEnabled;
+
+	console.log(document.fullscreenEnabled);
+
+	let fullScreenErrorList =  ["fullscreenerror",
+								"webkitfullscreenerror",
+								"mozfullscreenerror",
+								"MSFullscreenError"]
+
+	//console.log(fullScreenFunc);
+//	console.log(fullScreenError);
+
+	document.body.requestFullscreen();
+	for(let index in fullScreenChangeList){
+		document.addEventListener(fullScreenChangeList[index], function( event ) {
+			console.log(document.fullscreenEnabled);
+			if(document.fullscreenEnabled)
+			{
+				console.log("fullscreen enable");
+				if(lockMode)
+					lockOrientation(lockMode);
+				startFunc();
+			}
+			else
+				endFunc();
+
+		});
+
+		document.addEventListener(fullScreenErrorList[index], function(event){
+			failedFunc();
+		});
+	}
+}
+
+function lockOrientation(mode) {
+	console.log("lockOrientation");
+    if (screen.orientation.lock) {
+        screen.orientation.lock(mode);
+    }
+    else if (screen.lockOrientation) {
+        screen.lockOrientation(mode);
+    }
+    else if (screen.webkitLockOrientation) {
+    	console.log("lock");
+        screen.webkitLockOrientation(mode);
+    }
+    else if (screen.mozLockOrientation) {
+        screen.mozLockOrientation(mode);
+    }
+    else if (screen.msLockOrientation) {
+        screen.msLockOrientation(mode);
+    }
+}
+
 
