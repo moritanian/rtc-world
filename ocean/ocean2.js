@@ -1,14 +1,9 @@
 /*
-	Modelloader 導入
-	
-	改善点
-	- loadの複雑な分岐解消
-	- meshのuuidをinstanceIdに使用できる　
-
-	懸念点
-	- sceneに追加部分
-		camera とのグループにしている場合、
-		グループごとsceneにaddするべきかmodelのmeshだけでいいのか
+	2017/4/20 残タスク
+	- 体力切れアニメーション
+	- 機体内を画像に
+	- 照準器をcanvasで
+	- 
 	
 */
 /*
@@ -30,6 +25,7 @@ var Ocean = (function(){
 	let animateCallback;
 	let beShotCallback;
 	let isOrbitControl, isUseChanel;
+	let myScorePoint;
 
 	var screenDirection = function(){
 		return window.innerWidth / window.innerHeight < 1.0 ? true : false;
@@ -234,6 +230,7 @@ var Ocean = (function(){
 		}
 
 		beShotCallback = option.beShotCallback || function(){};
+		myScorePoint = 0;
 		
 	};
 
@@ -574,6 +571,7 @@ var Ocean = (function(){
 			option.userId = chanelControl.getMyId();
 		}
 
+		option.myScorePoint = myScorePoint;
 		updateBullets();
 
 		if(animateCallback){
@@ -854,7 +852,8 @@ var Ocean = (function(){
 	function updateBullets(){
 		if(!bulletData)
 			return;
-		for(let bulletObj of bulletData.bulletList){
+		for(let index in bulletData.bulletList){
+			let bulletObj = bulletData.bulletList[index];
         	if(bulletObj.life <= 0){
         		continue;
         	}
@@ -869,17 +868,17 @@ var Ocean = (function(){
         		// 当たった場合は対象の被弾処理する
         		// TODO 自分が発射した弾のみpublishする　
         		if(bulletObj.beShotObjId){
-        			if(fighterInstances[bulletObj.beShotObjId].life > 0)
-						audioController.play("explosion_audio");
-					else
-						audioController.play("explosion_long_audio");
-        			console.log("beshot!!");
-        			console.log(bulletObj.beShotObjId);
+        			
 					Instance.publishFunc("beShot", 0, bulletObj.beShotObjId, bulletObj.point);
-        			beShotFighter(bulletObj.beShotObjId, bulletObj.point);
+        			if(beShotFighter(bulletObj.beShotObjId, bulletObj.point)){
+        				// score
+        				let fighter = fighterInstances[bulletObj.beShotObjId];
+        				myScorePoint += fighter.gettableScorePoint || 10;
+        			}
+
         		}
         		bulletData.meshPool.release(bulletObj.mesh);
-
+        		bulletData.bulletList.splice(index ,1); // 残しておいた方がはやいかも
         	}
         }
     }
@@ -1128,6 +1127,13 @@ var Ocean = (function(){
 		bulletData.bulletList.push(bulletObj);
 	}
 
+	// getter
+	Object.defineProperty(Ocean.prototype, "myScorePoint", {
+    	get: function(){
+        	return myScorePoint;
+    	}
+    });
+
 	function getInstanceIdFromMeshRecursively(mesh, depth = 0){
 		if(!mesh.instanceId)
 		{
@@ -1227,15 +1233,23 @@ var Ocean = (function(){
 	}
 
 	// 被弾処理
+	// channel経由でも呼ばれる
 	function beShotFighter(instanceId, point){
 		let fighter = fighterInstances[instanceId];
-		if(!fighter)
-			return;
+		if(!fighter || fighter.life <= 0)
+			return false;
+
+		if(fighter.life > 0)
+			audioController.play("explosion_audio");
+		else
+			audioController.play("explosion_long_audio");
+        console.log("beshot!!");
 
 		//audioController.play("explosion_audio");
 		let isMe = instanceId == controlFighterId;
 
 		fighter.life -= 1;
+		console.log(fighter.life);
 		if(fighter.life <= 0)
 		{
 			if(isMe)
@@ -1258,6 +1272,7 @@ var Ocean = (function(){
 		}
 
 		beShotCallback(isMe, instanceId, fighter.life);
+		return true;
 		//fighter.userId 
 	}
 

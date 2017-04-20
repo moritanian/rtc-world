@@ -70,6 +70,7 @@
 	        			<span class="item-title">z_pos</span>
 	        			<span class="item-value z_pos"><input type="text"></span>
 	        		</li>
+	        		<!--
 	        		<li class="info-li">
 	        			<span class="item-title">x_rot</span>
 	        			<span class="item-value x_rot"><input type="text"></span>
@@ -82,7 +83,11 @@
 	        			<span class="item-title">z_rot</span>
 	        			<span class="item-value z_rot"><input type="text"></span>
 	        		</li>
-
+					-->
+					<li class="info-li">
+	        			<span class="item-title">score</span>
+	        			<span class="item-value score"><input type="text"></span>
+	        		</li>
 	        		<li class="info-li">
 	        			<div class="info-button" id="be-shot"> Be shot </div>
 	        		</li>
@@ -160,6 +165,7 @@
 				$x_rot: $(".x_rot input"),
 				$y_rot: $(".y_rot input"),
 				$z_rot: $(".z_rot input"),
+				$score: $(".score input"),
 				$fps : $(".fps input"),
 				$member : $(".member input")
 			};
@@ -360,6 +366,7 @@ let s = 40;
 				infoControls.$y_rot.val(camera.rotation.y);
 				infoControls.$z_rot.val(camera.rotation.z);
 	            infoControls.$fps.val(Math.floor(option.fps));
+	            infoControls.$score.val(Math.floor(option.myScorePoint));
 	            infoControls.$member.val(`${option.memberNum} ${option.userId} `);
 
 			}
