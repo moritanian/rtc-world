@@ -6,7 +6,7 @@
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<link rel=stylesheet href="./common.css">	
 	</head>
-	<body>
+	<body >
 			<!--<audio src="sound/wave.mp3" preload="auto" autoplay loop></audio>
 			<audio src="sound/whistle.mp3" preload="auto" autoplay></audio> -->
 
@@ -47,9 +47,59 @@
         <!-- UI parts -->
         <div class="ui-widgets">
 
-        		<!-- controls -->
+        	
+
+	       	<!-- start screen -->
+	      	<div class="select-fighter-container">
+	      		<div class="model-detail">
+
+	      			<div class="model-name"></div>
+
+	      			<div class="performance-list">
+
+	      				<div class="performance-elem performance-power">
+	      					<div class="performance-title">馬力 : </div>
+	      					<span class="performance-number"> 20 </span>
+
+	      					<div class="performance-bar"></div>
+	      				</div>
+	      				
+	      				<div class="performance-elem performance-fire">
+	      					<div class="performance-title">火力 : </div>
+	      					<div class="performance-number">10</div>
+	      					<div class="performance-bar"></div>
+	      				</div>
+
+	      				<div class="performance-elem performance-rotation">
+	      					<div class="performance-title">旋回能力 : </div>
+	      					<div class="performance-number">30</div>
+	      					<div class="performance-bar"></div>
+	      				</div>
+	      				
+	      				<div class="performance-elem performance-rising">
+	      					<div class="performance-title">上昇力 : </div>
+	      					<div class="performance-number">20</div>
+	      					<div class="performance-bar"></div>
+	      				</div>
+
+	      				<img class="nation-flag"></img>
+	      			</div>
+	      		</div>
+
+	      		<div class="select-arrows">
+	      			<div class="select-arrow left-arrow" ontouchstart=""></div>
+	      			<div class="select-arrow right-arrow" ontouchstart=""></div>
+	      		</div>
+
+	        	<div class="ui-button-mini start-button">
+	        		<div class="hexagon2"></div>
+	        		<div class="hexagon disable"> Loading..</div>
+	        	</div>
+	        </div>
+
+	        	<!-- controls -->
 	        <div class="info">
-	        	<ul class="info-items">
+	        	<ul class="info-items" style="display: none;">
 	        		<li class="info-li">
 	        			<span class="item-title">fps</span>
 	        			<span class="item-value fps"><input type="text"></span>
@@ -108,10 +158,10 @@
 	        		</li>
 	        		-->
 	        	</ul>
-	        	<div class="close-button info-toggle-button">Close Controls</div>
+	        	<div class="open-button info-toggle-button">Open Controls</div>
 	        </div>
 
-
+	        <!-- flying screen -->
 	        <div class="sighting" style="display: none;"></div>
 	        <div class="meter-group" style="display:none">
 	        	<div class="meter" id="feet-meter"></div>
@@ -119,10 +169,7 @@
 	        </div>
 	        <div class="blood-splash hide"></div>
 
-	        <div class="ui-button start-button">
-	        	<div class="hexagon2"></div>
-	        	<div class="hexagon disable"> Loading..</div>
-	        </div>
+	       
 	        
 	        <div class="game-over" style="display: none;">
 	        	<p>Game Over</p>
@@ -371,7 +418,7 @@ let s = 40;
 
 			}
 
-	        let $startButton = $(".start-button");
+	        let $startButton = $(".start-button .hexagon");
 
 	        // 3dビュー作成
 	        let oceanControl = new Ocean({
@@ -388,8 +435,18 @@ let s = 40;
 					"compass" : $("#compass-meter")
 				},
 				succsessFunc: self => {
-					$startButton.find(".hexagon").text("Start");
+					$startButton.text("Start");
 					$startButton.removeClass("disable");
+
+					setModelInSelect("zero_fighter");
+
+					$(".right-arrow").click(function(){
+						changeSelectModel(1);
+					});
+
+					$(".left-arrow").click(function(){
+						changeSelectModel(-1);
+					});
 
 					console.log("succsessFunc");
 				},
@@ -407,7 +464,8 @@ let s = 40;
 				if($(this).hasClass("disable"))
 					return;
 				oceanControl.OnClickStart("fighter_audio");
-				$(this).hide();
+				//$(this).parent().hide();
+				$(".select-fighter-container").hide();
 				$(".start-back").hide();
 				$(".sighting").show();
 				$(".meter-group").show();
@@ -479,6 +537,56 @@ let s = 40;
 	            	camera.position.z -= 50;
 	            }
 */
+
+			function setModelInSelect(modelName, id = 1){
+				let model = Ocean.Models[modelName];
+				if(!model)
+					return;
+
+				oceanControl.addFighter({
+					modelName: modelName,
+					scale: [10, 10, 10],
+					pos: [0, 100, -200],
+					rot: [0.1,  0.5 , 0],
+					angVel: new THREE.Vector3(0, 0.2, 0)
+
+				} ,id , true);
+
+				$(".select-fighter-container .model-name").text(model.modelName);
+				$(".performance-power .performance-number").text(model.performance.power);
+				$(".performance-power .performance-bar").width(`${model.performance.power}%`);
+
+				$(".performance-fire .performance-number").text(model.performance.fire);
+				$(".performance-fire .performance-bar").width(`${model.performance.fire}%`);
+
+				$(".performance-rotation .performance-number").text(model.performance.rotation);
+				$(".performance-rotation .performance-bar").width(`${model.performance.rotation}%`);
+
+				$(".performance-rising .performance-number").text(model.performance.rising);
+				$(".performance-rising .performance-bar").width(`${model.performance.rising}%`);
+
+
+				$(".performance-list img.nation-flag")
+					.attr("src", model.nationality.flag);
+
+			}
+
+			let selectModelIndex = 0;
+			let modelNames = Object.keys(Ocean.Models);
+			let modelLength = modelNames.length;
+			function changeSelectModel(move){
+				oceanControl.updateFighter({
+					vel: [300,0,0],
+					angVel: [0,0,0]
+				}, selectModelIndex + 1)
+				selectModelIndex += move;
+				if(selectModelIndex < 0)
+					selectModelIndex += modelLength;
+				else if(selectModelIndex >= modelLength )
+					selectModelIndex -= modelLength;
+				let modelName = modelNames[selectModelIndex];
+				setModelInSelect(modelName, selectModelIndex + 1);
+			}
 
 			function setModelIntanceWithControl(infoControls, modelInstance){
 				let mInstance = modelInstance;

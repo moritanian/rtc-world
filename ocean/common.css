@@ -13,6 +13,7 @@ body {
 .info{
     position: absolute;
     margin-left: 15px;
+    top: 0;
 }
 
 .info ul {
@@ -135,6 +136,117 @@ input[type="checkbox"].info-on-off-button:focus {
     top: 0;
 }
 
+.select-fighter-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.select-fighter-container .model-detail {
+    background-color: rgba(11, 11, 11, 0.17);
+    margin: 0 20px
+}
+
+.select-fighter-container .model-name {
+    width: 100%;
+    text-align: center;
+    position: relative;
+    padding-top: 10px;
+    font-size: 25px;
+    font-weight: bold;
+    color: white;
+    text-shadow: 4px 2px 4px #000000;
+}
+
+.performance-elem:nth-child(odd) {
+    float:left;
+}
+
+.performance-elem:nth-child(even) {
+    width: 50px;
+    right: 0;
+    margin-left: auto;
+}
+
+.model-detail .performance-list {
+    color: #34a5fe;
+    font-size: 15px;
+    font-weight: bold;
+    text-shadow: -1px 1px 7px #134ae1;
+    top: -10px;
+    position: relative;
+}
+
+.model-detail .performance-list .performance-elem {
+    padding: 0px 40px 8px;
+    width: 100px;
+}
+
+.performance-elem .performance-title {
+    float: left;
+}
+
+.performance-elem .performance-bar {
+   background-color: rgb(205, 255, 251);
+    height: 6px;
+    box-shadow: 2px 1px 20px 1px #23d7fd;
+    margin-top: 5px;
+    border-radius: 1px 1px 5px 1px;
+}
+
+.performance-elem .performance-number {
+    
+}
+
+.performance-list .nation-flag {
+    width: 50px;
+    background-size: cover;
+    position: absolute;
+    top: 50px;
+    right: 0;
+    left: 0;
+    margin: auto;
+    box-shadow: 4px 4px 17px 1px #121212;
+    top: 20px;
+}
+
+.select-arrows {
+    position: relative;
+    /*top: 50px; */
+    margin: 0px 20px 0px;
+    height: 70%;
+    height: -webkit-calc(100% - 135px);
+    height: calc(100% - 135px);
+
+}
+
+.select-arrows .select-arrow {
+    width: 30px;
+    height: 30px;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    margin-top: auto;
+    margin-bottom: auto;    
+    border-top: 5px solid #5b96ec;
+    border-right: 5px solid #5b96ec;
+}
+
+.select-arrows .select-arrow:active {
+    border-top: 5px solid #72e7f3;
+    border-right: 5px solid #72e7f3;
+}
+
+.select-arrows  .left-arrow {
+    transform: rotate(-135deg);
+    float: left;
+}
+ 
+.select-arrows  .right-arrow {
+    transform: rotate(45deg);
+    right: 0;
+    margin-left: auto;
+}
 
 .sighting {
    width: 200px;
@@ -168,12 +280,19 @@ input[type="checkbox"].info-on-off-button:focus {
     background-position-y: 30%;
 }
 
-.ui-button{
+.ui-button, .ui-buton-mini{
     position: relative;
+    margin: auto;
 }
 
 .start-button {
-    margin-top: 25%;
+    position: absolute;
+    bottom: 10px;
+    right: 0;
+    left: 0;
+    width: 30%;
+    margin: auto;
+
 }
 
 .start-back {
@@ -191,7 +310,7 @@ input[type="checkbox"].info-on-off-button:focus {
 }
 
 .hexagon {
-    width: 40%;
+    width: 92%;/* width: 40%; */
     height: 80px;
     background-color: #64C7CC;
     background: -moz-linear-gradient(top,#80CCE6,#80CCE6 5%,#09C 5%,#069 95%,#069 95%,#00293D);
@@ -261,7 +380,7 @@ input[type="checkbox"].info-on-off-button:focus {
     left: 0;
     right: 0;
     margin: auto;
-    width: 43%;
+    /* width: 43%;  */
     height: 90px;
     background-color: #484848;
     background: -moz-linear-gradient(top,#80CCE6,#80CCE6 5%,#09C 5%,#069 95%,#069 95%,#00293D);
@@ -286,6 +405,46 @@ input[type="checkbox"].info-on-off-button:focus {
    border-left: 40px solid #666667;
     left: 100%;
 }
+
+.ui-button-mini .hexagon {
+    width: 97%;
+    height: 28px;
+    font-size: 28px;
+    line-height: 28px;
+}
+
+.ui-button-mini .hexagon:before, .ui-button-mini .hexagon:after {
+   border: 14px solid transparent;
+}
+
+.ui-button-mini .hexagon:before {
+    border-right: 15px  solid #0088bb;
+    left: -28px;
+}
+
+.ui-button-mini .hexagon:after {
+    border-left: 14px solid #0088bb;
+    left: 100%;
+}
+
+.ui-button-mini .hexagon2 {
+    height: 30px;
+}
+
+.ui-button-mini .hexagon2:before, .ui-button-mini .hexagon2:after {
+   border: 15px solid transparent;
+}
+
+.ui-button-mini .hexagon2:before {
+   border-right: 15px solid #605e5e;
+    left: -30px;
+}
+
+.ui-button-mini .hexagon2:after {
+   border-left: 15px solid #666667;
+    left: 100%;
+}
+
 
 .game-over {
     position: absolute;

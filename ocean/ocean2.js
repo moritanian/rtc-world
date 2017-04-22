@@ -617,8 +617,17 @@ var Ocean = (function(){
 	 				);
 			}
 
-			if(fighter.userId == myId && id != controlFighterId && fighter.vel){
-				fighter.mesh.position.add(fighter.vel.clone().multiplyScalar(deltaTime));
+			if(fighter.userId == myId && id != controlFighterId){
+				if(fighter.angVel)
+				{
+					let ang = fighter.angVel.clone().multiplyScalar(deltaTime);
+					fighter.mesh.rotation.x += ang.x;
+					fighter.mesh.rotation.y += ang.y;
+					fighter.mesh.rotation.z += ang.z;
+				}
+				if( fighter.vel)
+					fighter.mesh.position.add(fighter.vel.clone().multiplyScalar(deltaTime));
+				
 				if(fighter.life <= 0 && fighter.mesh.position.y < -1000){
 					Instance.deleteFighter(id); // ここで消す
 				}
@@ -639,19 +648,23 @@ var Ocean = (function(){
 	Ocean.nationalityList = {
 		Japan:{
 			en: "Japan",
-			jp: "日本"
+			jp: "日本",
+			flag: "./images/flags/Japan.png"
 		},
 		Russia:{
 			en: "Russia",
-			jp: "ロシア"
+			jp: "ロシア",
+			flag: "./images/flags/Russia.png"
 		},
 		Soviet:{
 			en: "Soviet Union",
-			jp: "ソ連"
+			jp: "ソ連",
+			flags : "./images/flags/SovietUnion.png"
 		},
 		Ameriaca:{
 			en: "America",
-			jp: "アメリカ"
+			jp: "アメリカ",
+			flags : "./images/flags/America.png"
 		}
 	};
 
@@ -659,17 +672,38 @@ var Ocean = (function(){
 		battle_ship: {
 			path: "./objs/battle_ship/ship.json",
 			nationality: Ocean.nationalityList.Russia,
-			explain: "ステレグシュチイ級フリゲート"
+			explain: "ステレグシュチイ級フリゲート",
+			modelName: "ステレグシュチイ級フリゲート",
+			performance: {
+				power: 80,
+				fire: 120,
+				rotation: 20,
+				rising: 0
+			}
 		},
 		zero_fighter: {
 			path: "./objs/zero_fighter/scene.json",
 			nationality: Ocean.nationalityList.Japan,
-			explain: "零戦"
+			explain: "零戦",
+			modelName: "零戦",
+			performance: {
+				power: 100,
+				fire: 50,
+				rotation: 30,
+				rising: 120
+			}
 		},
 		p51_mustang: {
 			path: "./objs/p51_mustang/scene.json",
 			nationality: Ocean.nationalityList.Ameriaca,
-			explain: "P51 マスタング"
+			explain: "P51 マスタング",
+			modelName: "P51 マスタング",
+			performance: {
+				power: 60,
+				fire: 50,
+				rotation: 100,
+				rising: 80
+			}		
 		}
 	};
 
@@ -744,7 +778,7 @@ var Ocean = (function(){
 			modelName: ""
 		}
 	*/
-	Ocean.prototype.addFighter = function(fighterData, instanceId){
+	Ocean.prototype.addFighter = function(fighterData, instanceId, isMine = false){
 		let modelName = fighterData.modelName;
 		let model = Ocean.Models[modelName];
 		if(!model){
@@ -761,7 +795,8 @@ var Ocean = (function(){
 			modelName: modelName,
 			mesh: targetMesh,
 			vel: fighterData.vel ? new THREE.Vector3(fighterData.vel.x, fighterData.vel.y, fighterData.vel.z) : null,
-			userId: fighterData.userId,
+			angVel : fighterData.angVel ? new THREE.Vector3(fighterData.angVel.x, fighterData.angVel.y, fighterData.angVel.z) : null,
+			userId: isMine ? myId : fighterData.userId,
 			nonCollision: fighterData.nonCollision ? true : false,
 			life: fighterData.life,
 			fires: [] // fireGroup
@@ -829,7 +864,6 @@ var Ocean = (function(){
 		}
 		if(fighterData.pos){
 			mesh.position.set(fighterData.pos[0], fighterData.pos[1], fighterData.pos[2]);
-			//console.log(mesh.position);
 		}
 	}
 
@@ -888,6 +922,21 @@ var Ocean = (function(){
 		if(fighterInstances[instanceId] && fighterInstances[instanceId].mesh){
 			updateMesh(fighterInstances[instanceId].mesh, fighterData);
 		}
+		
+		if(fighterData.vel){
+			fighterInstances[instanceId].vel = new THREE.Vector3(
+				fighterData.vel[0],
+				fighterData.vel[1],
+				fighterData.vel[2]);
+		}
+
+		if(fighterData.angVel){
+			fighterInstances[instanceId].angVel = new THREE.Vector3(
+				fighterData.angVel[0],
+				fighterData.angVel[1],
+				fighterData.angVel[2]);
+		}
+
 		if(fighterData.life){
 			fighterInstances[instanceId].life = fighterData.life;
 		}
