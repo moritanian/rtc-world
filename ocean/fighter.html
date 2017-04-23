@@ -87,8 +87,16 @@
 	      		</div>
 
 	      		<div class="select-arrows">
-	      			<div class="select-arrow left-arrow" ontouchstart=""></div>
-	      			<div class="select-arrow right-arrow" ontouchstart=""></div>
+	      			<div class="arrow-group left-arrow-group">
+	      				<div class="arrow-part arrow-top-part"></div>
+	      				<div class="arrow-part arrow-bottom-part"></div>
+	      			</div>
+
+	      			<div class="arrow-group right-arrow-group">
+	      				<div class="arrow-part arrow-top-part"></div>
+	      				<div class="arrow-part arrow-bottom-part"></div>
+	      			</div>
+
 	      		</div>
 
 	        	<div class="ui-button-mini start-button">
@@ -438,14 +446,23 @@ let s = 40;
 					$startButton.text("Start");
 					$startButton.removeClass("disable");
 
-					setModelInSelect("zero_fighter");
+					let modelName = "zero_fighter";
+					setModelInSelect(modelName);
+					oceanControl.addFighter({
+						modelName: modelName,
+						scale: [10, 10, 10],
+						pos: [0, 100, -200],
+						rot: [0.1,  0.5 , 0],
+						angVel : new THREE.Vector3(0, 0.2, 0),
+						vel : [300, 0,0]
+					} ,1 , true);
 
-					$(".right-arrow").click(function(){
-						changeSelectModel(1);
+					$(".left-arrow-group").click(function(){
+						changeSelectModel(-1);
 					});
 
-					$(".left-arrow").click(function(){
-						changeSelectModel(-1);
+					$(".right-arrow-group").click(function(){
+						changeSelectModel(1);
 					});
 
 					console.log("succsessFunc");
@@ -521,36 +538,11 @@ let s = 40;
 				location.href = "./..";
 			});
 
-
-/*
-	            if(isShipMove){
-	            	//models.zero_fighter.instances[0].mesh.rotation.y += 0.01;
-	            	let s = 0.00020;
-	            	//models.zero_fighter.instances[0].mesh.rotation.x += s/40;
-	            	//models.zero_fighter.instances[0].mesh.rotation.y += s;
-	            	//models.zero_fighter.instances[0].mesh.rotation.z += s/10;
-	            	//camera.rotation.x += s/40;
-	            	//camera.rotation.y += s;
-	            	//camera.rotation.z += s/10;
-
-	            	models.zero_fighter.instances[0].mesh.position.z -= 50;
-	            	camera.position.z -= 50;
-	            }
-*/
-
+			// パネル表示
 			function setModelInSelect(modelName, id = 1){
 				let model = Ocean.Models[modelName];
 				if(!model)
 					return;
-
-				oceanControl.addFighter({
-					modelName: modelName,
-					scale: [10, 10, 10],
-					pos: [0, 100, -200],
-					rot: [0.1,  0.5 , 0],
-					angVel: new THREE.Vector3(0, 0.2, 0)
-
-				} ,id , true);
 
 				$(".select-fighter-container .model-name").text(model.modelName);
 				$(".performance-power .performance-number").text(model.performance.power);
@@ -560,7 +552,11 @@ let s = 40;
 				$(".performance-fire .performance-bar").width(`${model.performance.fire}%`);
 
 				$(".performance-rotation .performance-number").text(model.performance.rotation);
-				$(".performance-rotation .performance-bar").width(`${model.performance.rotation}%`);
+				let $bar = $(".performance-rotation .performance-bar");
+				$bar.css(" transition-duration", "0s");
+				$bar.width(0);
+				$bar.css(" transition-duration", "0.3s");
+				$bar.width(`${model.performance.rotation}%`);
 
 				$(".performance-rising .performance-number").text(model.performance.rising);
 				$(".performance-rising .performance-bar").width(`${model.performance.rising}%`);
@@ -568,23 +564,66 @@ let s = 40;
 
 				$(".performance-list img.nation-flag")
 					.attr("src", model.nationality.flag);
-
 			}
 
 			let selectModelIndex = 0;
 			let modelNames = Object.keys(Ocean.Models);
 			let modelLength = modelNames.length;
-			function changeSelectModel(move){
+
+			let enableChange = true;
+			
+			const CenterPos = new THREE.Vector3(0, 100, -200);
+			const StartDistX = 300;
+			const  DisplayRot = [0.1, 0.5, 0];
+			const DisplayAngVel = new THREE.Vector3(0, 0.2 ,0);
+			const ChangeTime = 0.5;
+
+			function changeSelectModel(move){ 
+				if(!enableChange)
+					return;
+				enableChange = false;
+				var previousId = selectModelIndex + 1;
 				oceanControl.updateFighter({
-					vel: [300,0,0],
-					angVel: [0,0,0]
-				}, selectModelIndex + 1)
+					vel: [StartDistX/ ChangeTime * move ,0 ,0],
+					angVel: new THREE.Vector3(0, 0, 0)
+				}, previousId);
+
 				selectModelIndex += move;
 				if(selectModelIndex < 0)
 					selectModelIndex += modelLength;
 				else if(selectModelIndex >= modelLength )
 					selectModelIndex -= modelLength;
 				let modelName = modelNames[selectModelIndex];
+
+				var nextId = selectModelIndex + 1;
+
+				oceanControl.addFighter({
+					modelName: modelName,
+					scale: [10, 10, 10],
+					pos: [CenterPos.x - move*StartDistX, 
+							CenterPos.y, 
+							CenterPos.z],
+					rot: DisplayRot,
+					vel : new THREE.Vector3(StartDistX/ChangeTime * move, 0,0)
+					//angVel: new THREE.Vector3(0, 0.2, 0)
+				} , nextId , true);
+
+				setTimeout(function(){
+					oceanControl.deleteFighter(previousId);
+
+					oceanControl.updateFighter({
+						vel: new THREE.Vector3(0,0,0),
+						pos: [CenterPos.x, CenterPos.y, CenterPos.z],
+					}, nextId);
+				}, ChangeTime * 1000);
+
+				setTimeout(function(){
+					oceanControl.updateFighter({
+						angVel: DisplayAngVel.clone()
+					}, nextId);
+					enableChange = true;
+				}, ChangeTime * 1000 + 200);
+
 				setModelInSelect(modelName, selectModelIndex + 1);
 			}
 

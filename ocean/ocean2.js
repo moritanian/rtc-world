@@ -659,12 +659,12 @@ var Ocean = (function(){
 		Soviet:{
 			en: "Soviet Union",
 			jp: "ソ連",
-			flags : "./images/flags/SovietUnion.png"
+			flag : "./images/flags/SovietUnion.png"
 		},
-		Ameriaca:{
+		America:{
 			en: "America",
 			jp: "アメリカ",
-			flags : "./images/flags/America.png"
+			flag : "./images/flags/America.png"
 		}
 	};
 
@@ -695,7 +695,7 @@ var Ocean = (function(){
 		},
 		p51_mustang: {
 			path: "./objs/p51_mustang/scene.json",
-			nationality: Ocean.nationalityList.Ameriaca,
+			nationality: Ocean.nationalityList.America,
 			explain: "P51 マスタング",
 			modelName: "P51 マスタング",
 			performance: {
@@ -932,9 +932,9 @@ var Ocean = (function(){
 
 		if(fighterData.angVel){
 			fighterInstances[instanceId].angVel = new THREE.Vector3(
-				fighterData.angVel[0],
-				fighterData.angVel[1],
-				fighterData.angVel[2]);
+				fighterData.angVel.x,
+				fighterData.angVel.y,
+				fighterData.angVel.z);
 		}
 
 		if(fighterData.life){
