@@ -16,6 +16,7 @@
 
 
 		<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+		<script src="./../three/TrackObjectControls.js"></script>
 		<script src="https://threejs.org/examples/js/Mirror.js"></script>
 		<script src="https://threejs.org/examples/js/WaterShader.js"></script>
 
@@ -417,9 +418,9 @@ let s = 40;
 	        	infoControls.$x_pos.val(Math.floor(camera.position.x));
 				infoControls.$y_pos.val(Math.floor(camera.position.y));
 				infoControls.$z_pos.val(Math.floor(camera.position.z));
-				infoControls.$x_rot.val(camera.rotation.x);
-				infoControls.$y_rot.val(camera.rotation.y);
-				infoControls.$z_rot.val(camera.rotation.z);
+				//infoControls.$x_rot.val(camera.rotation.x);
+				//infoControls.$y_rot.val(camera.rotation.y);
+				//infoControls.$z_rot.val(camera.rotation.z);
 	            infoControls.$fps.val(Math.floor(option.fps));
 	            infoControls.$score.val(Math.floor(option.myScorePoint));
 	            infoControls.$member.val(`${option.memberNum} ${option.userId} `);
@@ -453,9 +454,14 @@ let s = 40;
 						scale: [10, 10, 10],
 						pos: [0, 100, -200],
 						rot: [0.1,  0.5 , 0],
-						angVel : new THREE.Vector3(0, 0.2, 0),
+						//angVel : new THREE.Vector3(0, 0.2, 0),
 						vel : [300, 0,0]
-					} ,1 , true);
+					} ,2 , true);
+
+					objectControl = oceanControl.setObjectControl(true, 2, $(".select-fighter-container").get(0));
+					objectControl.autoRotate = true;
+
+
 
 					$(".left-arrow-group").click(function(){
 						changeSelectModel(-1);
@@ -466,6 +472,8 @@ let s = 40;
 					});
 
 					console.log("succsessFunc");
+
+					
 				},
 				beShotCallback: (isMe, id, life) => {
 					if(isMe){
@@ -480,6 +488,7 @@ let s = 40;
 			$startButton.click(function(){
 				if($(this).hasClass("disable"))
 					return;
+				objectControl.destroy();
 				oceanControl.OnClickStart("fighter_audio");
 				//$(this).parent().hide();
 				$(".select-fighter-container").hide();
@@ -566,7 +575,7 @@ let s = 40;
 					.attr("src", model.nationality.flag);
 			}
 
-			let selectModelIndex = 0;
+			let selectModelIndex = 1;
 			let modelNames = Object.keys(Ocean.Models);
 			let modelLength = modelNames.length;
 
@@ -575,17 +584,20 @@ let s = 40;
 			const CenterPos = new THREE.Vector3(0, 100, -200);
 			const StartDistX = 300;
 			const  DisplayRot = [0.1, 0.5, 0];
-			const DisplayAngVel = new THREE.Vector3(0, 0.2 ,0);
+			//const DisplayAngVel = new THREE.Vector3(0, 0.2 ,0);
 			const ChangeTime = 0.5;
+			let objectControl;
 
 			function changeSelectModel(move){ 
 				if(!enableChange)
 					return;
+
 				enableChange = false;
+				
 				var previousId = selectModelIndex + 1;
 				oceanControl.updateFighter({
-					vel: [StartDistX/ ChangeTime * move ,0 ,0],
-					angVel: new THREE.Vector3(0, 0, 0)
+					vel: [StartDistX/ ChangeTime * move ,0 ,0] //,
+					//angVel: new THREE.Vector3(0, 0, 0)
 				}, previousId);
 
 				selectModelIndex += move;
@@ -615,12 +627,16 @@ let s = 40;
 						vel: new THREE.Vector3(0,0,0),
 						pos: [CenterPos.x, CenterPos.y, CenterPos.z],
 					}, nextId);
+
+					objectControl = oceanControl.setObjectControl(true, nextId, $(".select-fighter-container").get(0));
+
 				}, ChangeTime * 1000);
 
 				setTimeout(function(){
-					oceanControl.updateFighter({
+					/*oceanControl.updateFighter({
 						angVel: DisplayAngVel.clone()
-					}, nextId);
+					}, nextId); */
+					objectControl.autoRotate = true;
 					enableChange = true;
 				}, ChangeTime * 1000 + 200);
 

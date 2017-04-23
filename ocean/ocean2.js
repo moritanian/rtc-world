@@ -221,6 +221,7 @@ var Ocean = (function(){
 
 		initScene();		
 		modelLoader = new ModelLoader(Ocean.Models, fighterGroup);
+	
 
 		if(option.meters){
 			meterControllers = {
@@ -357,10 +358,10 @@ var Ocean = (function(){
 		if(isOrbitControl){
 			controls = new THREE.OrbitControls( camera, renderer.domElement );
 			controls.enablePan = false;
-			controls.minDistance = 1000.0;
-			controls.maxDistance = 5000.0;
+			controls.minDistance = 100.0;
+			controls.maxDistance = 500.0;
 			controls.maxPolarAngle = Math.PI * 0.495;
-			controls.target.set( camera_init_target_pos[0], camera_init_target_pos[1], camera_init_target_pos[2] );
+			controls.target.set( camInitPos[0], camInitPos[1], camInitPos[2]);
 		}
 
 		scene.add( new THREE.AmbientLight( 0x444444 ) );
@@ -640,6 +641,8 @@ var Ocean = (function(){
 		if(isOrbitControl){
 			controls.update();
 		}
+		if(objectControl)
+			objectControl.update();
 		water.render();
 		renderer.render( scene, camera );
 	}
@@ -665,6 +668,11 @@ var Ocean = (function(){
 			en: "America",
 			jp: "アメリカ",
 			flag : "./images/flags/America.png"
+		},
+		Britain: {
+			en : "Britain",
+			jp: "イギリス",
+			flag: "./images/flags/Britain.png"
 		}
 	};
 
@@ -704,7 +712,20 @@ var Ocean = (function(){
 				rotation: 100,
 				rising: 80
 			}		
+		},
+		hawker_tempest: {
+			path: "./objs/hawker_tempest_simple/scene.json",
+			nationality: Ocean.nationalityList.Britain,
+			explain: "ホーカー テンペスト",
+			modelName: "ホーカー テンペスト",
+			performance: {
+				power: 90,
+				fire: 80,
+				rotation: 80,
+				rising: 70
+			}		
 		}
+
 	};
 
 	// プレーヤの状態
@@ -1175,6 +1196,42 @@ var Ocean = (function(){
 		};
 		bulletData.bulletList.push(bulletObj);
 	}
+
+ 	Ocean.prototype.setOrbitControl = function(_isOrbitControl, fighterInstanceId){
+ 	//	isOrbitControl = _isOrbitControl ? true : false;
+ 		if(_isOrbitControl)
+ 		{
+ 			let fighter = fighterInstances[fighterInstanceId];
+ 			if(!fighter)
+ 				return;
+
+ 			controls = new THREE.OrbitControls( fighter.mesh, renderer.domElement );
+			controls.enablePan = false;
+			controls.minDistance = 100.0;
+			controls.maxDistance = 500.0;
+			controls.maxPolarAngle = Math.PI * 0.495;
+			controls.target.set( fighter.mesh.position.x, fighter.mesh.position.y, fighter.mesh.position.z);
+
+ 		}
+ 	}
+
+ 	let objectControl;
+ 	Ocean.prototype.setObjectControl = function(isControl, fighterInstanceId, domElement){
+		if(isControl)
+		{
+			let fighter = fighterInstances[fighterInstanceId];
+ 			if(!fighter)
+ 				return;
+			objectControl = new THREE.TrackObjectControls(fighter.mesh, camera, domElement);
+		}
+		else 
+		{
+			objectControl.enabled = false;
+		}
+
+		return objectControl;
+	}
+
 
 	// getter
 	Object.defineProperty(Ocean.prototype, "myScorePoint", {
