@@ -3,6 +3,7 @@
     background-color: #202125;
     width: 60%;
     float: left;
+    position: relative;
 }
 
 .ellipse{

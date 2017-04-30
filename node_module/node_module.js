@@ -100,11 +100,12 @@ NodeModule.prototype.mdown = function(e){
     var instance = e.data.my_node_obj;
     var node_id = $(this).attr("node_id");
     e.data.my_node_obj.renown_node_detail(node_id);
+    console.log(e);
     //タッチデイベントとマウスのイベントの差異を吸収
     if(e.type === "mousedown") {
         var event = e;
         } else {
-        var event = e.changedTouches[0];
+        var event = e.originalEvent.changedTouches[0];
     }
     //要素内の相対座標を取得
     x = event.pageX - this.offsetLeft;
@@ -138,7 +139,7 @@ NodeModule.prototype.mmove = function(e) {
     if(e.type === "mousemove") {
         var event = e;
     } else {
-        var event = e.changedTouches[0];
+        var event = e.originalEvent.changedTouches[0];
     }
     //フリックしたときに画面を動かさないようにデフォルト動作を抑制
     e.preventDefault();
@@ -243,13 +244,11 @@ NodeModule.prototype.create_node = function(node_type, txt, pos){
     c_node.attr("node_id", this.node_count);
     this.map_parent.append(c_node);
     c_node.children().text(txt);
-    var offset = $(this.map_parent).offset();
-    c_node.css("top", pos[1] + offset.top ).css("left", pos[0] + offset.left);
+    c_node.css("top", pos[1] ).css("left", pos[0] );
 }
 
 NodeModule.prototype.get_node_dom_pos = function(dom){
-    var offset = $(this.map_parent).offset();
-    return [dom.position().left - offset.left, dom.position().top - offset.top];
+    return [dom.position().left , dom.position().top];
 }
     
 // 二点間直線
