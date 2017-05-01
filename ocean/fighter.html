@@ -175,6 +175,9 @@
 	        <div class="meter-group" style="display:none">
 	        	<div class="meter" id="feet-meter"></div>
 	        	<div class="meter" id="compass-meter"></div>
+	        	<div class="life-gauge-group" id="life-gauge">
+	        		<div id="life-gauge-child"></div>
+	        	</div>
 	        </div>
 	        <div class="blood-splash hide"></div>
 
@@ -376,42 +379,34 @@ let s = 40;
 	        		scale: [s, s, s],  // 10
 					pos: [1800, 50, 500],
 					rot: [0, Math.PI/2, 0],
-					life: 20,
 					vel : new THREE.Vector3(100,0,0)
 	        	},
 	        	{
 	        		modelName: "battle_ship",
-	        		scale: [10, 10, 10],
 					pos: [1800, 200, 0],
 					rot: [-Math.PI/5.0, -Math.PI/3, Math.PI/100],
-					life: 2
-	        	},
-	        	{
-	        		modelName: "zero_fighter",
-	        		scale: [10, 10, 10],
-					center: [0, 14, -34],
-					pos: [1800, 300, -5000],
-					rot: [0, 0,0],
-					fixCam: true,
-					control: true,
-					life: 3,
-					vel: new THREE.Vector3(0,0,1000)
 	        	},
 	        	{
 	        		modelName: "p51_mustang",
-	        		scale: [0.2, 0.2, 0.2],
 					pos: [1200, 5000, -2500],
 					rot: [ Math.PI/4 ,Math.PI/4,0],
-					life: 2
 	        	},
 	        	{
 	        		modelName: "p51_mustang",
-					scale: [0.2, 0.2, 0.2],
 					pos: [1200, 1000, -1000],
 					rot: [ Math.PI/4 , -Math.PI/6,0],
-					life: 2
 				}
 	        ];
+
+	        let myFighterData = {
+        		modelName: "zero_fighter",
+				center: [0, 14, -34],
+				pos: [1800, 300, -5000],
+				rot: [0, 0,0],
+				fixCam: true,
+				control: true,
+				//vel: new THREE.Vector3(0,0,1000)
+        	};
 
 	        var animateCallback = function(camera, option){
 	        	//console.log(option);
@@ -441,24 +436,26 @@ let s = 40;
 				isLockSideScreen: true,
 				meters : {
 					"feet" : $("#feet-meter"),
-					"compass" : $("#compass-meter")
+					"compass" : $("#compass-meter"),
+					"life_gauge": $("#life-gauge-child") 
 				},
 				succsessFunc: self => {
 					$startButton.text("Start");
 					$startButton.removeClass("disable");
 
+					// #TODO ここ、モデル変更部分と共通化させる
 					let modelName = "zero_fighter";
 					setModelInSelect(modelName);
+					nextId = uuid();
 					oceanControl.addFighter({
 						modelName: modelName,
-						scale: [10, 10, 10],
 						pos: [0, 100, -200],
 						rot: [0.1,  0.5 , 0],
-						//angVel : new THREE.Vector3(0, 0.2, 0),
-						vel : [300, 0,0]
-					} ,2 , true);
+						vel : [300, 0,0],
+						isPrivate: true
+					} ,nextId , true);
 
-					objectControl = oceanControl.setObjectControl(true, 2, $(".select-fighter-container").get(0));
+					objectControl = oceanControl.setObjectControl(true, nextId, $(".select-fighter-container").get(0));
 					objectControl.autoRotate = true;
 
 
@@ -499,15 +496,13 @@ let s = 40;
 				 // モデル追加
 				for(let index in fighterList){
 					let id = oceanControl.createFighter(fighterList[index]);
-					if(index == 0){
-						//setModelIntanceWithControl(infoControls, oceanControl.getFighterInstanceById(id));
-					}else {
-						if(index == 2){
-							controlFighterId = id;
-							oceanControl.setControlFighter(controlFighterId);
-						}
-					}
 				}
+				
+				oceanControl.deleteFighter(nextId);
+				myFighterData.modelName =  modelNames[selectModelIndex];;
+				controlFighterId = oceanControl.createFighter(myFighterData);
+				oceanControl.setControlFighter(controlFighterId);
+				oceanControl.applyPerformanceVelocity(controlFighterId);
 			});
 
 			let debugPause = false;
@@ -547,8 +542,12 @@ let s = 40;
 				location.href = "./..";
 			});
 
+			// objectControl のバブリング対策
+			Util.stopEventPropagation(".model-detail", ["mousedown", "touchstart"]);
+		
+
 			// パネル表示
-			function setModelInSelect(modelName, id = 1){
+			function setModelInSelect(modelName){
 				let model = Ocean.Models[modelName];
 				if(!model)
 					return;
@@ -588,13 +587,16 @@ let s = 40;
 			const ChangeTime = 0.5;
 			let objectControl;
 
+			let previousId;
+			let nextId;
+
 			function changeSelectModel(move){ 
 				if(!enableChange)
 					return;
 
 				enableChange = false;
 				
-				var previousId = selectModelIndex + 1;
+				previousId = nextId;//selectModelIndex + 1;
 				oceanControl.updateFighter({
 					vel: [StartDistX/ ChangeTime * move ,0 ,0] //,
 					//angVel: new THREE.Vector3(0, 0, 0)
@@ -607,17 +609,16 @@ let s = 40;
 					selectModelIndex -= modelLength;
 				let modelName = modelNames[selectModelIndex];
 
-				var nextId = selectModelIndex + 1;
+				nextId = uuid();//selectModelIndex + 1;
 
 				oceanControl.addFighter({
 					modelName: modelName,
-					scale: [10, 10, 10],
 					pos: [CenterPos.x - move*StartDistX, 
 							CenterPos.y, 
 							CenterPos.z],
 					rot: DisplayRot,
-					vel : new THREE.Vector3(StartDistX/ChangeTime * move, 0,0)
-					//angVel: new THREE.Vector3(0, 0.2, 0)
+					vel : new THREE.Vector3(StartDistX/ChangeTime * move, 0,0),
+					isPrivate: true
 				} , nextId , true);
 
 				setTimeout(function(){
@@ -640,7 +641,7 @@ let s = 40;
 					enableChange = true;
 				}, ChangeTime * 1000 + 200);
 
-				setModelInSelect(modelName, selectModelIndex + 1);
+				setModelInSelect(modelName);
 			}
 
 			function setModelIntanceWithControl(infoControls, modelInstance){

@@ -29,6 +29,8 @@ THREE.TrackObjectControls = function ( object, camera, domElement ) {
 
 	this.mouseButtons = { ORBIT: THREE.MOUSE.LEFT, ZOOM: THREE.MOUSE.MIDDLE };
 
+	this.inverseXY = false;
+
 	var scope = this;
 
 	var changeEvent = { type: 'change' };
@@ -79,9 +81,10 @@ THREE.TrackObjectControls = function ( object, camera, domElement ) {
 	this.update = function(){
 
 		if ( scope.autoRotate && state === STATE.NONE ) {
-
-			rotateLeft( getAutoRotationAngle() );
-
+			if(!this.inverseXY)
+				rotateLeft( getAutoRotationAngle() );
+			else
+				rotateUp( getAutoRotationAngle() );
 		}
 	}
 
@@ -100,14 +103,18 @@ THREE.TrackObjectControls = function ( object, camera, domElement ) {
 
 	function rotateLeft( angle ) {
 
+	if(!scope.inverseXY)
 		scope.object.rotation.y += angle;
-
+	else
+		scope.object.rotation.x -= angle;		
 	}
 
 	function rotateUp( angle ) {
 
-		scope.object.rotation.x += angle;
-
+		if(!scope.inverseXY)
+			scope.object.rotation.x += angle;
+		else
+			scope.object.rotation.y += angle;
 	}
 
 	function dolly(scale){
