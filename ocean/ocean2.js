@@ -19,6 +19,7 @@ var Ocean = (function(){
 	var count = 0, isFlowTracking, camInitPos, lastTime, deltaTime;
 	var Instance;
 	let isLockSideScreen; // 横に画面を固定する
+	let isInverseScreen;
 	let bulletData;　
 	let controlCallback; // control用callback
 	let controlFighterId;
@@ -196,6 +197,7 @@ var Ocean = (function(){
 		camInitPos = option.camera.pos || [0,0,0];
 		isUseChanel = option.isUseChanel || false;
 		isLockSideScreen = option.isLockSideScreen || false;
+		isInverseScreen = false;
 		this.fpsManager = new LpFilter(0.06);
 
 		let succsessFunc = option.succsessFunc || function(){};
@@ -335,6 +337,7 @@ var Ocean = (function(){
 		renderer.domElement.style.left = "-4px";
 
 		if(isLockSideScreen && screenDirection()){ // 横に倒す
+			isInverseScreen = true;
 			let sc_height = $(document).width() + 4;// screen.availHeight/window.devicePixelRatio; //$(document).width() + 4;
 			let sc_width = screen.availHeight;
 
@@ -348,6 +351,7 @@ var Ocean = (function(){
 			$(".ui-widgets").width(sc_width);
 			$(".ui-widgets").height(sc_height);
 		} else {
+			isInverseScreen = false;
 			console.log("not side!! ");
 
 			renderer.setPixelRatio( window.devicePixelRatio );
@@ -533,6 +537,7 @@ var Ocean = (function(){
 		console.log("avail width", screen.availWidth);
 		
 		if(isLockSideScreen && screenDirection()){ // 横に倒す
+			isInverseScreen = true;
 			let sc_height = $(document).width() + 4;// screen.availHeight/window.devicePixelRatio; //$(document).width() + 4;
 			let sc_width = screen.availHeight;
 			renderer.setPixelRatio( sc_width/ sc_height );
@@ -542,6 +547,7 @@ var Ocean = (function(){
 
 
 		} else {
+			isInverseScreen = false;
 			let sc_height = window.innerHeight; //screen.availHeight;// screen.availHeight/window.devicePixelRatio; //$(document).width() + 4;
 			let sc_width = $(document).width();
 			renderer.setPixelRatio( window.devicePixelRatio );
@@ -549,6 +555,8 @@ var Ocean = (function(){
 			$(".ui-widgets").width(sc_width);
 			$(".ui-widgets").height(sc_height);
 		}
+		if(objectControl)
+			objectControl.inverseXY = isInverseScreen;
 	}
 
 	function animate(){
@@ -1277,6 +1285,7 @@ var Ocean = (function(){
  			if(!fighter)
  				return;
 			objectControl = new THREE.TrackObjectControls(fighter.mesh, camera, domElement);
+			objectControl.inverseXY = isInverseScreen;
 		}
 		else 
 		{

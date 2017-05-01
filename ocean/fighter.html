@@ -542,6 +542,10 @@ let s = 40;
 				location.href = "./..";
 			});
 
+			// objectControl のバブリング対策
+			Util.stopEventPropagation(".model-detail", ["mousedown", "touchstart"]);
+		
+
 			// パネル表示
 			function setModelInSelect(modelName){
 				let model = Ocean.Models[modelName];

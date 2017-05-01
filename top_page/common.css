@@ -1,6 +1,6 @@
 @import url(./top.css) screen and (min-width: 769px); /* 769以上 */
 @import url(./top_tablet.css) screen and (max-width: 768px); /* 768以下 */
-@import url(./top_smart.css) screen and (max-width: 320px); /* 320以下 */
+/* @import url(./top_smart.css) screen and (max-width: 320px); */ /* 320以下 */
 
 body{
   margin:0px;

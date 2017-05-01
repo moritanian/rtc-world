@@ -1,3 +1,4 @@
+let Util = {};
 // 一度だけ出したいログ
 var OnceLog = (function(){
 	var OnceLog = function(){
@@ -179,3 +180,14 @@ Number.prototype.floatFormat = function(n)
 	return Math.round (this * _pow)/_pow;	
 }
 
+/* dom のevent propagation */
+Util.stopEventPropagation = function(selector, events)
+{
+	let dom = document.querySelector(selector);
+	for(let event of events)
+	{
+		dom.addEventListener(event, function(e){
+			e.stopPropagation();
+		});
+	}
+}
