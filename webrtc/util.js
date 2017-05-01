@@ -1,3 +1,4 @@
+let Util = {};
 // 一度だけ出したいログ
 var OnceLog = (function(){
 	var OnceLog = function(){
@@ -35,7 +36,7 @@ var MeshPool = (function(){
 			mesh =  this.poolList.shift();	
 			mesh.visible = true;
 		} else {
-			mesh = this.originalMesh.clone();
+			mesh = this._createMesh();
 		}
 
 		mesh.instanceId = instanceId;
@@ -51,6 +52,17 @@ var MeshPool = (function(){
 		if(this.parentObj)
 			this.parentObj.remove(mesh);
 		this.poolList.push(mesh);
+	}
+
+	// meshをあらかじめ確保
+	MeshPool.prototype.allocate = function(num){
+		for(let i=0; i<num; i++)
+			this.poolList.push(this._createMesh());
+	}
+
+	MeshPool.prototype._createMesh = function()	
+	{
+		return this.originalMesh.clone();
 	}
 
 	return MeshPool;
@@ -89,7 +101,7 @@ function uuid() {
   return uuid;
 }
 
-
+/* screen 系*/
 function setFullScreen(startFunc, endFunc, failedFunc, lockMode = "landscape"){
 	document.body.requestFullscreen  = document.body.requestFullscreen 
 		|| document.body.mozRequestFullScreen
@@ -161,4 +173,21 @@ function lockOrientation(mode) {
     }
 }
 
+/* 数値型拡張 */
+Number.prototype.floatFormat = function(n)
+{
+	let _pow = Math.pow(10, n);
+	return Math.round (this * _pow)/_pow;	
+}
 
+/* dom のevent propagation */
+Util.stopEventPropagation = function(selector, events)
+{
+	let dom = document.querySelector(selector);
+	for(let event of events)
+	{
+		dom.addEventListener(event, function(e){
+			e.stopPropagation();
+		});
+	}
+}

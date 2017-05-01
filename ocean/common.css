@@ -10,9 +10,12 @@ body {
     display: none;
 }
 
+/* control panel */
+
 .info{
     position: absolute;
     margin-left: 15px;
+    top: 0;
 }
 
 .info ul {
@@ -128,6 +131,7 @@ input[type="checkbox"].info-on-off-button:focus {
     width: 200px;
 }
 
+/* 以下スタート画面UI */
 .ui-widgets {
     position: absolute;
     width: 100%;
@@ -135,6 +139,181 @@ input[type="checkbox"].info-on-off-button:focus {
     top: 0;
 }
 
+.select-fighter-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.select-fighter-container .model-detail {
+    background-color: rgba(11, 11, 11, 0.17);
+    margin: 0 20px
+}
+
+.select-fighter-container .model-name {
+    width: 100%;
+    text-align: center;
+    position: relative;
+    padding-top: 10px;
+    font-size: 25px;
+    font-weight: bold;
+    color: white;
+    text-shadow: 4px 2px 4px #000000;
+}
+
+.performance-elem:nth-child(odd) {
+    float:left;
+}
+
+.performance-elem:nth-child(even) {
+    width: 50px;
+    right: 0;
+    margin-left: auto;
+}
+
+.model-detail .performance-list {
+    font-size: 15px;
+    font-weight: bold;
+    top: -7px;
+    position: relative;
+    text-shadow: 2px 2px 1px #053cab;
+    color: #ffffff;
+    
+}
+
+.model-detail .performance-list .performance-elem {
+    padding: 0px 40px 10px;
+    width: 100px;
+}
+
+.performance-elem .performance-title {
+    float: left;
+}
+
+.performance-elem .performance-bar {
+   background-color: rgb(205, 255, 251);
+    height: 6px;
+    box-shadow: 2px 1px 20px 1px #23d7fd;
+    margin-top: 5px;
+    border-radius: 1px 1px 5px 1px;
+
+    transition-duration:0.3s;
+    -moz-transition-duration:0.3s;
+    -webkit-transition-duration:0.3s;
+    -o-transition-duration:0.3s;
+    -ms-transition-duration:0.3s;
+    transition-timing-function:ease-out;
+    /*transition-timing-function:ease-in-out; */
+}
+
+.performance-elem .performance-number {
+    
+}
+
+.performance-list .nation-flag {
+    width: 50px;
+    background-size: cover;
+    position: absolute;
+    top: 50px;
+    right: 0;
+    left: 0;
+    margin: auto;
+    box-shadow: 4px 4px 17px 1px #121212;
+    top: 20px;
+}
+
+.select-arrows {
+    position: relative;
+    margin: 0px 10px 0px;
+    height: 70%;
+    height: -webkit-calc(100% - 135px);
+    height: calc(100% - 135px);
+}
+
+.arrow-group {
+    width: 40px;
+    height: 40px;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+    border-radius: 25px;
+}
+
+.arrow-group:active {
+    background-color: rgba(136, 170, 165, 0.37);
+    box-shadow: 0px 0px 20px 0px #eff4f3;
+}
+
+.left-arrow-group {
+    padding: 5px 0px 5px 10px;
+}
+
+.right-arrow-group {
+    right: 0;
+    padding: 5px 10px 5px 0px;
+}
+
+.arrow-part {
+    width: 7px;
+    height: 20px;
+    background-color: #c7feff;
+    box-shadow: 0px 0px 10px 1px #a3fae2;
+}
+
+.left-arrow-group .arrow-top-part{
+    -moz-transform-origin: 0 100%;
+    -webkit-transform-origin: 0 100%;
+    transform-origin: 0 100%;
+    -moz-transform: skewX(-25deg);
+    -webkit-transform: skewX(-25deg);
+    transform: skewX(-25deg);
+}
+
+.left-arrow-group .arrow-bottom-part{
+    -moz-transform-origin: 100% 0;
+    -webkit-transform-origin:100% 0;
+    transform-origin: 100% 0;
+    -moz-transform: skewX(25deg);
+    -webkit-transform: skewX(25deg);
+    transform: skewX(25deg);
+}
+
+.right-arrow-group .arrow-top-part {
+    -moz-transform-origin: 0 100%;
+    -webkit-transform-origin: 0 100%;
+    transform-origin: 0 100%;
+    -moz-transform: skewX(25deg);
+    -webkit-transform: skewX(25deg);
+    transform: skewX(25deg);
+
+    right: 0;
+    margin-left: auto;
+}
+
+.right-arrow-group .arrow-bottom-part {
+   -moz-transform-origin: 100% 0;
+    -webkit-transform-origin: 100% 0;
+    transform-origin: 100% 0;
+    -moz-transform: skewX(-25deg);
+    -webkit-transform: skewX(-25deg);
+    transform: skewX(-25deg);
+
+    right: 0;
+    margin-left: auto;
+}
+
+
+.parallelogram {
+    -moz-transform-origin:0 100%;
+    -webkit-transform-origin:0 100%;
+    transform-origin:0 100%;
+    -moz-transform:skewX(-25deg);
+    -webkit-transform:skewX(-25deg);
+    transform:skewX(-25deg);
+}
+
+/* ゲーム中画面UI */
 
 .sighting {
    width: 200px;
@@ -168,12 +347,19 @@ input[type="checkbox"].info-on-off-button:focus {
     background-position-y: 30%;
 }
 
-.ui-button{
+.ui-button, .ui-buton-mini{
     position: relative;
+    margin: auto;
 }
 
 .start-button {
-    margin-top: 25%;
+    position: absolute;
+    bottom: 10px;
+    right: 0;
+    left: 0;
+    width: 30%;
+    margin: auto;
+
 }
 
 .start-back {
@@ -182,7 +368,17 @@ input[type="checkbox"].info-on-off-button:focus {
 }
 
 .restart-button  {
-   margin: 5px;
+    width: 50%;
+    left: 0;
+    right: 0;
+    margin: 20px auto 10px;
+}
+
+.back-button {
+    width: 50%;
+    left: 0;
+    right: 0;
+    margin: 10px auto;
 }
 
 .start-button .disable {
@@ -191,7 +387,7 @@ input[type="checkbox"].info-on-off-button:focus {
 }
 
 .hexagon {
-    width: 40%;
+    width: 97%;/* width: 40%; */
     height: 80px;
     background-color: #64C7CC;
     background: -moz-linear-gradient(top,#80CCE6,#80CCE6 5%,#09C 5%,#069 95%,#069 95%,#00293D);
@@ -261,7 +457,7 @@ input[type="checkbox"].info-on-off-button:focus {
     left: 0;
     right: 0;
     margin: auto;
-    width: 43%;
+    /* width: 43%;  */
     height: 90px;
     background-color: #484848;
     background: -moz-linear-gradient(top,#80CCE6,#80CCE6 5%,#09C 5%,#069 95%,#069 95%,#00293D);
@@ -286,6 +482,64 @@ input[type="checkbox"].info-on-off-button:focus {
    border-left: 40px solid #666667;
     left: 100%;
 }
+
+.ui-button-mini .hexagon {
+    width: 97%;
+    height: 34px;
+    font-size: 28px;
+    line-height: 34px;
+}
+
+.ui-button-mini .hexagon:before, .ui-button-mini .hexagon:after {
+   border: 17px solid transparent;
+}
+
+.ui-button-mini .hexagon:before {
+    border-right: 17px  solid #0088bb;
+    left: -34px;
+}
+
+.ui-button-mini .hexagon:after {
+    border-left: 17px solid #0088bb;
+    left: 100%;
+}
+
+.ui-button-mini .hexagon2 {
+    height: 36px;
+}
+
+.ui-button-mini .hexagon2:before, .ui-button-mini .hexagon2:after {
+   border: 18px solid transparent;
+}
+
+.ui-button-mini .hexagon2:before {
+   border-right: 18px solid #605e5e;
+    left: -36px;
+}
+
+.ui-button-mini .hexagon2:after {
+   border-left: 18px solid #666667;
+    left: 100%;
+}
+
+.ui-button-mini .hexagon:hover:before {
+    border-right: 17px solid #32a4cf;
+}
+
+.ui-button-mini .hexagon:active:before {
+    border-right: 17px solid #74bcd7;
+}
+
+.ui-button-mini .hexagon:hover:after {
+    border-left: 17px solid #32a4cf;
+}
+
+.ui-button-mini .hexagon:active:after {
+    border-left: 17px solid #74bcd7;
+}
+
+
+
 
 .game-over {
     position: absolute;
@@ -319,7 +573,6 @@ input[type="checkbox"].info-on-off-button:focus {
     bottom: 0;
     margin: 0 auto;
     width: 50%;
-    height: 100%;
     pointer-events: none;
 }
 
@@ -346,6 +599,38 @@ input[type="checkbox"].info-on-off-button:focus {
     width: 100%;
     pointer-events: none;
 
+}
+
+.life-gauge-group {
+    position: relative;
+    width: 8px;
+    border: 1px solid #9e9e9e;
+    background-color: black;
+    box-shadow: 0px 0px 4px 0px #c3c0f3;
+    right: 0;
+    margin-left: auto;
+    height: 80%;
+    top: 10%;
+}
+
+#life-gauge-child {
+    position: absolute;
+    width: 96%;
+    height: 100%;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: auto;
+    background-color: #8dcc8d;
+    box-shadow: 0px -1px 6px 0px #6bda53;
+    background: -webkit-gradient(linear, left top, right top, from(rgba(75, 103, 112, 0)), color-stop(0.05,#9bd038), color-stop(0.95,#1a8e00), color-stop(0.95,rgba(38, 111, 148, 0.98)), to(rgba(0, 41, 61, 0.01)));
+}
+
+#life-gauge-child.danger-status {
+    background: -webkit-gradient(linear, left top, right top, from(rgba(75, 103, 112, 0)), color-stop(0.05,#ef5555), color-stop(0.95,#7d2211), color-stop(0.95,rgba(148, 38, 38, 0.98)), to(rgba(0, 41, 61, 0.01)));
+    box-shadow: 0px -1px 6px 0px #da6653;
 }
 
 

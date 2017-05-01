@@ -1,3 +1,4 @@
+
 # RTC-WORLD : js demo with WebRTC and its periferal technology 
 
 sample top page : https://moritanian.github.io/rtc-world/
@@ -71,4 +72,9 @@ https://moritanian.github.io/rtc-world/ocean/fighter.html
  - Volumeric fire https://github.com/yomotsu/VolumetricFire
  - free3D https://free3d.com/   for 3d model
  - Roel z'n Boel - Free Skyboxes https://reije081.home.xs4all.nl/skyboxes/ for sky box image 
+
+
+
+## License
+MIT
 

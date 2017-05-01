@@ -6,7 +6,7 @@
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<link rel=stylesheet href="./common.css">	
 	</head>
-	<body>
+	<body >
 			<!--<audio src="sound/wave.mp3" preload="auto" autoplay loop></audio>
 			<audio src="sound/whistle.mp3" preload="auto" autoplay></audio> -->
 
@@ -16,6 +16,7 @@
 
 
 		<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+		<script src="./../three/TrackObjectControls.js"></script>
 		<script src="https://threejs.org/examples/js/Mirror.js"></script>
 		<script src="https://threejs.org/examples/js/WaterShader.js"></script>
 
@@ -47,9 +48,67 @@
         <!-- UI parts -->
         <div class="ui-widgets">
 
-        		<!-- controls -->
+        	
+
+	       	<!-- start screen -->
+	      	<div class="select-fighter-container">
+	      		<div class="model-detail">
+
+	      			<div class="model-name"></div>
+
+	      			<div class="performance-list">
+
+	      				<div class="performance-elem performance-power">
+	      					<div class="performance-title">馬力 : </div>
+	      					<span class="performance-number"> 20 </span>
+
+	      					<div class="performance-bar"></div>
+	      				</div>
+	      				
+	      				<div class="performance-elem performance-fire">
+	      					<div class="performance-title">火力 : </div>
+	      					<div class="performance-number">10</div>
+	      					<div class="performance-bar"></div>
+	      				</div>
+
+	      				<div class="performance-elem performance-rotation">
+	      					<div class="performance-title">旋回能力 : </div>
+	      					<div class="performance-number">30</div>
+	      					<div class="performance-bar"></div>
+	      				</div>
+	      				
+	      				<div class="performance-elem performance-rising">
+	      					<div class="performance-title">上昇力 : </div>
+	      					<div class="performance-number">20</div>
+	      					<div class="performance-bar"></div>
+	      				</div>
+
+	      				<img class="nation-flag"></img>
+	      			</div>
+	      		</div>
+
+	      		<div class="select-arrows">
+	      			<div class="arrow-group left-arrow-group">
+	      				<div class="arrow-part arrow-top-part"></div>
+	      				<div class="arrow-part arrow-bottom-part"></div>
+	      			</div>
+
+	      			<div class="arrow-group right-arrow-group">
+	      				<div class="arrow-part arrow-top-part"></div>
+	      				<div class="arrow-part arrow-bottom-part"></div>
+	      			</div>
+
+	      		</div>
+
+	        	<div class="ui-button-mini start-button">
+	        		<div class="hexagon2"></div>
+	        		<div class="hexagon disable"> Loading..</div>
+	        	</div>
+	        </div>
+
+	        	<!-- controls -->
 	        <div class="info">
-	        	<ul class="info-items">
+	        	<ul class="info-items" style="display: none;">
 	        		<li class="info-li">
 	        			<span class="item-title">fps</span>
 	        			<span class="item-value fps"><input type="text"></span>
@@ -70,6 +129,7 @@
 	        			<span class="item-title">z_pos</span>
 	        			<span class="item-value z_pos"><input type="text"></span>
 	        		</li>
+	        		<!--
 	        		<li class="info-li">
 	        			<span class="item-title">x_rot</span>
 	        			<span class="item-value x_rot"><input type="text"></span>
@@ -82,7 +142,11 @@
 	        			<span class="item-title">z_rot</span>
 	        			<span class="item-value z_rot"><input type="text"></span>
 	        		</li>
-
+					-->
+					<li class="info-li">
+	        			<span class="item-title">score</span>
+	        			<span class="item-value score"><input type="text"></span>
+	        		</li>
 	        		<li class="info-li">
 	        			<div class="info-button" id="be-shot"> Be shot </div>
 	        		</li>
@@ -103,21 +167,21 @@
 	        		</li>
 	        		-->
 	        	</ul>
-	        	<div class="close-button info-toggle-button">Close Controls</div>
+	        	<div class="open-button info-toggle-button">Open Controls</div>
 	        </div>
 
-
+	        <!-- flying screen -->
 	        <div class="sighting" style="display: none;"></div>
 	        <div class="meter-group" style="display:none">
 	        	<div class="meter" id="feet-meter"></div>
 	        	<div class="meter" id="compass-meter"></div>
+	        	<div class="life-gauge-group" id="life-gauge">
+	        		<div id="life-gauge-child"></div>
+	        	</div>
 	        </div>
 	        <div class="blood-splash hide"></div>
 
-	        <div class="ui-button start-button">
-	        	<div class="hexagon2"></div>
-	        	<div class="hexagon disable"> Loading..</div>
-	        </div>
+	       
 	        
 	        <div class="game-over" style="display: none;">
 	        	<p>Game Over</p>
@@ -160,6 +224,7 @@
 				$x_rot: $(".x_rot input"),
 				$y_rot: $(".y_rot input"),
 				$z_rot: $(".z_rot input"),
+				$score: $(".score input"),
 				$fps : $(".fps input"),
 				$member : $(".member input")
 			};
@@ -314,57 +379,50 @@ let s = 40;
 	        		scale: [s, s, s],  // 10
 					pos: [1800, 50, 500],
 					rot: [0, Math.PI/2, 0],
-					life: 20,
 					vel : new THREE.Vector3(100,0,0)
 	        	},
 	        	{
 	        		modelName: "battle_ship",
-	        		scale: [10, 10, 10],
 					pos: [1800, 200, 0],
 					rot: [-Math.PI/5.0, -Math.PI/3, Math.PI/100],
-					life: 2
-	        	},
-	        	{
-	        		modelName: "zero_fighter",
-	        		scale: [10, 10, 10],
-					center: [0, 14, -34],
-					pos: [1800, 300, -5000],
-					rot: [0, 0,0],
-					fixCam: true,
-					control: true,
-					life: 3,
-					vel: new THREE.Vector3(0,0,1000)
 	        	},
 	        	{
 	        		modelName: "p51_mustang",
-	        		scale: [0.2, 0.2, 0.2],
 					pos: [1200, 5000, -2500],
 					rot: [ Math.PI/4 ,Math.PI/4,0],
-					life: 2
 	        	},
 	        	{
 	        		modelName: "p51_mustang",
-					scale: [0.2, 0.2, 0.2],
 					pos: [1200, 1000, -1000],
 					rot: [ Math.PI/4 , -Math.PI/6,0],
-					life: 2
 				}
 	        ];
+
+	        let myFighterData = {
+        		modelName: "zero_fighter",
+				center: [0, 14, -34],
+				pos: [1800, 300, -5000],
+				rot: [0, 0,0],
+				fixCam: true,
+				control: true,
+				//vel: new THREE.Vector3(0,0,1000)
+        	};
 
 	        var animateCallback = function(camera, option){
 	        	//console.log(option);
 	        	infoControls.$x_pos.val(Math.floor(camera.position.x));
 				infoControls.$y_pos.val(Math.floor(camera.position.y));
 				infoControls.$z_pos.val(Math.floor(camera.position.z));
-				infoControls.$x_rot.val(camera.rotation.x);
-				infoControls.$y_rot.val(camera.rotation.y);
-				infoControls.$z_rot.val(camera.rotation.z);
+				//infoControls.$x_rot.val(camera.rotation.x);
+				//infoControls.$y_rot.val(camera.rotation.y);
+				//infoControls.$z_rot.val(camera.rotation.z);
 	            infoControls.$fps.val(Math.floor(option.fps));
+	            infoControls.$score.val(Math.floor(option.myScorePoint));
 	            infoControls.$member.val(`${option.memberNum} ${option.userId} `);
 
 			}
 
-	        let $startButton = $(".start-button");
+	        let $startButton = $(".start-button .hexagon");
 
 	        // 3dビュー作成
 	        let oceanControl = new Ocean({
@@ -378,13 +436,41 @@ let s = 40;
 				isLockSideScreen: true,
 				meters : {
 					"feet" : $("#feet-meter"),
-					"compass" : $("#compass-meter")
+					"compass" : $("#compass-meter"),
+					"life_gauge": $("#life-gauge-child") 
 				},
 				succsessFunc: self => {
-					$startButton.find(".hexagon").text("Start");
+					$startButton.text("Start");
 					$startButton.removeClass("disable");
 
+					// #TODO ここ、モデル変更部分と共通化させる
+					let modelName = "zero_fighter";
+					setModelInSelect(modelName);
+					nextId = uuid();
+					oceanControl.addFighter({
+						modelName: modelName,
+						pos: [0, 100, -200],
+						rot: [0.1,  0.5 , 0],
+						vel : [300, 0,0],
+						isPrivate: true
+					} ,nextId , true);
+
+					objectControl = oceanControl.setObjectControl(true, nextId, $(".select-fighter-container").get(0));
+					objectControl.autoRotate = true;
+
+
+
+					$(".left-arrow-group").click(function(){
+						changeSelectModel(-1);
+					});
+
+					$(".right-arrow-group").click(function(){
+						changeSelectModel(1);
+					});
+
 					console.log("succsessFunc");
+
+					
 				},
 				beShotCallback: (isMe, id, life) => {
 					if(isMe){
@@ -399,8 +485,10 @@ let s = 40;
 			$startButton.click(function(){
 				if($(this).hasClass("disable"))
 					return;
+				objectControl.destroy();
 				oceanControl.OnClickStart("fighter_audio");
-				$(this).hide();
+				//$(this).parent().hide();
+				$(".select-fighter-container").hide();
 				$(".start-back").hide();
 				$(".sighting").show();
 				$(".meter-group").show();
@@ -408,15 +496,13 @@ let s = 40;
 				 // モデル追加
 				for(let index in fighterList){
 					let id = oceanControl.createFighter(fighterList[index]);
-					if(index == 0){
-						//setModelIntanceWithControl(infoControls, oceanControl.getFighterInstanceById(id));
-					}else {
-						if(index == 2){
-							controlFighterId = id;
-							oceanControl.setControlFighter(controlFighterId);
-						}
-					}
 				}
+				
+				oceanControl.deleteFighter(nextId);
+				myFighterData.modelName =  modelNames[selectModelIndex];;
+				controlFighterId = oceanControl.createFighter(myFighterData);
+				oceanControl.setControlFighter(controlFighterId);
+				oceanControl.applyPerformanceVelocity(controlFighterId);
 			});
 
 			let debugPause = false;
@@ -456,22 +542,107 @@ let s = 40;
 				location.href = "./..";
 			});
 
+			// objectControl のバブリング対策
+			Util.stopEventPropagation(".model-detail", ["mousedown", "touchstart"]);
+		
 
-/*
-	            if(isShipMove){
-	            	//models.zero_fighter.instances[0].mesh.rotation.y += 0.01;
-	            	let s = 0.00020;
-	            	//models.zero_fighter.instances[0].mesh.rotation.x += s/40;
-	            	//models.zero_fighter.instances[0].mesh.rotation.y += s;
-	            	//models.zero_fighter.instances[0].mesh.rotation.z += s/10;
-	            	//camera.rotation.x += s/40;
-	            	//camera.rotation.y += s;
-	            	//camera.rotation.z += s/10;
+			// パネル表示
+			function setModelInSelect(modelName){
+				let model = Ocean.Models[modelName];
+				if(!model)
+					return;
 
-	            	models.zero_fighter.instances[0].mesh.position.z -= 50;
-	            	camera.position.z -= 50;
-	            }
-*/
+				$(".select-fighter-container .model-name").text(model.modelName);
+				$(".performance-power .performance-number").text(model.performance.power);
+				$(".performance-power .performance-bar").width(`${model.performance.power}%`);
+
+				$(".performance-fire .performance-number").text(model.performance.fire);
+				$(".performance-fire .performance-bar").width(`${model.performance.fire}%`);
+
+				$(".performance-rotation .performance-number").text(model.performance.rotation);
+				let $bar = $(".performance-rotation .performance-bar");
+				$bar.css(" transition-duration", "0s");
+				$bar.width(0);
+				$bar.css(" transition-duration", "0.3s");
+				$bar.width(`${model.performance.rotation}%`);
+
+				$(".performance-rising .performance-number").text(model.performance.rising);
+				$(".performance-rising .performance-bar").width(`${model.performance.rising}%`);
+
+
+				$(".performance-list img.nation-flag")
+					.attr("src", model.nationality.flag);
+			}
+
+			let selectModelIndex = 1;
+			let modelNames = Object.keys(Ocean.Models);
+			let modelLength = modelNames.length;
+
+			let enableChange = true;
+			
+			const CenterPos = new THREE.Vector3(0, 100, -200);
+			const StartDistX = 300;
+			const  DisplayRot = [0.1, 0.5, 0];
+			//const DisplayAngVel = new THREE.Vector3(0, 0.2 ,0);
+			const ChangeTime = 0.5;
+			let objectControl;
+
+			let previousId;
+			let nextId;
+
+			function changeSelectModel(move){ 
+				if(!enableChange)
+					return;
+
+				enableChange = false;
+				
+				previousId = nextId;//selectModelIndex + 1;
+				oceanControl.updateFighter({
+					vel: [StartDistX/ ChangeTime * move ,0 ,0] //,
+					//angVel: new THREE.Vector3(0, 0, 0)
+				}, previousId);
+
+				selectModelIndex += move;
+				if(selectModelIndex < 0)
+					selectModelIndex += modelLength;
+				else if(selectModelIndex >= modelLength )
+					selectModelIndex -= modelLength;
+				let modelName = modelNames[selectModelIndex];
+
+				nextId = uuid();//selectModelIndex + 1;
+
+				oceanControl.addFighter({
+					modelName: modelName,
+					pos: [CenterPos.x - move*StartDistX, 
+							CenterPos.y, 
+							CenterPos.z],
+					rot: DisplayRot,
+					vel : new THREE.Vector3(StartDistX/ChangeTime * move, 0,0),
+					isPrivate: true
+				} , nextId , true);
+
+				setTimeout(function(){
+					oceanControl.deleteFighter(previousId);
+
+					oceanControl.updateFighter({
+						vel: new THREE.Vector3(0,0,0),
+						pos: [CenterPos.x, CenterPos.y, CenterPos.z],
+					}, nextId);
+
+					objectControl = oceanControl.setObjectControl(true, nextId, $(".select-fighter-container").get(0));
+
+				}, ChangeTime * 1000);
+
+				setTimeout(function(){
+					/*oceanControl.updateFighter({
+						angVel: DisplayAngVel.clone()
+					}, nextId); */
+					objectControl.autoRotate = true;
+					enableChange = true;
+				}, ChangeTime * 1000 + 200);
+
+				setModelInSelect(modelName);
+			}
 
 			function setModelIntanceWithControl(infoControls, modelInstance){
 				let mInstance = modelInstance;
