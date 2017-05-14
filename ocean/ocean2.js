@@ -9,6 +9,9 @@
 /*
 	ここでoceanの3dモデル構築を行う
 	外部ではthree.js の関数を直接よぶことはないようにする
+
+	TODO fighterInstanceをクラス化すべき
+	クラスを別ファイルにしたい
 */
 var Ocean = (function(){
 //Ocean: {	
@@ -53,6 +56,7 @@ var Ocean = (function(){
 	let firePool;
 	let modelLoader;
 	let meterControllers;
+	let enemyPointerController;
 
 	// 制御定数係数
 	const HORIZONTAL_COEFFICIENT_BASE = 0.05; //左右方向 0.02
@@ -175,12 +179,20 @@ var Ocean = (function(){
 	/*
 		option {
 			animateCallback: function(){},
+			successFunc,
+			beShotCallback,
 			isUseChanel,bgm
 			isFlowTracking: 
 			isOrbitControl:
 			camera: {
 				pos: [],
 				target: []
+			}
+			isLockSideScreen,
+			meters: []
+			enemyPointerArgs{
+				$parentDom,
+				$pointerDom
 			}
 
 		}
@@ -249,7 +261,8 @@ var Ocean = (function(){
 
 		beShotCallback = option.beShotCallback || function(){};
 		myScorePoint = 0;
-		
+		if(option.enemyPointerArgs)
+			enemyPointerController = new EnemyPointer(option.enemyPointerArgs.$parentDom, option.enemyPointerArgs.$pointerDom);
 	};
 
 	function initChannel(channelName, succsessFunc){
@@ -607,6 +620,9 @@ var Ocean = (function(){
 			}
 		}
 
+		if(enemyPointerController)
+			enemyPointerController.loop();
+
 		render();
 	};
 
@@ -658,7 +674,6 @@ var Ocean = (function(){
 			}
 
 		}
-		
 
 		water.material.uniforms.time.value += 1.0 / 60.0;
 		if(isOrbitControl){
@@ -1156,10 +1171,12 @@ var Ocean = (function(){
 		if(fighter.mesh.position.y < limit){
 			fighter.mesh.position.y = limit
 		}
-		meterControllers.compass.rotatePoint(beta/Math.PI*180);
 
-		meterControllers.feet.rotatePoint(fighter.mesh.position.y /100);
-
+		if(meterControllers){
+			meterControllers.compass.rotatePoint(beta/Math.PI*180);
+			meterControllers.feet.rotatePoint(fighter.mesh.position.y /100);
+		}
+	
 		publishObj(controlFighterId);
 
 
@@ -1449,7 +1466,7 @@ var Ocean = (function(){
 		}
 
 		// life-gauge
-		if(isMe)
+		if(isMe && meterControllers)
 			meterControllers.life_gauge.setGauge(fighter.life);
 		console.log("beshot isme" + isMe);
 
@@ -1457,6 +1474,170 @@ var Ocean = (function(){
 		return true;
 		//fighter.userId 
 	}
+	/* 敵機示唆 
+		毎ループよぶこと
+	*/
+	let EnemyPointer = (function(){
+
+		const blinkInterval = 0.5 ; //(s)
+		const distanceLimit = 100000;
+		const viewAngle = Math.PI/4; // TODO 他から計算したい
+
+		let $pointerParentDom, $pointerDom;
+		let parentDomHeight, parentDomWidth;
+		let cachedMyFighterInstance;
+
+
+		// contructor
+		function EnemyPointer(_$pointerParentDom, _$pointerDom){
+			this.loopCount = 0;
+			this.loopCountMax = 0;
+			this.updateMaxCount();
+			this.isShow = false;
+			$pointerParentDom = _$pointerParentDom;
+			
+			$pointerDom = _$pointerDom;
+			this.pointerDomList = {};
+		}
+
+		EnemyPointer.prototype.updateMaxCount = function(){
+			if(deltaTime && deltaTime > 0){
+				this.loopCountMax = Math.floor(blinkInterval/deltaTime);
+			}else{
+				this.loopCountMax = blinkInterval*60;
+			}
+		}	
+
+		// 毎フレーム呼ぶこと
+		EnemyPointer.prototype.loop = function(){
+			this.loopCount++;
+			if(this.loopCount < this.loopCountMax)
+				return;
+			this.loopCount = 0;
+			this.updateMaxCount();
+			this._update();
+		}
+
+		EnemyPointer.prototype.createPointer = function(fighterId){
+			let $newPointer = $pointerDom.clone();
+			this.pointerDomList[fighterId] = $newPointer;
+			$pointerParentDom.append($newPointer);
+			console.log($newPointer);
+			return $newPointer;
+		}
+
+		EnemyPointer.prototype.deletePointer = function(fighterId){
+			let $pointer = this.pointerDomList[fighterId];
+			if(!$pointer)
+				return;
+			$pointer.remove();
+			delete this.pointerDomList[fighterId];
+		}
+
+		/*
+		 ここがこのクラスの肝
+		 毎フレーム実行するわけではないので多少重くてもよしとする
+		 */
+		EnemyPointer.prototype.updatePointer = function($pointer, fighterInstance, fighterId, myUp, myForward){
+			if(!cachedMyFighterInstance.mesh || !fighterInstance.mesh)
+			{
+				this.deletePointer(fighterId);
+				return false;
+			}
+
+			let myFighterPos = cachedMyFighterInstance.mesh.position;
+			let enemyPos = fighterInstance.mesh.position;
+			let distance = myFighterPos.distanceTo(enemyPos);
+			if(distance > distanceLimit){
+				this.deletePointer(fighterId);
+				return false;
+			}
+
+			
+			let subVec = enemyPos.clone().sub(myFighterPos);
+			let h = myUp.dot(subVec);
+			let holSubVec = subVec.sub(myUp.clone().multiplyScalar(h));
+			let holDirectionVec = holSubVec.clone().normalize();
+			let holDot = myForward.dot(holDirectionVec);
+			let holCross = holDirectionVec.clone().cross(myForward); //myForward.clone().cross(holDirectionVec);
+			let angle = Math.asin(holCross.dot(myUp)); // -pi/2 ~ pi/2
+			// pi ~ -PI にするために場合分け
+			if(holDot < 0){
+				if(angle>0)
+					angle = Math.PI - angle;
+				else
+					angle = - Math.PI - angle;
+			}
+
+			let cylinderRad = holSubVec.dot(holDirectionVec);
+			let w = angle*cylinderRad;
+
+			let len = Math.sqrt(w*w + h*h);
+			let left = (1 + w/len ) * parentDomWidth/2;
+			let top = (1 - h/len ) * parentDomHeight/2;
+			let atan = Math.atan(w, -h);
+			if(!$pointer)
+				$pointer = this.createPointer(fighterId);
+			$pointer.css("left", left + "px").css("top", top + "px").css("transform", `rotate(${atan*180.0/Math.PI + 180}deg)`);
+			if(this.isShow)
+				$pointer.show();
+			return true;
+		}
+
+		EnemyPointer.prototype._update = function(){
+			if(!cachedMyFighterInstance){
+				cachedMyFighterInstance = fighterInstances[controlFighterId];
+				if(!cachedMyFighterInstance)
+					return;
+			}
+			if(!parentDomHeight){
+				parentDomWidth = $pointerParentDom.width();
+				parentDomHeight = $pointerParentDom.height();
+				console.log(parentDomHeight);
+				console.log(parentDomWidth);
+			}
+			
+
+			if(this.isShow){
+				this.isShow = false;
+				this.hideAll();
+			}else{
+				this.isShow = true;
+				let myUp = cachedMyFighterInstance.mesh.up;
+				let myForward = cachedMyFighterInstance.vel.clone().normalize(); // fixme これしかないのか？
+				for(let fighterId in fighterInstances){
+					let fighterInstance = fighterInstances[fighterId];
+					if(fighterInstance && fighterId != controlFighterId){
+						let $pointer = this.pointerDomList[fighterId];		
+						this.updatePointer($pointer, fighterInstance, fighterId, myUp, myForward);
+					}
+				}
+			}
+		}
+
+		EnemyPointer.prototype._lambdaFunc = function(func){
+			for(let index in this.pointerDomList){
+				let $pointer = this.pointerDomList[index];
+				if($pointer){
+					func($pointer, index);
+				}
+			}
+		}
+
+		EnemyPointer.prototype.hideAll = function(){
+			this._lambdaFunc(function($pointer){
+				$pointer.hide();
+			});
+		}
+
+		EnemyPointer.prototype.showAll = function(){
+			this._lambdaFunc(function($pointer){
+				$pointer.show();
+			});
+		}
+
+		return EnemyPointer;
+	})();
 
 	function createFire(fighterId, point){
 		let fighter = fighterInstances[fighterId];

@@ -106,6 +106,12 @@
 	        	</div>
 	        </div>
 
+	         <!-- -enemy  pointer -->
+	        <div id="enemy-pointer-view" style="display: none;">
+	        	<div id="enemy-pointer-parent">
+	        	</div>
+	        </div>
+
 	        	<!-- controls -->
 	        <div class="info">
 	        	<ul class="info-items" style="display: none;">
@@ -179,6 +185,7 @@
 	        		<div id="life-gauge-child"></div>
 	        	</div>
 	        </div>
+
 	        <div class="blood-splash hide"></div>
 
 	       
@@ -425,6 +432,7 @@ let s = 40;
 			}
 
 	        let $startButton = $(".start-button .hexagon");
+	        let $enemyPointerView = $("#enemy-pointer-view");
 
 	        // 3dビュー作成
 	        let oceanControl = new Ocean({
@@ -481,6 +489,10 @@ let s = 40;
 							$(".game-over").show();
 						}
 					}
+				},
+				enemyPointerArgs: {
+					$parentDom: $("#enemy-pointer-parent"),
+					$pointerDom: $("<div class='enemy-pointer'></div>")
 				}
 			});
 
@@ -505,6 +517,7 @@ let s = 40;
 				controlFighterId = oceanControl.createFighter(myFighterData);
 				oceanControl.setControlFighter(controlFighterId);
 				oceanControl.applyPerformanceVelocity(controlFighterId);
+				$enemyPointerView.show();
 			});
 
 			let debugPause = false;

@@ -1,4 +1,6 @@
 let Util = {};
+let nop = function(){};
+
 // 一度だけ出したいログ
 var OnceLog = (function(){
 	var OnceLog = function(){
@@ -103,6 +105,11 @@ function uuid() {
 
 /* screen 系*/
 function setFullScreen(startFunc, endFunc, failedFunc, lockMode = "landscape"){
+
+	startFunc = startFunc || nop;
+	endFunc  = endFunc || nop;
+	failedFunc = failedFunc || nop;
+
 	document.body.requestFullscreen  = document.body.requestFullscreen 
 		|| document.body.mozRequestFullScreen
 		|| document.body.webkitRequestFullScreen 
