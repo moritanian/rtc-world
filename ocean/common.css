@@ -633,6 +633,60 @@ input[type="checkbox"].info-on-off-button:focus {
     box-shadow: 0px -1px 6px 0px #da6653;
 }
 
+/* own-fighter */
+#own-fighter-view {
+    position: absolute;
+    top: 0;
+    left: 0;
+    min-width: 100%;
+    min-height: 100%;
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+/* css cloud */
+#css-cloud-world {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    margin-left: -256px;
+    margin-top: -256px;
+    height: 512px;
+    width: 512px;
+    -webkit-transform-style: preserve-3d;
+    -moz-transform-style: preserve-3d;
+    -o-transform-style: preserve-3d;
+}
+
+#css-cloud-world div {
+    -webkit-transform-style: preserve-3d;
+    -moz-transform-style: preserve-3d;
+    -o-transform-style: preserve-3d;
+}
+
+.cloudBase {
+    position: absolute;
+    left: 256px;
+    top: 256px;
+    width: 20px;
+    height: 20px;
+    margin-left: -10px;
+    margin-top: -10px;
+}
+
+.cloudLayer {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 256px;
+    height: 256px;
+    margin-left: -128px;
+    margin-top: -128px;
+    -webkit-transition: opacity .5s ease-out;
+    -moz-transition: opacity .5s ease-out;
+    -o-transition: opacity .5s ease-out;
+}
+
 
 /* side screen lock */
 @media screen and (orientation: landscape) {

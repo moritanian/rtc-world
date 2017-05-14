@@ -229,6 +229,8 @@ var Ocean = (function(){
 
 		initScene();		
 		modelLoader = new ModelLoader(Ocean.Models, fighterGroup);
+
+		this.cloudController = new CloudController();
 	
 
 		if(option.meters){
@@ -336,6 +338,7 @@ var Ocean = (function(){
 		renderer.domElement.style.position = "relative";
 		renderer.domElement.style.left = "-4px";
 
+		
 		if(isLockSideScreen && screenDirection()){ // 横に倒す
 			isInverseScreen = true;
 			let sc_height = $(document).width() + 4;// screen.availHeight/window.devicePixelRatio; //$(document).width() + 4;
@@ -343,7 +346,7 @@ var Ocean = (function(){
 
 			console.log("side!! ");
 			renderer.setPixelRatio( window.devicePixelRatio );
-			renderer.setSize(sc_width,  sc_height /*window.innerWidth*/);
+			renderer.setSize(sc_width,  sc_height );
 			container.appendChild( renderer.domElement );
 			scene = new THREE.Scene();
 			camera = new THREE.PerspectiveCamera( 55,  sc_width/ sc_height, 0.5, 3000000 );
@@ -355,12 +358,13 @@ var Ocean = (function(){
 			console.log("not side!! ");
 
 			renderer.setPixelRatio( window.devicePixelRatio );
-			renderer.setSize($(document).width() /* window.innerWidth */, screen.availHeight );
+			renderer.setSize($(document).width(), screen.availHeight );
 			container.appendChild( renderer.domElement );
 			scene = new THREE.Scene();
 			camera = new THREE.PerspectiveCamera( 55, window.innerWidth / screen.availHeight, 0.5, 3000000 );
 		}
 		
+		setScreenSize();
 		$(window).on("resize", setScreenSize);
 	
 		
@@ -524,7 +528,11 @@ var Ocean = (function(){
 		animate();
 	}
 
+
 	function setScreenSize(){
+		let $fighterViewImg = $("#own-fighter-view-img");
+
+		/*
 		console.log("setScreenSize");
 		console.log("innerheight", window.innerHeight);
 		console.log("outerheight", window.outerHeight);
@@ -535,7 +543,7 @@ var Ocean = (function(){
 		console.log("outerWidth", window.outerWidth);
 		console.log("width", $(document).width());
 		console.log("avail width", screen.availWidth);
-		
+		*/
 		if(isLockSideScreen && screenDirection()){ // 横に倒す
 			isInverseScreen = true;
 			let sc_height = $(document).width() + 4;// screen.availHeight/window.devicePixelRatio; //$(document).width() + 4;
@@ -554,6 +562,26 @@ var Ocean = (function(){
 			renderer.setSize($(document).width() /* window.innerWidth */, screen.availHeight );
 			$(".ui-widgets").width(sc_width);
 			$(".ui-widgets").height(sc_height);
+
+			let fighterViewImgWidth = 1366;
+			let fighterViewImgHeight = 728;
+			// screenのほうが縦長
+			console.log(sc_height/sc_width);
+			if(sc_height/ sc_width > fighterViewImgHeight/ fighterViewImgWidth){
+				$fighterViewImg.height(sc_height);
+				$fighterViewImg.width("auto");
+				let left =  -(fighterViewImgWidth * sc_width / fighterViewImgHeight - sc_width)/2 ;
+				$fighterViewImg.css("left", left + "px");
+				console.log(left);
+			} else {
+				$fighterViewImg.width(sc_width);
+				$fighterViewImg.height("auto");
+				let top = -(fighterViewImgHeight * sc_height / fighterViewImgWidth - sc_height)/2 ;
+				$fighterViewImg.css("top", top + "px");
+				console.log(top);
+
+
+			}
 		}
 		if(objectControl)
 			objectControl.inverseXY = isInverseScreen;
@@ -900,6 +928,7 @@ var Ocean = (function(){
 			}
 		}
 
+		targetObj.rotation.order = "YXZ";
 		if(fighterData.rot){
 			targetObj.rotation.set(fighterData.rot[0], fighterData.rot[1], fighterData.rot[2]);
 		}
@@ -1062,7 +1091,7 @@ var Ocean = (function(){
 		fighterInstances[instanceId].vel.add(velDelta);
 	}
 
-	Ocean.prototype.applyPerformanceVelocity = function(instanceId){
+	Ocean.prototype.applyPerformanceVelocity = function(instanceId, velAng){
 		let fighter = fighterInstances[instanceId];
 		if(!fighter)
 			return;
@@ -1070,7 +1099,8 @@ var Ocean = (function(){
 		let modelName = fighter.modelName;
 		let model = Ocean.Models[modelName];
 		let performance = model.performance;
-		fighter.vel = new THREE.Vector3(0, 0, POWER_VELOCITY_COEFFICIENT * performance.power);
+		let nVelAng = velAng.isVector3 ? velAng.clone().normalize() : new THREE.Vector3(0, 0, 1);
+		fighter.vel = nVelAng.multiplyScalar(POWER_VELOCITY_COEFFICIENT * performance.power);
 	}
 
 	/* fighter の入力    加速は？
@@ -1102,7 +1132,7 @@ var Ocean = (function(){
 		this.gameStatus = Ocean.GameStatus.play;
 
 		
-		const randomVibrationCoefficient = 10; // 機体の揺れ
+		const randomVibrationCoefficient = 0;//10; // 機体の揺れ
 		
 		let fighter = fighterInstances[controlFighterId];
 		fighter.mesh.rotation.order = "YXZ"; // 全て変えちゃう?
@@ -1643,6 +1673,104 @@ var Ocean = (function(){
 
 		return FirePool;
 	})();
+
+	/*
+		cloud
+		PC版はshaderで、　
+		スマホはcssで対応したい	
+	*/ 
+	let CloudController = (function(){
+		const CloudTypes = {
+			cssCloud : 1,
+			shaderCloud : 2
+		};
+		let objects, world, layers;
+
+		function CloudController(){
+			this.cloudType = CloudTypes.cssCloud;
+
+		}
+
+		CloudController.prototype.generate = function() {
+			if(this.cloudType == CloudTypes.cssCloud){
+				this.generateCssCloud();
+			}
+		
+		}
+
+		CloudController.prototype.generateCssCloud = function(){
+			objects = [];
+			layers = [];
+			world = document.getElementById( 'css-cloud-world' );
+			console.log(world);
+
+
+			if ( world.hasChildNodes() ) {
+				while ( world.childNodes.length >= 1 ) {
+					world.removeChild( world.firstChild );
+				}
+			}
+
+			for( var j = 0; j < 5; j++ ) {
+				objects.push( this.createCssCloud() );
+			}
+		}
+
+
+		CloudController.prototype.createCssCloud = function() {
+
+			var div = document.createElement( 'div'  );
+			div.className = 'cloudBase';
+			var x = 256 - ( Math.random() * 512 );
+			var y = 256 - ( Math.random() * 512 );
+			var z = 256 - ( Math.random() * 512 );
+			var t = 'translateX( ' + x + 'px ) translateY( ' + y + 'px ) translateZ( ' + z + 'px )';
+			div.style.webkitTransform = t;
+			div.style.MozTransform = t;
+			div.style.oTransform = t;
+			world.appendChild( div );
+
+			for( var j = 0; j < 5 + Math.round( Math.random() * 10 ); j++ ) {
+				var cloud = document.createElement( 'img' );
+				cloud.style.opacity = 0;
+				var r = Math.random();
+				var src = './textures/cloud.png';
+				( function( img ) { img.addEventListener( 'load', function() {
+					img.style.opacity = .8;
+				} ) } )( cloud );
+				cloud.setAttribute( 'src', src );
+				cloud.className = 'cloudLayer';
+
+				var x = 256 - ( Math.random() * 512 );
+				var y = 256 - ( Math.random() * 512 );
+				var z = 100 - ( Math.random() * 200 );
+				var a = Math.random() * 360;
+				var s = .25 + Math.random();
+				x *= .2; y *= .2;
+				cloud.data = {
+					x: x,
+					y: y,
+					z: z,
+					a: a,
+					s: s,
+					speed: .1 * Math.random()
+				};
+				var t = 'translateX( ' + x + 'px ) translateY( ' + y + 'px ) translateZ( ' + z + 'px ) rotateZ( ' + a + 'deg ) scale( ' + s + ' )';
+				cloud.style.webkitTransform = t;
+				cloud.style.MozTransform = t;
+				cloud.style.oTransform = t;
+
+				div.appendChild( cloud );
+				layers.push( cloud );
+			}
+
+			return div;
+		}
+
+		return  CloudController;
+	})();
+	//Ocean.cloudController.generate();
+
 
 	return Ocean;
 //}	

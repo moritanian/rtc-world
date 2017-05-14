@@ -43,7 +43,13 @@
         <!-- fire -->
 		<script src="./fire/VolumetricFire.js"></script>
 
-	
+		<!-- cloud -->
+		<div id="css-cloud-world"></div>
+
+		<!-- 自機 -->
+		<div id="own-fighter-view">
+			<img id="own-fighter-view-img" src="./images/fighter_view/zero_fighter2.png"/>
+		</div>
 
         <!-- UI parts -->
         <div class="ui-widgets">
@@ -470,6 +476,7 @@ let s = 40;
 						changeSelectModel(1);
 					});
 
+					self.cloudController.generate();
 					console.log("succsessFunc");
 
 					
@@ -501,10 +508,25 @@ let s = 40;
 				}
 				
 				oceanControl.deleteFighter(nextId);
+
+				//自機
 				myFighterData.modelName =  modelNames[selectModelIndex];;
+				
+				const initPosSize = 50000;
+				const initHeightHighest = 8000;
+				const initHeightLowest = 1000;
+				let rad = Math.random() * Math.PI * 2.0;
+				let initPosX = initPosSize * Math.sin(rad);
+				let initPosZ = initPosSize * Math.cos(rad);
+				let initPosY = (initHeightHighest - initHeightLowest) * Math.random() + initHeightLowest;
+				myFighterData.pos = [initPosX, initPosY, initPosZ];
+				//let eul = new THREE.Euler();
+				//eul.setFromVector3 ( new THREE.Vector3(-initPosX, -initPosY, initPosZ), "YXZ" );
+				//myFighterData.rot = [eul.x, eul.y, eul.z];
+
 				controlFighterId = oceanControl.createFighter(myFighterData);
 				oceanControl.setControlFighter(controlFighterId);
-				oceanControl.applyPerformanceVelocity(controlFighterId);
+				oceanControl.applyPerformanceVelocity(controlFighterId, new THREE.Vector3(-initPosX, -initPosY, -initPosZ));
 			});
 
 			let debugPause = false;
