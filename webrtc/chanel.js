@@ -360,6 +360,7 @@ var Chanel = (function(){
       stopAllDataChannelConnection();
       emitRoom({ type: 'bye' });  
       stopAllConnection();
+      socket.close();
     }
 
     // ---- multi party --
@@ -425,6 +426,7 @@ var Chanel = (function(){
     function stopDataChannelConnection(id) {
       if (isConnectedWithChannel(id)) {
         let dataChannel = dataChannels[id];
+        dataChannel.close();
         deleteDataChannel(id);
       }
     }
