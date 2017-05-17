@@ -58,6 +58,13 @@ var Ocean = (function(){
 	let meterControllers;
 	let enemyPointerController;
 
+	// カメラ系
+	const cameraParams ={
+		fov: 55,
+		near: 0.5,
+		far: 3000000
+	}
+
 	// 制御定数係数
 	const HORIZONTAL_COEFFICIENT_BASE = 0.05; //左右方向 0.02
 	const VERTICAL_COEFFICIENT_BASE = 0.02; // 上下方向 0.1
@@ -123,12 +130,13 @@ var Ocean = (function(){
 			}
 		};
 
-		AudioController.prototype.play = function(sourceName, loop = false){
+		AudioController.prototype.play = function(sourceName, loop = false, volume = 1.0){
 			if(audioSources[sourceName]){
 				if(loop)
 					audioSources[sourceName].loop = loop ? true : false;
 				audioSources[sourceName].pause();
 				audioSources[sourceName].currentTime = 0;
+				audioSources[sourceName].volume = volume;
 				audioSources[sourceName].play();
 			}
 		}
@@ -159,6 +167,7 @@ var Ocean = (function(){
 				if(name === bgmSource){
 					this.bgmSource = bgmSource;
 					audio.loop = true;
+					audio.volume = 0.2;
 					audio.play();
 				} else {
 					audio.volume = 0;
@@ -359,7 +368,7 @@ var Ocean = (function(){
 			renderer.setSize(sc_width,  sc_height /*window.innerWidth*/);
 			container.appendChild( renderer.domElement );
 			scene = new THREE.Scene();
-			camera = new THREE.PerspectiveCamera( 55,  sc_width/ sc_height, 0.5, 3000000 );
+			camera = new THREE.PerspectiveCamera( cameraParams.fov,  sc_width/ sc_height, cameraParams.near, cameraParams.far );
 			// TODO ここに書きたくない
 			$(".ui-widgets").width(sc_width);
 			$(".ui-widgets").height(sc_height);
@@ -371,7 +380,7 @@ var Ocean = (function(){
 			renderer.setSize($(document).width() /* window.innerWidth */, screen.availHeight );
 			container.appendChild( renderer.domElement );
 			scene = new THREE.Scene();
-			camera = new THREE.PerspectiveCamera( 55, window.innerWidth / screen.availHeight, 0.5, 3000000 );
+			camera = new THREE.PerspectiveCamera( cameraParams.fov, window.innerWidth / screen.availHeight, cameraParams.near, cameraParams.far );
 		}
 		
 		$(window).on("resize", setScreenSize);
@@ -1480,8 +1489,9 @@ var Ocean = (function(){
 	let EnemyPointer = (function(){
 
 		const blinkInterval = 0.5 ; //(s)
-		const distanceLimit = 100000;
-		const viewAngle = Math.PI/4; // TODO 他から計算したい
+		const distanceLimit = 30000;
+		const viewAngleDeg = cameraParams.fov *Math.PI / 180; // 
+
 
 		let $pointerParentDom, $pointerDom;
 		let parentDomHeight, parentDomWidth;
@@ -1558,9 +1568,11 @@ var Ocean = (function(){
 			let h = myUp.dot(subVec);
 			let holSubVec = subVec.sub(myUp.clone().multiplyScalar(h));
 			let holDirectionVec = holSubVec.clone().normalize();
-			let holDot = myForward.dot(holDirectionVec);
+			let holDot = myForward.dot(holDirectionVec); // 平面での前方向1~0(localX方向の画角のsin)
 			let holCross = holDirectionVec.clone().cross(myForward); //myForward.clone().cross(holDirectionVec);
 			let angle = Math.asin(holCross.dot(myUp)); // -pi/2 ~ pi/2
+
+			
 			// pi ~ -PI にするために場合分け
 			if(holDot < 0){
 				if(angle>0)
@@ -1572,13 +1584,28 @@ var Ocean = (function(){
 			let cylinderRad = holSubVec.dot(holDirectionVec);
 			let w = angle*cylinderRad;
 
+			let elevationAngle = 0.0;
+			if(distance>0)
+				elevationAngle = Math.asin(h/distance);//仰角のsin
+
+			// 画角内
+			if(Math.abs(angle) < viewAngleDeg && Math.abs(elevationAngle) < viewAngleDeg){
+				this.deletePointer(fighterId);
+				return false;		
+			}
+
+
 			let len = Math.sqrt(w*w + h*h);
 			let left = (1 + w/len ) * parentDomWidth/2;
 			let top = (1 - h/len ) * parentDomHeight/2;
-			let atan = Math.atan(w, -h);
+
+			let atan = -Math.atan2(h,w) - Math.PI/2;
+			
+			let deg = atan*180.0/Math.PI;
+			
 			if(!$pointer)
 				$pointer = this.createPointer(fighterId);
-			$pointer.css("left", left + "px").css("top", top + "px").css("transform", `rotate(${atan*180.0/Math.PI + 180}deg)`);
+			$pointer.css("left", left + "px").css("top", top + "px").css("transform", `rotate(${deg}deg)`);
 			if(this.isShow)
 				$pointer.show();
 			return true;

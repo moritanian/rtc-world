@@ -162,22 +162,21 @@ function setFullScreen(startFunc, endFunc, failedFunc, lockMode = "landscape"){
 
 function lockOrientation(mode) {
 	console.log("lockOrientation");
-    if (screen.orientation.lock) {
-        screen.orientation.lock(mode);
-    }
-    else if (screen.lockOrientation) {
-        screen.lockOrientation(mode);
-    }
-    else if (screen.webkitLockOrientation) {
-    	console.log("lock");
-        screen.webkitLockOrientation(mode);
-    }
-    else if (screen.mozLockOrientation) {
-        screen.mozLockOrientation(mode);
-    }
-    else if (screen.msLockOrientation) {
-        screen.msLockOrientation(mode);
-    }
+	let lockOrientationList = [
+		screen.orientation.lock,
+		screen.lockOrientation,
+		screen.webkitLockOrientation,
+		screen.mozLockOrientation,
+		screen.msLockOrientation
+	];
+	for(let index in lockOrientationList){
+		if(lockOrientationList[index]){
+			lockOrientationList[index](mode).catch(function(e) {
+    			console.log("catch the lockOrientation error");
+    			console.log(e);
+			});
+		}
+	}
 }
 
 /* 数値型拡張 */

@@ -656,7 +656,7 @@ input[type="checkbox"].info-on-off-button:focus {
     width: 0;
     height: 0;
     border: 7px solid transparent;
-    border-top: 12px solid #47e60c;
+    border-top: 15px solid #47e60c; /* 30*/ 
 }
 
 /* side screen lock */
