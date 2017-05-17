@@ -3,7 +3,7 @@
 	- 体力切れアニメーション
 	- 機体内を画像に
 	- 照準器をcanvasで
-	- 
+	- timeout機能
 	
 */
 /*
@@ -14,7 +14,6 @@
 	クラスを別ファイルにしたい
 */
 var Ocean = (function(){
-//Ocean: {	
 
 	// 
 	var scene, camera, water, renderer, controls, tracking;
@@ -57,6 +56,7 @@ var Ocean = (function(){
 	let modelLoader;
 	let meterControllers;
 	let enemyPointerController;
+	let timeOutModule;
 
 	// カメラ系
 	const cameraParams ={
@@ -202,7 +202,8 @@ var Ocean = (function(){
 			enemyPointerArgs{
 				$parentDom,
 				$pointerDom
-			}
+			},
+			timeOut: 0(s)
 
 		}
 
@@ -272,6 +273,15 @@ var Ocean = (function(){
 		myScorePoint = 0;
 		if(option.enemyPointerArgs)
 			enemyPointerController = new EnemyPointer(option.enemyPointerArgs.$parentDom, option.enemyPointerArgs.$pointerDom);
+
+		if(option.timeOut && option.timeOut > 0){
+			timeOutModule = {
+				timeCount:0,
+				timeOut: option.timeOut,
+				hasTimeOut: false
+			};
+		}
+
 	};
 
 	function initChannel(channelName, succsessFunc){
@@ -583,6 +593,7 @@ var Ocean = (function(){
 
 	function animate(){
 		requestAnimationFrame( animate );
+
 		let option = {}; // option for animateCallback
 		
 		if(isFlowTracking){
@@ -639,6 +650,17 @@ var Ocean = (function(){
 		var time = performance.now() * 0.001;
 		deltaTime = (time - lastTime) || 0.0;
 		lastTime = time;
+
+		// timeOut
+		if(timeOutModule && timeOutModule.hasTimeOut == false){
+			timeOutModule.timeCount += deltaTime;
+			if(timeOutModule.timeCount > timeOutModule.timeOut){
+				if (isUseChanel)
+					chanelControl.hangUp();
+				timeOutModule.hasTimeOut = true;
+				console.log("---------  time out!!!!!!  ---------------");
+			}
+		}
 
 		/*
 		sphere.position.y = Math.sin( time ) * 500 + 250;
@@ -723,8 +745,14 @@ var Ocean = (function(){
 		}
 	};
 
+	Ocean.ModelTypes = {
+		ship: "ship",
+		plane: "plane"
+	};
+
 	Ocean.Models = {
 		battle_ship: {
+			type: Ocean.ModelTypes.ship,
 			path: "./objs/battle_ship/ship.json",
 			nationality: Ocean.nationalityList.Russia,
 			explain: "ステレグシュチイ級フリゲート",
@@ -737,6 +765,7 @@ var Ocean = (function(){
 			}
 		},
 		zero_fighter: {
+			type: Ocean.ModelTypes.plane,
 			path: "./objs/zero_fighter/scene.json",
 			nationality: Ocean.nationalityList.Japan,
 			explain: "零戦",
@@ -749,6 +778,7 @@ var Ocean = (function(){
 			}
 		},
 		p51_mustang: {
+			type: Ocean.ModelTypes.plane,
 			path: "./objs/p51_mustang/scene.json",
 			nationality: Ocean.nationalityList.America,
 			explain: "P51 マスタング",
@@ -761,6 +791,7 @@ var Ocean = (function(){
 			}		
 		},
 		hawker_tempest: {
+			type: Ocean.ModelTypes.plane,
 			path: "./objs/hawker_tempest_simple/scene.json",
 			nationality: Ocean.nationalityList.Britain,
 			explain: "ホーカー テンペスト",

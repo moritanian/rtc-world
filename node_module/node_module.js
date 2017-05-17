@@ -100,7 +100,6 @@ NodeModule.prototype.mdown = function(e){
     var instance = e.data.my_node_obj;
     var node_id = $(this).attr("node_id");
     e.data.my_node_obj.renown_node_detail(node_id);
-    console.log(e);
     //タッチデイベントとマウスのイベントの差異を吸収
     if(e.type === "mousedown") {
         var event = e;

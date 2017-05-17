@@ -493,7 +493,8 @@ let s = 40;
 				enemyPointerArgs: {
 					$parentDom: $("#enemy-pointer-parent"),
 					$pointerDom: $("<div class='enemy-pointer'></div>")
-				}
+				},
+				timeOut: 10
 			});
 
 			$startButton.click(function(){
@@ -589,8 +590,12 @@ let s = 40;
 					.attr("src", model.nationality.flag);
 			}
 
-			let selectModelIndex = 1;
-			let modelNames = Object.keys(Ocean.Models);
+			let selectModelIndex = 0;
+			let modelNames = []; //Object.keys(Ocean.Models);
+			for(let modelName in Ocean.Models){
+				if(Ocean.Models[modelName].type === Ocean.ModelTypes.plane )
+					modelNames.push(modelName);
+			}
 			let modelLength = modelNames.length;
 
 			let enableChange = true;
@@ -638,7 +643,6 @@ let s = 40;
 
 				setTimeout(function(){
 					oceanControl.deleteFighter(previousId);
-
 					oceanControl.updateFighter({
 						vel: new THREE.Vector3(0,0,0),
 						pos: [CenterPos.x, CenterPos.y, CenterPos.z],
