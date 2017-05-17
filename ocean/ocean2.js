@@ -1563,7 +1563,6 @@ var Ocean = (function(){
 			let $newPointer = $pointerDom.clone();
 			this.pointerDomList[fighterId] = $newPointer;
 			$pointerParentDom.append($newPointer);
-			console.log($newPointer);
 			return $newPointer;
 		}
 
