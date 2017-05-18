@@ -3,7 +3,6 @@
 	- 体力切れアニメーション
 	- 機体内を画像に
 	- 照準器をcanvasで
-	- timeout機能
 	
 */
 /*
@@ -558,6 +557,7 @@ var Ocean = (function(){
 
 	function setScreenSize(){
 		console.log("setScreenSize");
+		/*
 		console.log("innerheight", window.innerHeight);
 		console.log("outerheight", window.outerHeight);
 		console.log("height", $(document).height());
@@ -567,6 +567,7 @@ var Ocean = (function(){
 		console.log("outerWidth", window.outerWidth);
 		console.log("width", $(document).width());
 		console.log("avail width", screen.availWidth);
+		*/
 		
 		if(isLockSideScreen && screenDirection()){ // 横に倒す
 			isInverseScreen = true;
@@ -874,17 +875,17 @@ var Ocean = (function(){
 			scale: [],
 			rot: [],
 			pos: []
-			modelName: ""
+			modelName: "",
+			meshModelName: "", (option meshとpublishする名前を変更する)
 		}
 	*/
 	Ocean.prototype.addFighter = function(fighterData, instanceId, isMine = false){
 		let modelName = fighterData.modelName;
-		let model = Ocean.Models[modelName];
+		let meshModelName = fighterData.meshModelName || modelName;
+		let model = Ocean.Models[meshModelName];
 		if(!model){
 			return 0;
 		}
-
-		console.log(modelName);
 
 		let mesh = model.meshPool.instantiate(instanceId, false);
 		let targetMesh = setMesh(mesh, fighterData);

@@ -163,20 +163,29 @@ function setFullScreen(startFunc, endFunc, failedFunc, lockMode = "landscape"){
 function lockOrientation(mode) {
  	console.log("lockOrientation");
      if (screen.orientation.lock) {
-         screen.orientation.lock(mode);
+         screen.orientation.lock(mode).catch(function(e) {
+			console.log(e);
+		});
      }
      else if (screen.lockOrientation) {
-         screen.lockOrientation(mode);
+         screen.lockOrientation(mode).catch(function(e) {
+			console.log(e);
+		});
      }
      else if (screen.webkitLockOrientation) {
-     	console.log("lock");
-         screen.webkitLockOrientation(mode);
+         screen.webkitLockOrientation(mode).catch(function(e) {
+			console.log(e);
+		});
      }
      else if (screen.mozLockOrientation) {
-         screen.mozLockOrientation(mode);
+         screen.mozLockOrientation(mode).catch(function(e) {
+			console.log(e);
+		});
      }
      else if (screen.msLockOrientation) {
-         screen.msLockOrientation(mode);
+         screen.msLockOrientation(mode).catch(function(e) {
+			console.log(e);
+		});
      }
  }
 

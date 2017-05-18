@@ -408,7 +408,7 @@ let s = 40;
 	        ];
 
 	        let myFighterData = {
-        		modelName: "zero_fighter",
+        		meshModelName: "zero_fighter",
 				center: [0, 14, -34],
 				pos: [1800, 300, -5000],
 				rot: [0, 0,0],
@@ -514,7 +514,7 @@ let s = 40;
 				}
 				
 				oceanControl.deleteFighter(nextId);
-				myFighterData.modelName =  modelNames[selectModelIndex];;
+				myFighterData.modelName =  modelNames[selectModelIndex];
 				controlFighterId = oceanControl.createFighter(myFighterData);
 				oceanControl.setControlFighter(controlFighterId);
 				oceanControl.applyPerformanceVelocity(controlFighterId);
