@@ -608,7 +608,7 @@ var Ocean = (function(){
 			} else {
 				$fighterViewImg.width(sc_width);
 				$fighterViewImg.height("auto");
-				let top = -(fighterViewImgHeight * sc_width / fighterViewImgWidth - sc_height)/2 + 25 ; // +25 は根拠なし
+				let top = -(fighterViewImgHeight * sc_width / fighterViewImgWidth - sc_height)/2 + 30 ; // +25 は根拠なし
 				$fighterViewImg.css("top", top + "px");
 				console.log(top);
 
@@ -1952,8 +1952,8 @@ var Ocean = (function(){
 			if(!isGenerated)
 				return;
 			if(this.cloudType == CloudTypes.cssCloud){
-				this.worldInfo.pos[1] += -0.1;
-				this.worldInfo.pos[2] += 1;
+				this.worldInfo.pos[1] += -5*deltaTime;
+				this.worldInfo.pos[2] += 50*deltaTime;
 
 				if(this.worldInfo.pos[2] > 1200)
 					return;
