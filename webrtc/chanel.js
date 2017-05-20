@@ -357,20 +357,12 @@ var Chanel = (function(){
     }
     // close PeerConnection
     Chanel.prototype.hangUp = function() {
-      /*
-      if (peerConnection) {
-        console.log('Hang up.');
-        peerConnection.close();
-        peerConnection = null;
-        pauseVideo(remoteVideo);
-      }
-      else {
-        console.warn('peer NOT exist.');
-      }
-      */
+      stopAllDataChannelConnection();
       emitRoom({ type: 'bye' });  
       stopAllConnection();
+      socket.close();
     }
+
     // ---- multi party --
     function callMe() {
       emitRoom({type: 'call me'});
@@ -428,6 +420,20 @@ var Chanel = (function(){
       }
       else {
         return false;
+      }
+    }
+
+    function stopDataChannelConnection(id) {
+      if (isConnectedWithChannel(id)) {
+        let dataChannel = dataChannels[id];
+        dataChannel.close();
+        deleteDataChannel(id);
+      }
+    }
+
+    function stopAllDataChannelConnection() {
+      for (let id in peerConnections) {
+        stopDataChannelConnection(id);
       }
     }
 

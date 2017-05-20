@@ -1,4 +1,6 @@
 let Util = {};
+let nop = function(){};
+
 // 一度だけ出したいログ
 var OnceLog = (function(){
 	var OnceLog = function(){
@@ -103,6 +105,11 @@ function uuid() {
 
 /* screen 系*/
 function setFullScreen(startFunc, endFunc, failedFunc, lockMode = "landscape"){
+
+	startFunc = startFunc || nop;
+	endFunc  = endFunc || nop;
+	failedFunc = failedFunc || nop;
+
 	document.body.requestFullscreen  = document.body.requestFullscreen 
 		|| document.body.mozRequestFullScreen
 		|| document.body.webkitRequestFullScreen 
@@ -154,24 +161,33 @@ function setFullScreen(startFunc, endFunc, failedFunc, lockMode = "landscape"){
 }
 
 function lockOrientation(mode) {
-	console.log("lockOrientation");
-    if (screen.orientation.lock) {
-        screen.orientation.lock(mode);
-    }
-    else if (screen.lockOrientation) {
-        screen.lockOrientation(mode);
-    }
-    else if (screen.webkitLockOrientation) {
-    	console.log("lock");
-        screen.webkitLockOrientation(mode);
-    }
-    else if (screen.mozLockOrientation) {
-        screen.mozLockOrientation(mode);
-    }
-    else if (screen.msLockOrientation) {
-        screen.msLockOrientation(mode);
-    }
-}
+ 	console.log("lockOrientation");
+     if (screen.orientation.lock) {
+         screen.orientation.lock(mode).catch(function(e) {
+			console.log(e);
+		});
+     }
+     else if (screen.lockOrientation) {
+         screen.lockOrientation(mode).catch(function(e) {
+			console.log(e);
+		});
+     }
+     else if (screen.webkitLockOrientation) {
+         screen.webkitLockOrientation(mode).catch(function(e) {
+			console.log(e);
+		});
+     }
+     else if (screen.mozLockOrientation) {
+         screen.mozLockOrientation(mode).catch(function(e) {
+			console.log(e);
+		});
+     }
+     else if (screen.msLockOrientation) {
+         screen.msLockOrientation(mode).catch(function(e) {
+			console.log(e);
+		});
+     }
+ }
 
 /* 数値型拡張 */
 Number.prototype.floatFormat = function(n)

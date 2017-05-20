@@ -644,21 +644,32 @@ input[type="checkbox"].info-on-off-button:focus {
     background-repeat: no-repeat;
 }
 
+#own-fighter-view img{
+    position: relative;
+}
+
 /* css cloud */
 #css-cloud-world {
     position: absolute;
-    left: 50%;
-    top: 50%;
-    margin-left: -256px;
-    margin-top: -256px;
-    height: 512px;
-    width: 512px;
+    overflow: hidden;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    perspective: 500px;
+
     -webkit-transform-style: preserve-3d;
     -moz-transform-style: preserve-3d;
     -o-transform-style: preserve-3d;
 }
 
-#css-cloud-world div {
+#css-cloud-world #css-cloud-world-child {
+    position: absolute;
+     top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
     -webkit-transform-style: preserve-3d;
     -moz-transform-style: preserve-3d;
     -o-transform-style: preserve-3d;
@@ -666,12 +677,19 @@ input[type="checkbox"].info-on-off-button:focus {
 
 .cloudBase {
     position: absolute;
-    left: 256px;
-    top: 256px;
+    
+    /*left: 256px;
+    top: 256px; */
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    margin: auto;
     width: 20px;
     height: 20px;
-    margin-left: -10px;
+   /* margin-left: -10px;
     margin-top: -10px;
+   */ 
 }
 
 .cloudLayer {
@@ -687,6 +705,31 @@ input[type="checkbox"].info-on-off-button:focus {
     -o-transition: opacity .5s ease-out;
 }
 
+/* enemy pointer */
+#enemy-pointer-view {
+    position: absolute;
+    width : 80%;
+    height: 90%;
+    margin: auto;
+    right: 0;
+    left: 0;
+    top: 0;
+    bottom: 0;
+
+}
+#enemy-pointer-parent {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+#enemy-pointer-parent .enemy-pointer {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border: 7px solid transparent;
+    border-top: 15px solid #47e60c; /* 30*/ 
+}
 
 /* side screen lock */
 @media screen and (orientation: landscape) {

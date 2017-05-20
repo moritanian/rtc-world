@@ -3,15 +3,16 @@
 	- 体力切れアニメーション
 	- 機体内を画像に
 	- 照準器をcanvasで
-	- 
 	
 */
 /*
 	ここでoceanの3dモデル構築を行う
 	外部ではthree.js の関数を直接よぶことはないようにする
+
+	TODO fighterInstanceをクラス化すべき
+	クラスを別ファイルにしたい
 */
 var Ocean = (function(){
-//Ocean: {	
 
 	// 
 	var scene, camera, water, renderer, controls, tracking;
@@ -53,6 +54,15 @@ var Ocean = (function(){
 	let firePool;
 	let modelLoader;
 	let meterControllers;
+	let enemyPointerController;
+	let timeOutModule;
+
+	// カメラ系
+	const cameraParams ={
+		fov: 55,
+		near: 0.5,
+		far: 3000000
+	}
 
 	// 制御定数係数
 	const HORIZONTAL_COEFFICIENT_BASE = 0.05; //左右方向 0.02
@@ -119,12 +129,13 @@ var Ocean = (function(){
 			}
 		};
 
-		AudioController.prototype.play = function(sourceName, loop = false){
+		AudioController.prototype.play = function(sourceName, loop = false, volume = 1.0){
 			if(audioSources[sourceName]){
 				if(loop)
 					audioSources[sourceName].loop = loop ? true : false;
 				audioSources[sourceName].pause();
 				audioSources[sourceName].currentTime = 0;
+				audioSources[sourceName].volume = volume;
 				audioSources[sourceName].play();
 			}
 		}
@@ -155,6 +166,7 @@ var Ocean = (function(){
 				if(name === bgmSource){
 					this.bgmSource = bgmSource;
 					audio.loop = true;
+					audio.volume = 0.2;
 					audio.play();
 				} else {
 					audio.volume = 0;
@@ -175,6 +187,8 @@ var Ocean = (function(){
 	/*
 		option {
 			animateCallback: function(){},
+			successFunc,
+			beShotCallback,
 			isUseChanel,bgm
 			isFlowTracking: 
 			isOrbitControl:
@@ -182,6 +196,13 @@ var Ocean = (function(){
 				pos: [],
 				target: []
 			}
+			isLockSideScreen,
+			meters: []
+			enemyPointerArgs{
+				$parentDom,
+				$pointerDom
+			},
+			timeOut: 0(s)
 
 		}
 
@@ -251,7 +272,17 @@ var Ocean = (function(){
 
 		beShotCallback = option.beShotCallback || function(){};
 		myScorePoint = 0;
-		
+		if(option.enemyPointerArgs)
+			enemyPointerController = new EnemyPointer(option.enemyPointerArgs.$parentDom, option.enemyPointerArgs.$pointerDom);
+
+		if(option.timeOut && option.timeOut > 0){
+			timeOutModule = {
+				timeCount:0,
+				timeOut: option.timeOut,
+				hasTimeOut: false
+			};
+		}
+
 	};
 
 	function initChannel(channelName, succsessFunc){
@@ -346,10 +377,10 @@ var Ocean = (function(){
 
 			console.log("side!! ");
 			renderer.setPixelRatio( window.devicePixelRatio );
-			renderer.setSize(sc_width,  sc_height );
+			//renderer.setSize(sc_width,  sc_height );
 			container.appendChild( renderer.domElement );
 			scene = new THREE.Scene();
-			camera = new THREE.PerspectiveCamera( 55,  sc_width/ sc_height, 0.5, 3000000 );
+			camera = new THREE.PerspectiveCamera( cameraParams.fov,  sc_width/ sc_height, cameraParams.near, cameraParams.far );
 			// TODO ここに書きたくない
 			$(".ui-widgets").width(sc_width);
 			$(".ui-widgets").height(sc_height);
@@ -358,10 +389,10 @@ var Ocean = (function(){
 			console.log("not side!! ");
 
 			renderer.setPixelRatio( window.devicePixelRatio );
-			renderer.setSize($(document).width(), screen.availHeight );
+			//renderer.setSize($(document).width(), screen.availHeight );
 			container.appendChild( renderer.domElement );
 			scene = new THREE.Scene();
-			camera = new THREE.PerspectiveCamera( 55, window.innerWidth / screen.availHeight, 0.5, 3000000 );
+			camera = new THREE.PerspectiveCamera( cameraParams.fov, window.innerWidth / window.innerHeight, cameraParams.near, cameraParams.far );
 		}
 		
 		setScreenSize();
@@ -530,10 +561,10 @@ var Ocean = (function(){
 
 
 	function setScreenSize(){
-		let $fighterViewImg = $("#own-fighter-view-img");
-
-		/*
 		console.log("setScreenSize");
+		let $fighterViewImg = $("#own-fighter-view-img");
+		
+		
 		console.log("innerheight", window.innerHeight);
 		console.log("outerheight", window.outerHeight);
 		console.log("height", $(document).height());
@@ -543,11 +574,11 @@ var Ocean = (function(){
 		console.log("outerWidth", window.outerWidth);
 		console.log("width", $(document).width());
 		console.log("avail width", screen.availWidth);
-		*/
+	
 		if(isLockSideScreen && screenDirection()){ // 横に倒す
 			isInverseScreen = true;
 			let sc_height = $(document).width() + 4;// screen.availHeight/window.devicePixelRatio; //$(document).width() + 4;
-			let sc_width = screen.availHeight;
+			let sc_width = window.innerHeight;
 			renderer.setPixelRatio( sc_width/ sc_height );
 			renderer.setSize(sc_width, sc_height);
 			$(".ui-widgets").width(sc_width);
@@ -557,9 +588,9 @@ var Ocean = (function(){
 		} else {
 			isInverseScreen = false;
 			let sc_height = window.innerHeight; //screen.availHeight;// screen.availHeight/window.devicePixelRatio; //$(document).width() + 4;
-			let sc_width = $(document).width();
+			let sc_width = window.innerWidth + 4;
 			renderer.setPixelRatio( window.devicePixelRatio );
-			renderer.setSize($(document).width() /* window.innerWidth */, screen.availHeight );
+			renderer.setSize(sc_width /* window.innerWidth */, sc_height );
 			$(".ui-widgets").width(sc_width);
 			$(".ui-widgets").height(sc_height);
 
@@ -570,13 +601,14 @@ var Ocean = (function(){
 			if(sc_height/ sc_width > fighterViewImgHeight/ fighterViewImgWidth){
 				$fighterViewImg.height(sc_height);
 				$fighterViewImg.width("auto");
-				let left =  -(fighterViewImgWidth * sc_width / fighterViewImgHeight - sc_width)/2 ;
+				console.log(fighterViewImgWidth * sc_height / fighterViewImgHeight);
+				let left =  -(fighterViewImgWidth * sc_height / fighterViewImgHeight - sc_width)/2 ;
 				$fighterViewImg.css("left", left + "px");
 				console.log(left);
 			} else {
 				$fighterViewImg.width(sc_width);
 				$fighterViewImg.height("auto");
-				let top = -(fighterViewImgHeight * sc_height / fighterViewImgWidth - sc_height)/2 ;
+				let top = -(fighterViewImgHeight * sc_width / fighterViewImgWidth - sc_height)/2 ;
 				$fighterViewImg.css("top", top + "px");
 				console.log(top);
 
@@ -589,6 +621,7 @@ var Ocean = (function(){
 
 	function animate(){
 		requestAnimationFrame( animate );
+
 		let option = {}; // option for animateCallback
 		
 		if(isFlowTracking){
@@ -635,6 +668,9 @@ var Ocean = (function(){
 			}
 		}
 
+		if(enemyPointerController)
+			enemyPointerController.loop();
+
 		render();
 	};
 
@@ -643,11 +679,27 @@ var Ocean = (function(){
 		deltaTime = (time - lastTime) || 0.0;
 		lastTime = time;
 
+		// timeOut
+		if(timeOutModule && timeOutModule.hasTimeOut == false){
+			timeOutModule.timeCount += deltaTime;
+			if(timeOutModule.timeCount > timeOutModule.timeOut){
+				if (isUseChanel)
+					chanelControl.hangUp();
+				timeOutModule.hasTimeOut = true;
+				console.log("---------  time out!!!!!!  ---------------");
+			}
+		}
+
 		/*
 		sphere.position.y = Math.sin( time ) * 500 + 250;
 		sphere.rotation.x = time * 0.5;
 		sphere.rotation.z = time * 0.51;
 	*/
+
+		if(Instance.cloudController){
+			Instance.cloudController.loop();
+		}
+
 		if(controlCallback){
 			let result = controlCallback();
 			Instance.controlFighter(result.control);
@@ -686,7 +738,6 @@ var Ocean = (function(){
 			}
 
 		}
-		
 
 		water.material.uniforms.time.value += 1.0 / 60.0;
 		if(isOrbitControl){
@@ -727,8 +778,14 @@ var Ocean = (function(){
 		}
 	};
 
+	Ocean.ModelTypes = {
+		ship: "ship",
+		plane: "plane"
+	};
+
 	Ocean.Models = {
 		battle_ship: {
+			type: Ocean.ModelTypes.ship,
 			path: "./objs/battle_ship/ship.json",
 			nationality: Ocean.nationalityList.Russia,
 			explain: "ステレグシュチイ級フリゲート",
@@ -741,6 +798,7 @@ var Ocean = (function(){
 			}
 		},
 		zero_fighter: {
+			type: Ocean.ModelTypes.plane,
 			path: "./objs/zero_fighter/scene.json",
 			nationality: Ocean.nationalityList.Japan,
 			explain: "零戦",
@@ -753,6 +811,7 @@ var Ocean = (function(){
 			}
 		},
 		p51_mustang: {
+			type: Ocean.ModelTypes.plane,
 			path: "./objs/p51_mustang/scene.json",
 			nationality: Ocean.nationalityList.America,
 			explain: "P51 マスタング",
@@ -765,6 +824,7 @@ var Ocean = (function(){
 			}		
 		},
 		hawker_tempest: {
+			type: Ocean.ModelTypes.plane,
 			path: "./objs/hawker_tempest_simple/scene.json",
 			nationality: Ocean.nationalityList.Britain,
 			explain: "ホーカー テンペスト",
@@ -847,17 +907,17 @@ var Ocean = (function(){
 			scale: [],
 			rot: [],
 			pos: []
-			modelName: ""
+			modelName: "",
+			meshModelName: "", (option meshとpublishする名前を変更する)
 		}
 	*/
 	Ocean.prototype.addFighter = function(fighterData, instanceId, isMine = false){
 		let modelName = fighterData.modelName;
-		let model = Ocean.Models[modelName];
+		let meshModelName = fighterData.meshModelName || modelName;
+		let model = Ocean.Models[meshModelName];
 		if(!model){
 			return 0;
 		}
-
-		console.log(modelName);
 
 		let mesh = model.meshPool.instantiate(instanceId, false);
 		let targetMesh = setMesh(mesh, fighterData);
@@ -1112,8 +1172,10 @@ var Ocean = (function(){
 		** 1flameごとに呼び出すこと！！
 	*/
 
-	Ocean.prototype.setControlFighter = function(instanceId){
+	Ocean.prototype.setControlFighter = function(instanceId, isVisible = true){
 		controlFighterId = instanceId;
+		if(!isVisible)
+			fighterInstances[instanceId].mesh.visible = false;
 	}
 
 	Ocean.prototype.controlFighter = function(control){
@@ -1186,10 +1248,12 @@ var Ocean = (function(){
 		if(fighter.mesh.position.y < limit){
 			fighter.mesh.position.y = limit
 		}
-		meterControllers.compass.rotatePoint(beta/Math.PI*180);
 
-		meterControllers.feet.rotatePoint(fighter.mesh.position.y /100);
-
+		if(meterControllers){
+			meterControllers.compass.rotatePoint(beta/Math.PI*180);
+			meterControllers.feet.rotatePoint(fighter.mesh.position.y /100);
+		}
+	
 		publishObj(controlFighterId);
 
 
@@ -1479,7 +1543,7 @@ var Ocean = (function(){
 		}
 
 		// life-gauge
-		if(isMe)
+		if(isMe && meterControllers)
 			meterControllers.life_gauge.setGauge(fighter.life);
 		console.log("beshot isme" + isMe);
 
@@ -1487,6 +1551,187 @@ var Ocean = (function(){
 		return true;
 		//fighter.userId 
 	}
+	/* 敵機示唆 
+		毎ループよぶこと
+	*/
+	let EnemyPointer = (function(){
+
+		const blinkInterval = 0.5 ; //(s)
+		const distanceLimit = 30000;
+		const viewAngleDeg = cameraParams.fov *Math.PI / 180; // 
+
+
+		let $pointerParentDom, $pointerDom;
+		let parentDomHeight, parentDomWidth;
+		let cachedMyFighterInstance;
+
+
+		// contructor
+		function EnemyPointer(_$pointerParentDom, _$pointerDom){
+			this.loopCount = 0;
+			this.loopCountMax = 0;
+			this.updateMaxCount();
+			this.isShow = false;
+			$pointerParentDom = _$pointerParentDom;
+			
+			$pointerDom = _$pointerDom;
+			this.pointerDomList = {};
+		}
+
+		EnemyPointer.prototype.updateMaxCount = function(){
+			if(deltaTime && deltaTime > 0){
+				this.loopCountMax = Math.floor(blinkInterval/deltaTime);
+			}else{
+				this.loopCountMax = blinkInterval*60;
+			}
+		}	
+
+		// 毎フレーム呼ぶこと
+		EnemyPointer.prototype.loop = function(){
+			this.loopCount++;
+			if(this.loopCount < this.loopCountMax)
+				return;
+			this.loopCount = 0;
+			this.updateMaxCount();
+			this._update();
+		}
+
+		EnemyPointer.prototype.createPointer = function(fighterId){
+			let $newPointer = $pointerDom.clone();
+			this.pointerDomList[fighterId] = $newPointer;
+			$pointerParentDom.append($newPointer);
+			return $newPointer;
+		}
+
+		EnemyPointer.prototype.deletePointer = function(fighterId){
+			let $pointer = this.pointerDomList[fighterId];
+			if(!$pointer)
+				return;
+			$pointer.remove();
+			delete this.pointerDomList[fighterId];
+		}
+
+		/*
+		 ここがこのクラスの肝
+		 毎フレーム実行するわけではないので多少重くてもよしとする
+		 */
+		EnemyPointer.prototype.updatePointer = function($pointer, fighterInstance, fighterId, myUp, myForward){
+			if(!cachedMyFighterInstance.mesh || !fighterInstance.mesh)
+			{
+				this.deletePointer(fighterId);
+				return false;
+			}
+
+			let myFighterPos = cachedMyFighterInstance.mesh.position;
+			let enemyPos = fighterInstance.mesh.position;
+			let distance = myFighterPos.distanceTo(enemyPos);
+			if(distance > distanceLimit){
+				this.deletePointer(fighterId);
+				return false;
+			}
+
+			
+			let subVec = enemyPos.clone().sub(myFighterPos);
+			let h = myUp.dot(subVec);
+			let holSubVec = subVec.sub(myUp.clone().multiplyScalar(h));
+			let holDirectionVec = holSubVec.clone().normalize();
+			let holDot = myForward.dot(holDirectionVec); // 平面での前方向1~0(localX方向の画角のsin)
+			let holCross = holDirectionVec.clone().cross(myForward); //myForward.clone().cross(holDirectionVec);
+			let angle = Math.asin(holCross.dot(myUp)); // -pi/2 ~ pi/2
+
+			
+			// pi ~ -PI にするために場合分け
+			if(holDot < 0){
+				if(angle>0)
+					angle = Math.PI - angle;
+				else
+					angle = - Math.PI - angle;
+			}
+
+			let cylinderRad = holSubVec.dot(holDirectionVec);
+			let w = angle*cylinderRad;
+
+			let elevationAngle = 0.0;
+			if(distance>0)
+				elevationAngle = Math.asin(h/distance);//仰角のsin
+
+			// 画角内
+			if(Math.abs(angle) < viewAngleDeg && Math.abs(elevationAngle) < viewAngleDeg){
+				this.deletePointer(fighterId);
+				return false;		
+			}
+
+
+			let len = Math.sqrt(w*w + h*h);
+			let left = (1 + w/len ) * parentDomWidth/2;
+			let top = (1 - h/len ) * parentDomHeight/2;
+
+			let atan = -Math.atan2(h,w) - Math.PI/2;
+			
+			let deg = atan*180.0/Math.PI;
+			
+			if(!$pointer)
+				$pointer = this.createPointer(fighterId);
+			$pointer.css("left", left + "px").css("top", top + "px").css("transform", `rotate(${deg}deg)`);
+			if(this.isShow)
+				$pointer.show();
+			return true;
+		}
+
+		EnemyPointer.prototype._update = function(){
+			if(!cachedMyFighterInstance){
+				cachedMyFighterInstance = fighterInstances[controlFighterId];
+				if(!cachedMyFighterInstance)
+					return;
+			}
+			if(!parentDomHeight){
+				parentDomWidth = $pointerParentDom.width();
+				parentDomHeight = $pointerParentDom.height();
+				console.log(parentDomHeight);
+				console.log(parentDomWidth);
+			}
+			
+
+			if(this.isShow){
+				this.isShow = false;
+				this.hideAll();
+			}else{
+				this.isShow = true;
+				let myUp = cachedMyFighterInstance.mesh.up;
+				let myForward = cachedMyFighterInstance.vel.clone().normalize(); // fixme これしかないのか？
+				for(let fighterId in fighterInstances){
+					let fighterInstance = fighterInstances[fighterId];
+					if(fighterInstance && fighterId != controlFighterId){
+						let $pointer = this.pointerDomList[fighterId];		
+						this.updatePointer($pointer, fighterInstance, fighterId, myUp, myForward);
+					}
+				}
+			}
+		}
+
+		EnemyPointer.prototype._lambdaFunc = function(func){
+			for(let index in this.pointerDomList){
+				let $pointer = this.pointerDomList[index];
+				if($pointer){
+					func($pointer, index);
+				}
+			}
+		}
+
+		EnemyPointer.prototype.hideAll = function(){
+			this._lambdaFunc(function($pointer){
+				$pointer.hide();
+			});
+		}
+
+		EnemyPointer.prototype.showAll = function(){
+			this._lambdaFunc(function($pointer){
+				$pointer.show();
+			});
+		}
+
+		return EnemyPointer;
+	})();
 
 	function createFire(fighterId, point){
 		let fighter = fighterInstances[fighterId];
@@ -1684,26 +1929,45 @@ var Ocean = (function(){
 			cssCloud : 1,
 			shaderCloud : 2
 		};
+
+		let isGenerated;
 		let objects, world, layers;
 
 		function CloudController(){
 			this.cloudType = CloudTypes.cssCloud;
-
+			this.worldInfo = {
+				pos: [0,0,0]
+			};
+			isGenerated = false;
 		}
 
 		CloudController.prototype.generate = function() {
 			if(this.cloudType == CloudTypes.cssCloud){
 				this.generateCssCloud();
 			}
-		
+			isGenerated = true;
+		}
+
+		CloudController.prototype.loop = function(){
+			if(!isGenerated)
+				return;
+			if(this.cloudType == CloudTypes.cssCloud){
+				this.worldInfo.pos[1] += -0.1;
+				this.worldInfo.pos[2] += 1;
+
+				if(this.worldInfo.pos[2] > 1200)
+					return;
+
+				if(world)
+					world.style.transform =  `translateY(${this.worldInfo.pos[1]}px) translateZ(${this.worldInfo.pos[2]}px)`;
+			}
 		}
 
 		CloudController.prototype.generateCssCloud = function(){
 			objects = [];
 			layers = [];
-			world = document.getElementById( 'css-cloud-world' );
+			world = document.getElementById( 'css-cloud-world-child' );
 			console.log(world);
-
 
 			if ( world.hasChildNodes() ) {
 				while ( world.childNodes.length >= 1 ) {
@@ -1711,19 +1975,34 @@ var Ocean = (function(){
 				}
 			}
 
-			for( var j = 0; j < 5; j++ ) {
-				objects.push( this.createCssCloud() );
+			// x: y:上負 z:正 手前
+			const cloudPositions = [
+				[200, 0, 50],
+				[100, -800, 0],
+				[-100, 200, 100],
+				[-100, 270, 350],
+				[200, 300, -200],
+				[300, 350, -230]
+			];
+
+			for( var j = 0; j < 6; j++ ) {
+				objects.push( this.createCssCloud(cloudPositions[j]) );
 			}
 		}
 
 
-		CloudController.prototype.createCssCloud = function() {
+		CloudController.prototype.createCssCloud = function(pos) {
 
 			var div = document.createElement( 'div'  );
 			div.className = 'cloudBase';
-			var x = 256 - ( Math.random() * 512 );
-			var y = 256 - ( Math.random() * 512 );
-			var z = 256 - ( Math.random() * 512 );
+			
+			var x = pos ? pos[0] : 256 - ( Math.random() * 512 );
+			var y = pos ? pos[1] : - ( Math.random() * 512 );
+			var z = pos ? pos[2] : ( Math.random() * 512 );
+			x *= 0.5;
+			y *= 0.5;
+
+
 			var t = 'translateX( ' + x + 'px ) translateY( ' + y + 'px ) translateZ( ' + z + 'px )';
 			div.style.webkitTransform = t;
 			div.style.MozTransform = t;
@@ -1740,12 +2019,12 @@ var Ocean = (function(){
 				} ) } )( cloud );
 				cloud.setAttribute( 'src', src );
 				cloud.className = 'cloudLayer';
-
 				var x = 256 - ( Math.random() * 512 );
 				var y = 256 - ( Math.random() * 512 );
 				var z = 100 - ( Math.random() * 200 );
+		
 				var a = Math.random() * 360;
-				var s = .25 + Math.random();
+				var s = 0.25 + Math.random();
 				x *= .2; y *= .2;
 				cloud.data = {
 					x: x,
