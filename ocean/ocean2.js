@@ -608,7 +608,7 @@ var Ocean = (function(){
 			} else {
 				$fighterViewImg.width(sc_width);
 				$fighterViewImg.height("auto");
-				let top = -(fighterViewImgHeight * sc_width / fighterViewImgWidth - sc_height)/2 ;
+				let top = -(fighterViewImgHeight * sc_width / fighterViewImgWidth - sc_height)/2 + 25 ; // +25 は根拠なし
 				$fighterViewImg.css("top", top + "px");
 				console.log(top);
 
