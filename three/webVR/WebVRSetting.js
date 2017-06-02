@@ -1,8 +1,15 @@
 /*
-	VR化セットアップクラス
+	VR Setup class
 
-	EventDispathcer使ってVRコントローラの入力とれるようにしたい
-	https://threejs.org/docs/#api/core/EventDispatcher
+	TODO: domベースでコントロールパネルだす
+		viveコントローラで姿勢
+
+	- websocket real time communication
+	https://deepstream.io./
+	- cannon.js
+	http://qiita.com/o_tyazuke/items/3481ef1a31b2a4888f5d
+	- google experiments
+	http://www.moguravr.com/google-webvr-experiments/
 
 */
 var WebVRSetting = {
@@ -10,6 +17,12 @@ var WebVRSetting = {
 		
 		var Instance = this;
 		Object.assign(this, THREE.EventDispatcher.prototype);
+
+		if ( WEBVR.isAvailable() === false ) {
+
+			return false;
+
+		}
 
 		this.controls =  new THREE.VRControls( camera );
 		this.controls.standing = true;
@@ -89,6 +102,8 @@ var WebVRSetting = {
 			Instance.effect.setSize( window.innerWidth, window.innerHeight );
 
 		}
+
+		return true;
 
 	},
 
@@ -195,6 +210,11 @@ var WebVRSetting = {
 
 	// should be called in animate()
 	startLoop: function(scene, camera, animate){
+		if(WEBVR.isAvailable() === false )
+		{
+			return false;
+		}
+
 		var Instance = this;
 		var animateFunc = function(){
 			Instance.effect.requestAnimationFrame(animateFunc);
@@ -214,6 +234,7 @@ var WebVRSetting = {
 
 		animateFunc();
 
+		return true;
 	}
 
 }

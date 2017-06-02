@@ -556,7 +556,12 @@ var Ocean = (function(){
 		firePool = new FirePool(fireGroup);
 
 		//modelLoader.funcBuffered(animate);
-		animate();
+		if(WebVRSetting.init(renderer, camera, scene, "./../three/webVR/")){
+			WebVRSetting.startLoop(scene, camera, _animate);
+		}else{
+			animate();
+		}
+
 	}
 
 
@@ -621,6 +626,10 @@ var Ocean = (function(){
 
 	function animate(){
 		requestAnimationFrame( animate );
+		_animate();
+	}
+
+	function _animate(){
 
 		let option = {}; // option for animateCallback
 		
