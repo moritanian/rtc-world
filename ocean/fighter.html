@@ -25,12 +25,15 @@
 
         <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
 
+
 		<!-- tracking -->
+		<!--
         <script type="text/javascript" src="./../jsfeat/jsfeat-min.js"></script>
         <script type="text/javascript" src="./../jsfeat//compatibility.js"></script>
         <script type="text/javascript" src="./../jsfeat/profile.js"></script>
         <script type="text/javascript" src="./../webrtc/device_cam.js"></script>
         <script type="text/javascript" src="./../jsfeat/screen_flow.js"></script>
+		-->
 
         <!-- data chanel -->
         <script src="https://rtc-world-s.herokuapp.com/socket.io/socket.io.js"></script> 
@@ -50,6 +53,7 @@
 		<script src="https://threejs.org/examples/js/effects/VREffect.js"></script>
 		<script src="https://threejs.org/examples/js/vr/ViveController.js"></script>
 		<script src="https://threejs.org/examples/js/vr/WebVR.js"></script>
+		<script src="https://threejs.org/examples/js/effects/StereoEffect.js"></script>
 
 		<script src="https://threejs.org/examples/js/loaders/OBJLoader.js"></script>
 
@@ -517,7 +521,11 @@ let s = 40;
 					$parentDom: $("#enemy-pointer-parent"),
 					$pointerDom: $("<div class='enemy-pointer'></div>")
 				},
-				timeOut: 60*10
+				timeOut: 60*10,
+				antialias :  WEBVR.isAvailable(),
+				vrSetting: {
+					//useStereoVR: true
+				}
 			});
 
 			$startButton.click(function(){
@@ -645,7 +653,6 @@ let s = 40;
 			const CenterPos = new THREE.Vector3(0, 100, -200);
 			const StartDistX = 300;
 			const  DisplayRot = [0.1, 0.5, 0];
-			//const DisplayAngVel = new THREE.Vector3(0, 0.2 ,0);
 			const ChangeTime = 0.5;
 			let objectControl;
 
@@ -661,7 +668,6 @@ let s = 40;
 				previousId = nextId;//selectModelIndex + 1;
 				oceanControl.updateFighter({
 					vel: [StartDistX/ ChangeTime * move ,0 ,0] //,
-					//angVel: new THREE.Vector3(0, 0, 0)
 				}, previousId);
 
 				selectModelIndex += move;
@@ -671,7 +677,7 @@ let s = 40;
 					selectModelIndex -= modelLength;
 				let modelName = modelNames[selectModelIndex];
 
-				nextId = uuid();//selectModelIndex + 1;
+				nextId = uuid();
 
 				oceanControl.addFighter({
 					modelName: modelName,
@@ -695,9 +701,6 @@ let s = 40;
 				}, ChangeTime * 1000);
 
 				setTimeout(function(){
-					/*oceanControl.updateFighter({
-						angVel: DisplayAngVel.clone()
-					}, nextId); */
 					objectControl.autoRotate = true;
 					enableChange = true;
 				}, ChangeTime * 1000 + 200);

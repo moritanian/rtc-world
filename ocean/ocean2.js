@@ -220,6 +220,7 @@ var Ocean = (function(){
 		isLockSideScreen = option.isLockSideScreen || false;
 		isInverseScreen = false;
 		this.fpsManager = new LpFilter(0.06);
+		option.antialias = option.antialias || false;
 
 		let succsessFunc = option.succsessFunc || function(){};
 
@@ -248,7 +249,7 @@ var Ocean = (function(){
 
 		this.uiWidgets = $(".ui-widgets");
 
-		initScene();		
+		initScene(option.antialias, option.vrSetting);		
 		modelLoader = new ModelLoader(Ocean.Models, fighterGroup);
 
 		this.cloudController = new CloudController();
@@ -348,7 +349,7 @@ var Ocean = (function(){
 		startTime = getTime();
 	}
 
-	function initScene(){
+	function initScene(antialias, vrSetting){
 		var parameters = {
 				width: 2000,
 				height: 2000,
@@ -364,7 +365,7 @@ var Ocean = (function(){
 		let container = document.createElement( 'div' );
 		document.body.prepend( container );
 
-		renderer = new THREE.WebGLRenderer({antialias: false});
+		renderer = new THREE.WebGLRenderer({antialias: antialias ? true : false});
 		
 		renderer.domElement.style.position = "relative";
 		renderer.domElement.style.left = "-4px";
@@ -556,11 +557,8 @@ var Ocean = (function(){
 		firePool = new FirePool(fireGroup);
 
 		//modelLoader.funcBuffered(animate);
-		if(WebVRSetting.init(renderer, camera, scene, "./../three/webVR/")){
-			WebVRSetting.startLoop(scene, camera, _animate);
-		}else{
-			animate();
-		}
+		WebVRSetting.init(renderer, camera, scene, "./../three/webVR/", vrSetting);
+		WebVRSetting.startLoop(scene, camera, _animate);
 
 	}
 
@@ -622,11 +620,6 @@ var Ocean = (function(){
 		}
 		if(objectControl)
 			objectControl.inverseXY = isInverseScreen;
-	}
-
-	function animate(){
-		requestAnimationFrame( animate );
-		_animate();
 	}
 
 	function _animate(){
@@ -755,7 +748,7 @@ var Ocean = (function(){
 		if(objectControl)
 			objectControl.update();
 		water.render();
-		renderer.render( scene, camera );
+		//renderer.render( scene, camera );
 	}
 
 // static member

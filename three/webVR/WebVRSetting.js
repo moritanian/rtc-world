@@ -4,6 +4,16 @@
 	TODO: domベースでコントロールパネルだす
 		viveコントローラで姿勢
 
+	- html-gl
+	html2canvas使っている
+
+	- dreamgl これ使えばwebVRのUIできるかも
+	https://github.com/dreemproject/dreemgl
+
+	- 以下で3Dモデル入手場所書かれている
+	https://aframe.io/docs/0.5.0/introduction/models.html
+	skech fab - download できるものはCreative Commons License
+
 	- websocket real time communication
 	https://deepstream.io./
 	- cannon.js
@@ -13,13 +23,23 @@
 
 */
 var WebVRSetting = {
-	init: function(renderer, camera, scene, path){
+	init: function(renderer, camera, scene, path, options){
 		
 		var Instance = this;
 		Object.assign(this, THREE.EventDispatcher.prototype);
 
-		if ( WEBVR.isAvailable() === false ) {
-
+		options = options || {};
+		this.useHeadsetVR = options.useHeadsetVR == null || options.useHeadsetVR  ? true : false;
+		this.useStereoVR = options.useStereoVR ? true : false;
+		if ( !this.useHeadsetVR || WEBVR.isAvailable() === false ) {
+			this.useHeadsetVR = false;
+			if(options.useStereoVR){
+				console.log("useStereoVR");
+				this.effect = new THREE.StereoEffect( renderer );
+				this.effect.setSize( window.innerWidth, window.innerHeight );
+				return true;
+			}
+			this.effect = renderer;
 			return false;
 
 		}
@@ -79,8 +99,10 @@ var WebVRSetting = {
 		this.effect = new THREE.VREffect( renderer );
 
 		WEBVR.getVRDisplay( function ( display ) {
-
-			document.body.appendChild( WEBVR.getButton( display, renderer.domElement ) );
+			let button =  WEBVR.getButton( display, renderer.domElement );
+			button.style.right = "10px";
+			button.style.left = "auto";
+			document.body.appendChild(button );
 
 		} );
 
@@ -210,28 +232,38 @@ var WebVRSetting = {
 
 	// should be called in animate()
 	startLoop: function(scene, camera, animate){
-		if(WEBVR.isAvailable() === false )
-		{
-			return false;
-		}
-
+		
 		var Instance = this;
-		var animateFunc = function(){
-			Instance.effect.requestAnimationFrame(animateFunc);
-			animate();
-			Instance.controller1.update();
-			Instance.controller2.update();
+		var animateFunc; 
+		if(Instance.useHeadsetVR){
+			animateFunc = function(){
+				Instance.effect.requestAnimationFrame(animateFunc);
+				animate();
+				Instance.controller1.update();
+				Instance.controller2.update();
 
-			Instance.controls.update();
+				Instance.controls.update();
 
-			Instance.cleanIntersected();
+				Instance.cleanIntersected();
 
-			Instance.intersectObjects( Instance.controller1 );
-			Instance.intersectObjects( Instance.controller2 );
-			Instance.effect.render( scene, camera );
+				Instance.intersectObjects( Instance.controller1 );
+				Instance.intersectObjects( Instance.controller2 );
+				Instance.effect.render( scene, camera );
 
-		};
-
+			};
+		} else if(Instance.useStereoVR){
+			animateFunc = function(){
+				requestAnimationFrame( animateFunc );
+				animate();
+				Instance.effect.render(scene, camera);
+			};
+		} else {
+			animateFunc = function(){
+				requestAnimationFrame( animateFunc );
+				animate();
+				Instance.effect.render(scene, camera);
+			};
+		}
 		animateFunc();
 
 		return true;
