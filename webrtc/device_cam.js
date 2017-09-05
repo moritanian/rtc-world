@@ -4,49 +4,63 @@ var camera_controller = (function(){
 	var cameraData = [];
 	var localStream;
 	var video;
-	var camera_controller = function(videoElement){
+  var resolution;
+	var camera_controller = function(videoElement, _resolution){
 		video = videoElement;
-	}
+    if(_resolution in camera_controller.RESOLUTION)
+      resolution = _resolution;
+	   else
+      resolution = "";
+  }
+
+  camera_controller.RESOLUTION = {
+    VGA: "VGA",
+    HD: "HD" 
+  };
+
+  let RESOLUTION_HASH = {};
+  RESOLUTION_HASH[camera_controller.RESOLUTION.VGA] = [640, 480];
+  RESOLUTION_HASH[camera_controller.RESOLUTION.HD] = [1280, 720];
 
 	camera_controller.prototype.startCamera = function(_cam_id = 1){
 		cam_id = _cam_id;
 		if(!!MediaStreamTrack.getSources){
 			MediaStreamTrack.getSources(function(data){
-	            //カメラ情報を取得して、出力する
-	            var strCamera = "";
-	            var len = data.length;
-	            for( var i = 0 ; i < len ; i ++ ){
-	            	strCamera += "<p>種類："+ data[i].kind+"<br/>ID："+ data[i].id+"</p>";
-	            	if( data[i].kind == "video" ){
-	            		cameraData.push(data[i]);
-	            	}
-	            }
-	            if( cameraData.length == 0 ){
-	            	alert("カメラが見つかりません");
-	            	return;
-	            }
-	            //カメラを取得・切り替える
-	            setCamera();
-	        });
-        }else if(!!navigator.mediaDevices.enumerateDevices){
-          	navigator.mediaDevices.enumerateDevices()
-          	.then(function(devices) {
-            	devices.forEach(function(device) {
-              		//console.log(device.kind + ": " + device.label +
-                  //        " id = " + device.deviceId);
-              		if(device.kind === "videoinput"){
-              			cameraData.push({id:device.deviceId});
-              		}
-            	});
-            	setCamera();
-          	})
-          	.catch(function(err) {
-           		console.log(err.name + ": " + error.message);
-          	});
-        }else{
-        	//カメラを取得・切り替える
-        	setCamera();   
+        //カメラ情報を取得して、出力する
+        var strCamera = "";
+        var len = data.length;
+        for( var i = 0 ; i < len ; i ++ ){
+          strCamera += "<p>種類："+ data[i].kind+"<br/>ID："+ data[i].id+"</p>";
+          if( data[i].kind == "video" ){
+            cameraData.push(data[i]);
+          }
         }
+        if( cameraData.length == 0 ){
+          alert("カメラが見つかりません");
+          return;
+        }
+        //カメラを取得・切り替える
+        setCamera();
+      });
+    }else if(!!navigator.mediaDevices.enumerateDevices){
+      navigator.mediaDevices.enumerateDevices()
+    	.then(function(devices) {
+      	devices.forEach(function(device) {
+          // console.log(device.kind + ": " + device.label +
+          //  " id = " + device.deviceId);
+          if(device.kind === "videoinput"){
+            cameraData.push({id:device.deviceId});
+          }
+        });
+        setCamera();
+      })
+    	.catch(function(err) {
+     		console.log(err.name + ": " + err.message);
+    	});
+    }else{
+  	 //カメラを取得・切り替える
+  	 setCamera();   
+    }
 	}
 
 	camera_controller.prototype.convertCamera = function(){
@@ -57,41 +71,58 @@ var camera_controller = (function(){
 		setCamera();
 	}
 
+  camera_controller.prototype.addLoadedEventListener = function(loadedFunc){
+     function wrappedLoadedFunc(){
+        video.removeEventListener('loadeddata', wrappedLoadedFunc);
+        loadedFunc(video.videoWidth, video.videoHeight);
+      }
+      video.addEventListener("loadeddata", wrappedLoadedFunc);
+  }
+
 	var setCamera = function(){
-		navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || window.navigator.mozGetUserMedia;
-        window.URL = window.URL || window.webkitURL;
-		 //カメラ再生中の場合は切り替えのため、一旦停止する
-        if( localStream ){
-          localStream.getTracks().forEach(function (track) { track.stop()});
-        }
+		navigator.getUserMedia = navigator.getUserMedia ||
+      navigator.webkitGetUserMedia || 
+      window.navigator.mozGetUserMedia;
+    window.URL = window.URL ||
+      window.webkitURL;
+		
+    //カメラ再生中の場合は切り替えのため、一旦停止する
+    if( localStream ){
+      localStream.getTracks().forEach(function (track) { track.stop()});
+    }
 
-        if(cameraData.length > 0){
-        	if(cam_id > cameraData.length-1){
-        		cam_id = 0;
-        	}
-        	var constraints = {
-        		video: {
-        			optional: [{sourceId: cameraData[cam_id].id }] //カメラIDを直接指定する
-        		},
-        		audio: false
-          	};
-        }else{
-        	var constraints = {video: true, audio: false};
+    if(cameraData.length > 0){
+      if(cam_id > cameraData.length-1){
+        cam_id = 0;
+      }
+      var constraints = {
+        video: {
+    			optional: [{sourceId: cameraData[cam_id].id }], //カメラIDを直接指定する
+    		},
+    		audio: false
+      	};
+      if(resolution != ""){
+        constraints.video.mandatory = {
+          "minWidth": RESOLUTION_HASH[resolution][0],
+          "minHeight": RESOLUTION_HASH[resolution][1]
         }
-        //カメラをIDを使用して取得する
-        navigator.getUserMedia(
-        	constraints,
-        	function(stream) {
-
-        		//切り替え時にカメラを停止するため、情報を保存しておく
-        		localStream = stream;
-	            //カメラをvideoに結びつける
-    	        video.src = window.URL.createObjectURL(stream);
-	        },
-          	function(err) {
-            	//エラー処理
-          	}
-        );
+      }
+    }else{
+    	var constraints = {video: true, audio: false};
+    }
+    //カメラをIDを使用して取得する
+    navigator.getUserMedia(
+      constraints,
+      function(stream) {
+        //切り替え時にカメラを停止するため、情報を保存しておく
+        localStream = stream;
+        //カメラをvideoに結びつける
+        video.src = window.URL.createObjectURL(stream);
+      },
+      function(err) {
+        //エラー処理
+      }
+    );
 	}
 	return camera_controller; 
 })();

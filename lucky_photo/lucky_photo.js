@@ -6,7 +6,7 @@
     var filters = ["", "grayscale", "sepia", "blur"];
     
     video = $("#myVideo").get(0);
-    var camController = new camera_controller(video);
+    var camController = new camera_controller(video, camera_controller.RESOLUTION.HD);
     camController.startCamera();
 
       function takeCamera(){
@@ -22,7 +22,16 @@
         var u_time = Math.floor((d.getTime())/1000);
         var filename = "lucky_photo" + u_time + ".png";
         download(url, filename);
-      }
+
+        $(video).hide();
+        $(canvas).show();
+        setInterval(function(){
+          $(video).show();
+          $(canvas).hide();
+        }, 2000);
+        console.log(video.videoHeight);
+        console.log(video.videoWidth);
+      };
 
       function download(objectURL, filename) {
         var a = document.createElement('a');
@@ -36,14 +45,7 @@
         //clickイベントを着火
         e.initEvent("click", true, true, window, 1, 0, 0, 0, 0, false, false, false, false, 0, null);
         a.dispatchEvent(e);
-
-        $(video).hide();
-        $(canvas).show();
-        setInterval(function(){
-          $(video).show();
-          $(canvas).hide();
-        }, 2000);
-      }
+      };
 
       function applyEffect(){
         $(video).removeClass(filters[effect_index]);
