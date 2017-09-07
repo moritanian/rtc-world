@@ -22,7 +22,7 @@
        
         <script type="text/javascript" src="./profile.js"></script>
         <script type="text/javascript" src="./../webrtc/device_cam.js"></script>
-        <script type="text/javascript" src="./screen_flow.js"></script>
+        <script type="text/javascript" src="./screen_flow_control.js"></script>
        
         
     </head>
@@ -88,36 +88,42 @@
                 return lp_filter
             })();
 
+            var video = document.createElement('video');
+            video.autoplay = 'autoplay';
+            var camController = new camera_controller(video);
+            camController.startCamera();
 
-                var tracking = new screen_flow(2);
-                var offset, rot;
-                var move_coff = 500.0;
-                var x_filter = new lp_filter(0.3);
-                var y_filter = new lp_filter(0.3);
-                var z_filter = new lp_filter(0.3);
-                var $map_element = $("#map");
-                
-                var render = function(){
-                    if(map){
-                         map.panTo(new google.maps.LatLng(FIRST_LATING[0] + y_filter.get()/move_coff, FIRST_LATING[1] - x_filter.get()/move_coff));
-                         $map_element.css("zoom", (z_filter.get()/20 +100) + "%");
-                         $map_element.css("transform", "rotate(" + rot.z*180 /3.14 + "deg)");
+            var tracking = new screen_flow_control(video, 2);
+            var offset, rot;
+            var move_coff = 500.0;
+            var x_filter = new lp_filter(0.3);
+            var y_filter = new lp_filter(0.3);
+            var z_filter = new lp_filter(0.3);
+            var $map_element = $("#map");
+            
+            var render = function(){
+                if(map){
+                     map.panTo(new google.maps.LatLng(FIRST_LATING[0] + y_filter.get()/move_coff, FIRST_LATING[1] - x_filter.get()/move_coff));
+                     $map_element.css("zoom", (z_filter.get()/20 +100) + "%");
+                     $map_element.css("transform", "rotate(" + rot.z*180 /3.14 + "deg)");
 
-                    }
                 }
+            }
 
-                var anim_loop = function(){
-                    window.requestAnimationFrame(anim_loop);
-                    var flow = tracking.get_data();
-                    offset = flow.move;
-                    rot = flow.rot;
+            var anim_loop = function(){
+                window.requestAnimationFrame(anim_loop);
 
-                    x_filter.set(offset.x);
-                    y_filter.set(offset.y);
-                    z_filter.set(offset.z);
-                    render();
-                }
-                anim_loop();
+                tracking.update();
+                var flow = tracking.get_data();
+                offset = flow.move;
+                rot = flow.rot;
+
+                x_filter.set(offset.x);
+                y_filter.set(offset.y);
+                z_filter.set(offset.z);
+                render();
+            }
+            anim_loop();
 
             
 
