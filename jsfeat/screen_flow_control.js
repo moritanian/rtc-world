@@ -44,7 +44,7 @@ var screen_flow_control = function(video, REQURE_POINT_NUM_PER_SIDE = 3, canvas)
 		   	this.canvas.width = videoHeight;
 		   	this.canvas.height = videoHeight;
 
-		   	ctx = canvas.getContext('2d');
+		   	ctx = this.canvas.getContext('2d');
 
 	    	ctx.fillStyle = "rgb(0,255,0)";
 	    	ctx.strokeStyle = "rgb(0,255,0)";
