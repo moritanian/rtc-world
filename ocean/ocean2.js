@@ -423,38 +423,29 @@ var Ocean = (function(){
 		var light = new THREE.DirectionalLight( 0xffffbb, 1 );
 		light.position.set( - 1, 1, - 1 );
 		scene.add( light );
-	   
-		let waterNormals = new THREE.TextureLoader().load( 'textures/waternormals.jpg' );
-		waterNormals.wrapS = waterNormals.wrapT = THREE.RepeatWrapping;
-
-		water = new THREE.Water( 
-			renderer, 
-			camera, 
-			scene, 
+	 
+		water = new THREE.Water(
+			parameters.width * 500, 
+			parameters.height * 500,
 			{
 				textureWidth: 512,
 				textureHeight: 512,
-				waterNormals: waterNormals,
-				alpha: 	1.0,
+				waterNormals: new THREE.TextureLoader().load( 'textures/waternormals.jpg', function ( texture ) {
+					texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+				}),
+				alpha: 1.0,
 				sunDirection: light.position.clone().normalize(),
 				sunColor: 0xffffff,
 				waterColor: 0x001e0f,
-				distortionScale: 50.0
-			} 
+				distortionScale: 50.0,
+				fog: scene.fog != undefined
+			}
 		);
 
+		water.rotation.x = - Math.PI / 2;
+		water.receiveShadow = true;
 
-		let mirrorMesh = new THREE.Mesh(
-			new THREE.PlaneBufferGeometry( parameters.width * 500, parameters.height * 500 ),
-			water.material
-		);
-
-		//water.instanceId = "water";
-		//mirrorMesh.instanceId = "mirroeMesh";
-		mirrorMesh.add( water );
-		mirrorMesh.rotation.x = - Math.PI * 0.5;
-		scene.add( mirrorMesh );
-
+		scene.add( water );
 
 		// load skybox
 		(function (){
@@ -740,12 +731,17 @@ var Ocean = (function(){
 		}
 
 		water.material.uniforms.time.value += 1.0 / 60.0;
+		
+		water.material.uniforms.size.value = 1.0;
+		water.material.uniforms.distortionScale.value = 3.7;
+		water.material.uniforms.alpha.value = 1.0;
+		
 		if(isOrbitControl){
 			controls.update();
 		}
 		if(objectControl)
 			objectControl.update();
-		water.render();
+		
 		renderer.render( scene, camera );
 	}
 
