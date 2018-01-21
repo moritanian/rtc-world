@@ -5,6 +5,7 @@
     var effect_index = 0;
     var filters = ["", "grayscale", "sepia", "blur"];
     var isRecording = false;
+    var isShowMpDialog = false;
     
     video = $("#myVideo").get(0);
     var camController = new camera_controller(video, camera_controller.RESOLUTION.HD);
@@ -81,6 +82,14 @@
         download(url, filename);
       }
 
+      $("#myVideo").bind("click", function(){
+        if(isShowMpDialog){
+          video.play();
+        } else if(!isRecording){
+          takeCamera();
+        }
+      });
+
       //カメラ切り替えボタンクリックイベント
       $("#changeButton").bind("click",function(){
         camController.convertCamera();
@@ -97,6 +106,7 @@
           readyPlaybackRecorded();
           $(this).removeClass("recording");
           $("#mp-dialog").show();
+          isShowMpDialog = true;
         } else {
           isRecording = true;
           camController.startRecording();
@@ -119,6 +129,7 @@
 
       $("#closeMpButton").bind("click", function(){
         $("#mp-dialog").hide();
+        isShowMpDialog = false;
         camController.startCamera();
       });
 
