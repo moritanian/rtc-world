@@ -5,13 +5,14 @@ var camera_controller = (function(){
 	var localStream;
 	var video;
   var resolution;
+  var recorder, chunks;
 	var camera_controller = function(videoElement, _resolution){
 		video = videoElement;
     if(_resolution in camera_controller.RESOLUTION)
       resolution = _resolution;
 	   else
       resolution = "";
-  }
+  };
 
   camera_controller.RESOLUTION = {
     VGA: "VGA",
@@ -35,7 +36,7 @@ var camera_controller = (function(){
             cameraData.push(data[i]);
           }
         }
-        if( cameraData.length == 0 ){
+        if( cameraData.length === 0 ){
           alert("カメラが見つかりません");
           return;
         }
@@ -61,7 +62,7 @@ var camera_controller = (function(){
   	 //カメラを取得・切り替える
   	 setCamera();   
     }
-	}
+	};
 
 	camera_controller.prototype.convertCamera = function(){
 		cam_id++;
@@ -69,7 +70,7 @@ var camera_controller = (function(){
 			cam_id = 0;
 		}
 		setCamera();
-	}
+	};
 
   camera_controller.prototype.addLoadedEventListener = function(loadedFunc){
      function wrappedLoadedFunc(){
@@ -77,7 +78,45 @@ var camera_controller = (function(){
         loadedFunc(video.videoWidth, video.videoHeight);
       }
       video.addEventListener("loadeddata", wrappedLoadedFunc);
-  }
+  };
+
+  // 録画開始
+  camera_controller.prototype.startRecording = function(){
+    const option = {
+      videoBitsPerSecond : 5120000, // 512kbits / sec
+      mimeType : 'video/webm; codecs=vp9'
+    };
+
+    recorder = new MediaRecorder(localStream, option);
+    chunks = []; // 録画データを保持する
+
+    // 一定間隔で録画が区切られて、データが渡される
+    recorder.ondataavailable = function(evt) {
+      chunks.push(evt.data);
+    };
+
+    // 録画開始
+    recorder.start(1000); // 1000ms 毎に録画データを区切る
+    
+    // 録画停止時に呼ばれる
+    recorder.onstop = function(evt) {
+      recorder = null;
+    };
+
+  };
+
+  camera_controller.prototype.stopRecording = function(){
+    // 録画停止（の要求）  
+    recorder.stop();
+  };
+
+  camera_controller.prototype.getRecordedBlobUrl = function(){
+
+    const videoBlob = new Blob(chunks, { type: "video/webm" });
+    let blobUrl = window.URL.createObjectURL(videoBlob);
+    return blobUrl;
+
+  };
 
 	var setCamera = function(){
 		navigator.getUserMedia = navigator.getUserMedia ||
@@ -85,6 +124,8 @@ var camera_controller = (function(){
       window.navigator.mozGetUserMedia;
     window.URL = window.URL ||
       window.webkitURL;
+
+    var constraints;
 		
     //カメラ再生中の場合は切り替えのため、一旦停止する
     if( localStream ){
@@ -95,20 +136,20 @@ var camera_controller = (function(){
       if(cam_id > cameraData.length-1){
         cam_id = 0;
       }
-      var constraints = {
+      constraints = {
         video: {
     			optional: [{sourceId: cameraData[cam_id].id }], //カメラIDを直接指定する
     		},
     		audio: false
       	};
-      if(resolution != ""){
+      if(resolution !== ""){
         constraints.video.mandatory = {
           "minWidth": RESOLUTION_HASH[resolution][0],
           "minHeight": RESOLUTION_HASH[resolution][1]
-        }
+        };
       }
     }else{
-    	var constraints = {video: true, audio: false};
+    	constraints = {video: true, audio: false};
     }
     //カメラをIDを使用して取得する
     navigator.getUserMedia(
@@ -123,6 +164,6 @@ var camera_controller = (function(){
         //エラー処理
       }
     );
-	}
+	};
 	return camera_controller; 
 })();

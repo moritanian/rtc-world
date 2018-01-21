@@ -4,6 +4,7 @@
     var video, canvas, ctx;
     var effect_index = 0;
     var filters = ["", "grayscale", "sepia", "blur"];
+    var isRecording = false;
     
     video = $("#myVideo").get(0);
     var camController = new camera_controller(video, camera_controller.RESOLUTION.HD);
@@ -31,7 +32,7 @@
         }, 2000);
         console.log(video.videoHeight);
         console.log(video.videoWidth);
-      };
+      }
 
       function download(objectURL, filename) {
         var a = document.createElement('a');
@@ -45,7 +46,7 @@
         //clickイベントを着火
         e.initEvent("click", true, true, window, 1, 0, 0, 0, 0, false, false, false, false, 0, null);
         a.dispatchEvent(e);
-      };
+      }
 
       function applyEffect(){
         $(video).removeClass(filters[effect_index]);
@@ -59,6 +60,27 @@
         console.log(filters[effect_index]);
       }
 
+      function readyPlaybackRecorded(){
+    
+        let blobUrl = camController.getRecordedBlobUrl(); 
+        let playbackVideo = video;
+        if (playbackVideo.src) {
+          window.URL.revokeObjectURL(playbackVideo.src); // 解放
+          playbackVideo.src = null;
+        }
+        playbackVideo.src = blobUrl;
+        playbackVideo.pause();
+
+      }
+
+      function downloadRecorderd(){
+        var url = camController.getRecordedBlobUrl();
+        var d = new Date();
+        var u_time = Math.floor((d.getTime())/1000);
+        var filename = "lucky_photo_movie" + u_time + ".webm";
+        download(url, filename);
+      }
+
       //カメラ切り替えボタンクリックイベント
       $("#changeButton").bind("click",function(){
         camController.convertCamera();
@@ -68,11 +90,39 @@
         takeCamera();
       });
 
+      $("#movieButton").bind("click",function(){
+        if(isRecording){
+          isRecording = false;
+          camController.stopRecording();
+          readyPlaybackRecorded();
+          $(this).removeClass("recording");
+          $("#mp-dialog").show();
+        } else {
+          isRecording = true;
+          camController.startRecording();
+          $(this).addClass("recording");
+          
+        }
+      });
+
       $("#effectButton").bind("click",function(){
         applyEffect();
       });
 
-      canvas = $("#canvas")
+      $("#playbackButton").bind("click", function(){
+        video.play();
+      });
+
+      $("#movieDownloadButton").bind("click", function(){
+        downloadRecorderd();
+      });
+
+      $("#closeMpButton").bind("click", function(){
+        $("#mp-dialog").hide();
+        camController.startCamera();
+      });
+
+      canvas = $("#canvas");
       $(video).css("max-width", screen.width);
       $(canvas).css("max-width", screen.width);
       $(video).css("max-height", screen.height*0.7);

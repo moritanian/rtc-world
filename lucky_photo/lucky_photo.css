@@ -41,6 +41,39 @@ body{
       min-width:90px;
       border-radius: 4px;
       margin-bottom: 12px;
+      height: 36px;
+    }
+
+    .movie-buttons {
+      background-color: #000000b0;
+      top: -50px;
+      padding: 5px;
+      box-shadow: #9e9e9e5c 1px 2px 6px 0px;
+      position: relative;
+      display: none;
+    }
+
+    .mp-button {
+      font-weight: bold;
+      text-shadow: 0 0 3px #fff;
+      font-size: 16px;
+      min-width: 100px;
+      border-radius: 4px;
+      padding: 2px;
+    }
+
+    .close-button {
+      position: absolute;
+      right: 5px;
+      width: 24px;
+      height: 24px;
+      background-color: #dededeb0;
+      border-radius: 24px;
+      font-size: 24px;
+      text-align: center;
+      line-height: 24px;
+      box-shadow: #969696 1px 1px;
+      cursor: pointer;
     }
 
     #changeButton{
@@ -64,6 +97,30 @@ body{
       background: linear-gradient(to bottom, #ffbc7a 0%,#f8ab60 44%,#ee9640 100%);
       filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#7abcff', endColorstr='#ee9640',GradientType=0 );
       border: 1px solid red;
+    }
+
+    #movieButton{
+      background: #ffbc7a;
+      background: -moz-linear-gradient(top, #ffbc7a 0%, #f8ab60 44%, #ee9640 100%);
+      background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#7abcff), color-stop(44%,#60abf8), color-stop(100%,#4096ee));
+      background: -webkit-linear-gradient(top, #7abcff 0%,#60abf8 44%,#4096ee 100%);
+      background: -o-linear-gradient(top, #7abcff 0%,#60abf8 44%,#4096ee 100%);
+      background: -ms-linear-gradient(top, #7abcff 0%,#60abf8 44%,#4096ee 100%);
+      background: linear-gradient(to bottom, #b9b9b9 0%,#cecece 44%,#aaafaa 100%);
+      filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#7abcff', endColorstr='#ee9640',GradientType=0 );
+      border: 1px solid #244c00;
+    }
+
+    #movieButton.recording{
+      background: #ffbc7a;
+      background: -moz-linear-gradient(top, #ffbc7a 0%, #f8ab60 44%, #ee9640 100%);
+      background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#7abcff), color-stop(44%,#60abf8), color-stop(100%,#4096ee));
+      background: -webkit-linear-gradient(top, #7abcff 0%,#60abf8 44%,#4096ee 100%);
+      background: -o-linear-gradient(top, #7abcff 0%,#60abf8 44%,#4096ee 100%);
+      background: -ms-linear-gradient(top, #7abcff 0%,#60abf8 44%,#4096ee 100%);
+      background: linear-gradient(to bottom, #cacaca 0%,#ffffff 44%,#c1c1c1 100%);
+      filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#7abcff', endColorstr='#ee9640',GradientType=0 );
+      border: 1px solid #ff0076;
     }
 
      #effectButton{
