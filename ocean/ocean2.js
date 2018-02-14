@@ -31,7 +31,7 @@ var Ocean = (function(){
 
 	var screenDirection = function(){
 		return window.innerWidth / window.innerHeight < 1.0 ? true : false;
-	}
+	};
 
 	let fighterInstances;
 
@@ -62,7 +62,7 @@ var Ocean = (function(){
 		fov: 55,
 		near: 0.5,
 		far: 3000000
-	}
+	};
 
 	// 制御定数係数
 	const HORIZONTAL_COEFFICIENT_BASE = 0.05; //左右方向 0.02
@@ -93,7 +93,7 @@ var Ocean = (function(){
 					}
 				});
 			}
-		}
+		};
 
 		// すでに完了していれば即実行、まだなら
 		ModelLoader.prototype.funcBuffered = function(func){
@@ -102,11 +102,11 @@ var Ocean = (function(){
 			}else {
 				loadedFuncs.push(func);
 			}
-		}
+		};
 
 		ModelLoader.prototype.hasFinished = function(){
 			return loadedNum == modelLength;
-		}
+		};
 
 		return ModelLoader; 
 	})();
@@ -138,26 +138,26 @@ var Ocean = (function(){
 				audioSources[sourceName].volume = volume;
 				audioSources[sourceName].play();
 			}
-		}
+		};
 
 		AudioController.prototype.stop = function(sourceName){
 			if(audioSources[sourceName]){
 				audioSources[sourceName].pause();
 				audioSources[sourceName].currentTime = 0;
 			}
-		}
+		};
 
 		AudioController.prototype.pauseBgm = function(){
 			if(audioSources[this.bgmSource]){
 				audioSources[this.bgmSource].pause();
 			}
-		}
+		};
 
 		AudioController.prototype.restartBgm = function(){
 			if(audioSources[this.bgmSource]){
 				audioSources[this.bgmSource].play();
 			}
-		}
+		};
 
 		// スマホブラウザのクリックイベントでしか再生できない問題への対応
 		AudioController.prototype.onClickInitialize = function(bgmSource = ""){
@@ -176,7 +176,7 @@ var Ocean = (function(){
 				}
 
 			}
-		}
+		};
 
 		return new AudioController();
 	})();
@@ -272,8 +272,11 @@ var Ocean = (function(){
 
 		beShotCallback = option.beShotCallback || function(){};
 		myScorePoint = 0;
-		if(option.enemyPointerArgs)
-			enemyPointerController = new EnemyPointer(option.enemyPointerArgs.$parentDom, option.enemyPointerArgs.$pointerDom);
+		if(option.enemyPointerArgs){
+			enemyPointerController = new EnemyPointer(
+				option.enemyPointerArgs.$parentDom, 
+				option.enemyPointerArgs.$pointerDom);
+		}
 
 		if(option.timeOut && option.timeOut > 0){
 			timeOutModule = {
@@ -329,7 +332,7 @@ var Ocean = (function(){
         var closed_callback = function(connectionCount, _userId){
             console.log("connection closed callback" + connectionCount);
             deleteMember(_userId);
-        }
+        };
 
         var socket_connected_callback = function(id){
         	myId = id;
@@ -342,9 +345,10 @@ var Ocean = (function(){
 			modelLoader.funcBuffered(function(){
 				succsessFunc(Instance);
 			});
-        }
+        };
 
-		chanelControl = new Chanel(connected_callback, msg_get_callback, closed_callback, channelName, socket_connected_callback)
+		chanelControl = new Chanel(connected_callback, 
+				msg_get_callback, closed_callback, channelName, socket_connected_callback);
 		startTime = getTime();
 	}
 
@@ -552,10 +556,10 @@ var Ocean = (function(){
 
 
 	function setScreenSize(){
-		console.log("setScreenSize");
+		//console.log("setScreenSize");
 		let $fighterViewImg = $("#own-fighter-view-img");
 		
-		
+		/*
 		console.log("innerheight", window.innerHeight);
 		console.log("outerheight", window.outerHeight);
 		console.log("height", $(document).height());
@@ -565,7 +569,7 @@ var Ocean = (function(){
 		console.log("outerWidth", window.outerWidth);
 		console.log("width", $(document).width());
 		console.log("avail width", screen.availWidth);
-	
+	*/
 		if(isLockSideScreen && screenDirection()){ // 横に倒す
 			isInverseScreen = true;
 			let sc_height = $(document).width() + 4;// screen.availHeight/window.devicePixelRatio; //$(document).width() + 4;
@@ -663,7 +667,7 @@ var Ocean = (function(){
 			enemyPointerController.loop();
 
 		render();
-	};
+	}
 
 	function render(){
 		var time = performance.now() * 0.001;
@@ -671,7 +675,7 @@ var Ocean = (function(){
 		lastTime = time;
 
 		// timeOut
-		if(timeOutModule && timeOutModule.hasTimeOut == false){
+		if(timeOutModule && timeOutModule.hasTimeOut === false){
 			timeOutModule.timeCount += deltaTime;
 			if(timeOutModule.timeCount > timeOutModule.timeOut){
 				if (isUseChanel)
@@ -843,7 +847,7 @@ var Ocean = (function(){
 		Pause : 4,
 		Win : 5,
 		GameOver: 6
-	}
+	};
 
 	/*
 		funcObjでよびだされる関数郡
@@ -857,7 +861,7 @@ var Ocean = (function(){
 			}
 		},
 		"shotBullet": function(senderId, fighterId){
-			Instance.oneShoot(fighterId)
+			Instance.oneShoot(fighterId);
 		},
 
 		"beShot": function(senderId, instanceId, point, shooterObjId){

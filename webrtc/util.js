@@ -194,7 +194,7 @@ Number.prototype.floatFormat = function(n)
 {
 	let _pow = Math.pow(10, n);
 	return Math.round (this * _pow)/_pow;	
-}
+};
 
 /* dom のevent propagation */
 Util.stopEventPropagation = function(selector, events)
@@ -206,4 +206,4 @@ Util.stopEventPropagation = function(selector, events)
 			e.stopPropagation();
 		});
 	}
-}
+};

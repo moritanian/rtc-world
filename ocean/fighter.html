@@ -302,9 +302,9 @@
 
 			// デバイスの傾き
 			$( window ).on( "deviceorientation", function(e){
-				var evenet = e.originalEvent;
-
-				hasCompass = evenet.absolute;
+				var event = e.originalEvent;
+				hasCompass =  event !== null && event.alpha !== null;
+				console.log(event);
 				if(hasCompass){
 					if(event.webkitCompassHeading) {
 						// Apple works only with this, alpha doesn't work
@@ -439,7 +439,7 @@ let s = 40;
 	            infoControls.$score.val(Math.floor(option.myScorePoint));
 	            infoControls.$member.val(`${option.memberNum} ${option.userId} `);
 
-			}
+			};
 
 	        let $startButton = $(".start-button .hexagon");
 	        let $enemyPointerView = $("#enemy-pointer-view");
@@ -566,7 +566,7 @@ let s = 40;
 							acceleration: 1.0,
 							debugPause: debugPause
 						}
-					}
+					};
 				} else {
 					keyInputs.horizontalIntegrated += keyInputs.horizontal/100.0;
 					return {
@@ -576,7 +576,7 @@ let s = 40;
 							acceleration: 1.0,
 							debugPause: debugPause
 						}
-					}
+					};
 				} 
 			});
 
