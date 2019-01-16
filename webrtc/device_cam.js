@@ -158,7 +158,7 @@ var camera_controller = (function(){
         //切り替え時にカメラを停止するため、情報を保存しておく
         localStream = stream;
         //カメラをvideoに結びつける
-        video.src = window.URL.createObjectURL(stream);
+        video.srcObject = stream;
       },
       function(err) {
         //エラー処理
